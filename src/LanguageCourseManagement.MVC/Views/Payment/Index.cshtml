@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "Tahsilatlar";
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+}
+
+<section class="content-card" id="payments-page" data-can-edit="@(isSystemAdmin.ToString().ToLowerInvariant())">
+    <div class="section-heading">
+        <div>
+            <h1>Tahsilatlar</h1>
+            <p>Nakit tahsilat yönetimi</p>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="paymentsTable" data-datatable>
+            <caption class="visually-hidden">Tahsilat listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Öğrenci</th>
+                    <th scope="col">Ders</th>
+                    <th scope="col">Tutar</th>
+                    <th scope="col">Yöntem</th>
+                    <th scope="col">Tarih</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/pages/payments-page.js" asp-append-version="true"></script>
+}

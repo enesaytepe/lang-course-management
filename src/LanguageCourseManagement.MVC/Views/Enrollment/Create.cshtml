@@ -1,0 +1,22 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.EnrollmentCreateViewModel
+@{
+    ViewData["Title"] = "Yeni kayıt";
+    ViewData["SubmitText"] = "Kaydet ve tahsil et";
+}
+
+<section class="content-card" id="enrollment-create-page">
+    <div class="section-heading">
+        <div>
+            <h1>Yeni kayıt</h1>
+            <p>Öğrenci kayıt ve tam nakit tahsilat işlemi</p>
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+    </div>
+
+    <partial name="_Form" model="Model" view-data="ViewData" />
+</section>
+
+@section Scripts {
+    <script src="~/js/pages/enrollments-page.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

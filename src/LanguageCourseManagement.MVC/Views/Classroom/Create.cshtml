@@ -1,0 +1,16 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.ClassroomFormViewModel
+@{
+    ViewData["Title"] = "Yeni Derslik";
+    ViewData["FormAction"] = "Create";
+    ViewData["FormHeading"] = "Yeni derslik";
+    ViewData["FormDescription"] = "Derslik bilgilerini girin.";
+    ViewData["CancelAction"] = "Index";
+    ViewData["SubmitText"] = "Kaydet";
+}
+
+<partial name="_Form" model="Model" view-data="ViewData" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/classrooms-page.js" asp-append-version="true"></script>
+}

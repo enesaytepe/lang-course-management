@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "defaultProvider": "unpkg",
+  "libraries": [
+    {
+      "library": "datatables.net@1.13.11",
+      "destination": "src/LanguageCourseManagement.MVC/wwwroot/lib/datatables",
+      "files": [
+        "js/jquery.dataTables.min.js"
+      ]
+    },
+    {
+      "library": "datatables.net-dt@1.13.11",
+      "destination": "src/LanguageCourseManagement.MVC/wwwroot/lib/datatables",
+      "files": [
+        "css/jquery.dataTables.min.css"
+      ]
+    },
+    {
+      "library": "sweetalert2@11.22.4",
+      "destination": "src/LanguageCourseManagement.MVC/wwwroot/lib/sweetalert2",
+      "files": [
+        "dist/sweetalert2.min.css",
+        "dist/sweetalert2.min.js"
+      ]
+    }
+  ]
+}

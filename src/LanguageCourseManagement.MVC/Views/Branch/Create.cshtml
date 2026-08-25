@@ -1,0 +1,14 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.BranchFormViewModel
+@{
+    ViewData["Title"] = "Yeni Şube";
+    ViewData["FormAction"] = "Create";
+    ViewData["FormHeading"] = "Yeni şube";
+    ViewData["FormDescription"] = "Şube bilgilerini girin.";
+}
+
+<partial name="_Form" model="Model" view-data="ViewData" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/branches-page.js" asp-append-version="true"></script>
+}

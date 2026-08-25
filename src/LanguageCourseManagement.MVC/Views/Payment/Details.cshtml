@@ -1,0 +1,40 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.PaymentSettlementViewModel
+@{
+    ViewData["Title"] = "Tahsilat detayı";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>Tahsilat detayı</h1>
+            <p>Tahsilat bilgileri</p>
+        </div>
+    </div>
+
+    <dl class="detail-list">
+        <div>
+            <dt>Tahsilat numarası</dt>
+            <dd>@Model.Id</dd>
+        </div>
+        <div>
+            <dt>Kayıt numarası</dt>
+            <dd>@Model.EnrollmentId</dd>
+        </div>
+        <div>
+            <dt>Tutar</dt>
+            <dd>@Model.Amount.ToString("N2") ₺</dd>
+        </div>
+        <div>
+            <dt>Yöntem</dt>
+            <dd>@Model.Method</dd>
+        </div>
+        <div>
+            <dt>Tahsilat tarihi</dt>
+            <dd>@Model.SettledAt.ToString("dd.MM.yyyy HH:mm")</dd>
+        </div>
+    </dl>
+
+    <div class="form-actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+    </div>
+</section>

@@ -1,0 +1,42 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.EnrollmentCreateViewModel
+@{
+    ViewData["Title"] = "Kayıtlar";
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+}
+
+<section class="content-card" id="enrollments-page" data-can-edit="@(isSystemAdmin.ToString().ToLowerInvariant())">
+    <div class="section-heading">
+        <div>
+            <h1>Kayıtlar</h1>
+            <p>Öğrenci kayıt yönetimi</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Create">Yeni kayıt</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="enrollmentsTable" data-datatable>
+            <caption class="visually-hidden">Kayıt listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Öğrenci</th>
+                    <th scope="col">Ders</th>
+                    <th scope="col">Tutar</th>
+                    <th scope="col">Durum</th>
+                    @if (isSystemAdmin)
+                    {
+                        <th scope="col">İşlemler</th>
+                    }
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+<form id="enrollmentAntiforgeryForm" class="d-none" aria-hidden="true">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/pages/enrollments-page.js" asp-append-version="true"></script>
+}

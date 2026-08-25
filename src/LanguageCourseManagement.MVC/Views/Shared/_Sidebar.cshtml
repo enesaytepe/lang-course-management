@@ -1,0 +1,33 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var navigation = new[]
+    {
+        ("Dashboard", "Index", "Yönetim Panosu"),
+        ("Branch", "Index", "Şubeler"),
+        ("Classroom", "Index", "Derslikler"),
+        ("Facility", "Index", "Tesisler"),
+        ("Language", "Index", "Diller"),
+        ("CourseLevel", "Index", "Kurs Seviyeleri"),
+        ("Teacher", "Index", "Öğretmenler"),
+        ("Student", "Index", "Öğrenciler"),
+        ("Course", "Index", "Dersler"),
+        ("Enrollment", "Index", "Kayıtlar"),
+        ("Payment", "Index", "Tahsilatlar")
+    };
+}
+<aside class="sidebar" aria-label="Ana menü">
+    <a class="brand" asp-controller="Dashboard" asp-action="Index"><span class="brand-mark" aria-hidden="true">BL</span><span>Bir Lisan<br /><strong>Bir İnsan</strong></span></a>
+    <p class="sidebar-caption">Yönetim</p>
+    <nav>
+        <ul class="nav flex-column gap-1">
+            @foreach (var item in navigation)
+            {
+                var isActive = controller == item.Item1;
+                <li>
+                    <a class="side-link @(isActive ? "active" : string.Empty)" asp-controller="@item.Item1" asp-action="@item.Item2" aria-current="@(isActive ? "page" : null)"><span aria-hidden="true">›</span>@item.Item3</a>
+                </li>
+            }
+        </ul>
+    </nav>
+    <div class="role-summary" aria-label="Kullanıcı rolü"><span>Oturum açıldı</span><strong>@User.Identity?.Name</strong><small>@(User.IsInRole("SystemAdmin") ? "SystemAdmin" : "RegistrationOfficer")</small></div>
+</aside>

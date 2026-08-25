@@ -1,0 +1,51 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.StudentFormViewModel
+@{
+    ViewData["Title"] = "Öğrenciler";
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+    var isRegistrationOfficer = User.IsInRole("RegistrationOfficer");
+}
+
+<section class="content-card" id="students-page" data-can-edit="@(isSystemAdmin.ToString().ToLowerInvariant())">
+    <div class="section-heading">
+        <div>
+            <h1>Öğrenciler</h1>
+            <p>Öğrenci yönetimi</p>
+        </div>
+        @if (isSystemAdmin || isRegistrationOfficer)
+        {
+            <a class="btn btn-primary" asp-action="Create">Yeni öğrenci</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="studentsTable" data-datatable>
+            <caption class="visually-hidden">Öğrenci listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Ad Soyad</th>
+                    <th scope="col">Cep Telefonu</th>
+                    <th scope="col">Kayıt Tarihi</th>
+                    <th scope="col">Durum</th>
+                    @if (isSystemAdmin)
+                    {
+                        <th scope="col">İşlemler</th>
+                    }
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+@if (isSystemAdmin)
+{
+    <form id="studentDeleteAntiforgeryForm" class="d-none" aria-hidden="true">
+        @Html.AntiForgeryToken()
+    </form>
+}
+
+@section Scripts
+{
+    <script src="~/js/pages/students-page.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,56 @@
+using LanguageCourseManagement.Application.Exceptions;
+using LanguageCourseManagement.MVC.Exceptions.HttpProblemDetails;
+
+namespace LanguageCourseManagement.MVC.Exceptions.Handlers;
+
+/// <summary>
+/// HTTP yanıtına exception detaylarını yazan exception handler.
+/// </summary>
+public class HttpExceptionHandler : ExceptionHandler
+{
+    /// <summary>
+    /// Yazılacak HTTP yanıt nesnesi.
+    /// </summary>
+    public HttpResponse Response
+    {
+        get => _response ?? throw new ArgumentNullException(nameof(_response));
+        set => _response = value;
+    }
+
+    private HttpResponse? _response;
+
+    protected override Task HandleException(BusinessException businessException)
+    {
+        Response.StatusCode = StatusCodes.Status409Conflict;
+        string details = new BusinessProblemDetails(businessException.Message).AsJson();
+        return Response.WriteAsync(details);
+    }
+
+    protected override Task HandleException(ValidationException validationException)
+    {
+        Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+        string details = new ValidationProblemDetails(validationException.Errors).AsJson();
+        return Response.WriteAsync(details);
+    }
+
+    protected override Task HandleException(AuthorizationException authorizationException)
+    {
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+        string details = new AuthorizationProblemDetails(authorizationException.Message).AsJson();
+        return Response.WriteAsync(details);
+    }
+
+    protected override Task HandleException(NotFoundException notFoundException)
+    {
+        Response.StatusCode = StatusCodes.Status404NotFound;
+        string details = new NotFoundProblemDetails(notFoundException.Message).AsJson();
+        return Response.WriteAsync(details);
+    }
+
+    protected override Task HandleException(Exception exception)
+    {
+        Response.StatusCode = StatusCodes.Status500InternalServerError;
+        string details = new InternalServerErrorProblemDetails().AsJson();
+        return Response.WriteAsync(details);
+    }
+}

@@ -1,0 +1,31 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.BranchDetailsViewModel
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@Model.Name</h1>
+            <p>Şube detayı</p>
+        </div>
+        @if (User.IsInRole("SystemAdmin"))
+        {
+            <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Düzenle</a>
+        }
+    </div>
+
+    <dl class="detail-list">
+        <div><dt>Adres</dt><dd>@Model.Address</dd></div>
+        <div><dt>Telefon</dt><dd>@(Model.PhoneNumber ?? "-")</dd></div>
+        <div><dt>Toplu taşıma</dt><dd>@(Model.PublicTransportationDirections ?? "-")</dd></div>
+        <div><dt>Özel araç</dt><dd>@(Model.PrivateVehicleDirections ?? "-")</dd></div>
+        <div><dt>Sosyal olanaklar</dt><dd>@(Model.Facilities.Count == 0 ? "-" : string.Join(", ", Model.Facilities))</dd></div>
+        <div><dt>Koordinat</dt><dd>@Model.Latitude, @Model.Longitude</dd></div>
+        <div><dt>Durum</dt><dd><span class="status-pill @(Model.IsActive ? "status-active" : string.Empty)">@(Model.IsActive ? "Aktif" : "Pasif")</span></dd></div>
+    </dl>
+
+    <div class="form-actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+    </div>
+</section>

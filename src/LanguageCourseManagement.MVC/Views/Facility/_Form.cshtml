@@ -1,0 +1,50 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.FacilityFormViewModel
+@{
+    var formAction = ViewData["FormAction"] as string ?? "Create";
+    var isEdit = string.Equals(formAction, "Edit", StringComparison.OrdinalIgnoreCase);
+    var heading = ViewData["FormHeading"] as string ?? "Yeni tesis";
+    var description = ViewData["FormDescription"] as string ?? "Tesis bilgilerini girin.";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@heading</h1>
+            <p>@description</p>
+        </div>
+    </div>
+
+    <form id="facility@(isEdit ? "Edit" : "Create")Form"
+          data-facility-form="@(isEdit ? "edit" : "create")"
+          data-facility-id="@(isEdit ? Model.Id : null)"
+          data-api-endpoint="/api/facilities"
+          method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" data-validation-summary></div>
+        <div class="row g-4">
+            <div class="col-12">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            @if (isEdit)
+            {
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+            <button type="submit" class="btn btn-primary" data-facility-submit>@(isEdit ? "Güncelle" : "Kaydet")</button>
+        </div>
+    </form>
+</section>

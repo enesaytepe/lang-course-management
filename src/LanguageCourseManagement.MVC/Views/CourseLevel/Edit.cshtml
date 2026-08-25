@@ -1,0 +1,5 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.CourseLevelFormViewModel
+@{ ViewData["Title"] = "Kurs Seviyesi Düzenle"; }
+@{ ViewData["FormAction"] = "Edit"; ViewData["FormHeading"] = "Kurs seviyesi düzenle"; ViewData["FormDescription"] = "Kurs seviyesi bilgilerini güncelleyin."; ViewData["CancelAction"] = "Details"; ViewData["SubmitText"] = "Güncelle"; }
+<partial name="_Form" model="Model" view-data="ViewData" />
+@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/pages/course-levels-page.js" asp-append-version="true"></script> }
