@@ -1,0 +1,4 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.LanguageFormViewModel
+@{ ViewData["Title"] = "Yeni Dil"; ViewData["FormAction"] = "Create"; ViewData["FormHeading"] = "Yeni dil"; ViewData["FormDescription"] = "Dil bilgilerini girin."; ViewData["SubmitText"] = "Kaydet"; }
+<partial name="_Form" model="Model" view-data="ViewData" />
+@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/pages/languages-page.js" asp-append-version="true"></script> }

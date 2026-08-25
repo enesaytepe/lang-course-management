@@ -1,0 +1,85 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.BranchFormViewModel
+@{
+    ViewData["Title"] = "Şubeler";
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+    var useCreateModal = ViewData["UseCreateModal"] as bool? ?? true;
+}
+
+<section class="content-card" id="branches-page" data-can-edit="@(isSystemAdmin.ToString().ToLowerInvariant())">
+    <div class="section-heading">
+        <div>
+            <h1>Şubeler</h1>
+            <p>Merkezi şube yönetimi</p>
+        </div>
+        @if (isSystemAdmin)
+        {
+            @if (useCreateModal)
+            {
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#branchCreateModal">
+                    Yeni şube
+                </button>
+            }
+            else
+            {
+                <a class="btn btn-primary" asp-action="Create">Yeni şube</a>
+            }
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="branchesTable" data-datatable>
+            <caption class="visually-hidden">Şube listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Şube</th>
+                    <th scope="col">Adres</th>
+                    <th scope="col">Telefon</th>
+                    <th scope="col">Durum</th>
+                    @if (isSystemAdmin)
+                    {
+                        <th scope="col">İşlemler</th>
+                    }
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+@if (isSystemAdmin && useCreateModal)
+{
+    <div class="modal fade" id="branchCreateModal" tabindex="-1" aria-labelledby="branchCreateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="branchCreateModalLabel">Yeni şube</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    @{
+                        ViewData["FormAction"] = "Create";
+                        ViewData["FormHeading"] = "";
+                        ViewData["FormDescription"] = "Şube bilgilerini girin.";
+                        ViewData["SubmitText"] = "Kaydet";
+                        ViewData["IsModal"] = true;
+                    }
+                    <partial name="_Form" model="Model" view-data="ViewData" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+@if (isSystemAdmin)
+{
+    <form id="branchDeleteAntiforgeryForm" class="d-none" aria-hidden="true">
+        @Html.AntiForgeryToken()
+    </form>
+}
+
+@section Scripts
+{
+    <script src="~/js/pages/branches-page.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

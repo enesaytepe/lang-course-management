@@ -1,0 +1,63 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.EnrollmentDetailViewModel
+@{
+    ViewData["Title"] = "Kayıt detayı";
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>Kayıt detayı</h1>
+            <p>Öğrenci kayıt ve tahsilat bilgileri</p>
+        </div>
+        <div class="table-actions">
+            @if (isSystemAdmin && Model.Status == "Active")
+            {
+                <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id">Durumu düzenle</a>
+            }
+            <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+        </div>
+    </div>
+
+    <dl class="detail-list">
+        <div>
+            <dt>Öğrenci</dt>
+            <dd>@Model.StudentName</dd>
+        </div>
+        <div>
+            <dt>Ders</dt>
+            <dd>@Model.CourseName</dd>
+        </div>
+        <div>
+            <dt>Kurs ücreti</dt>
+            <dd>@Model.TuitionFee.ToString("N2") ₺</dd>
+        </div>
+        <div>
+            <dt>İndirim</dt>
+            <dd>@Model.DiscountAmount.ToString("N2") ₺</dd>
+        </div>
+        <div>
+            <dt>Son tutar</dt>
+            <dd>@Model.FinalAmount.ToString("N2") ₺</dd>
+        </div>
+        <div>
+            <dt>Durum</dt>
+            <dd>
+                <span class="status-pill @(Model.Status == "Active" ? "status-active" : string.Empty)">
+                    @(Model.Status == "Completed" ? "Tamamlandı" : Model.Status == "Cancelled" ? "İptal edildi" : "Aktif")
+                </span>
+            </dd>
+        </div>
+        <div>
+            <dt>Tahsilat</dt>
+            <dd>@(Model.IsSettled ? "Tamamlandı" : "Bekliyor")</dd>
+        </div>
+        @if (Model.PaymentId.HasValue)
+        {
+            <div>
+                <dt>Tahsilat numarası</dt>
+                <dd>@Model.PaymentId</dd>
+            </div>
+        }
+    </dl>
+</section>

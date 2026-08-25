@@ -1,0 +1,92 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.ClassroomFormViewModel
+@{
+    var formAction = ViewData["FormAction"] as string ?? "Create";
+    var isEdit = string.Equals(formAction, "Edit", StringComparison.OrdinalIgnoreCase);
+    var heading = ViewData["FormHeading"] as string ?? "Yeni derslik";
+    var description = ViewData["FormDescription"] as string ?? "Derslik bilgilerini girin.";
+    var cancelAction = ViewData["CancelAction"] as string ?? "Index";
+    var submitText = ViewData["SubmitText"] as string ?? "Kaydet";
+    var isModal = ViewData["IsModal"] as bool? ?? false;
+}
+
+<section class="content-card @(isModal ? "border-0 shadow-none p-0" : string.Empty)">
+    @if (!isModal)
+    {
+        <div class="section-heading">
+            <div>
+                <h1>@heading</h1>
+                <p>@description</p>
+            </div>
+        </div>
+    }
+
+    <form id="@(isModal ? "classroomCreateForm" : null)"
+          asp-action="@formAction"
+          asp-route-id="@(isEdit ? Model.Id : null)"
+          method="post"
+          asp-antiforgery="@(!isModal)"
+          data-classroom-create-form="@(isModal ? "true" : null)"
+          data-classroom-form="@(isModal ? null : (isEdit ? "update" : "create"))"
+          data-classroom-id="@(isEdit ? Model.Id : null)">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" data-validation-summary></div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label asp-for="BranchId" class="form-label"></label>
+                <select asp-for="BranchId" class="form-select">
+                    <option value="">Şube seçin</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.Id">
+                            @branch.Name@(!branch.IsActive ? " (Pasif)" : string.Empty)
+                        </option>
+                    }
+                </select>
+                <span asp-validation-for="BranchId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Capacity" class="form-label"></label>
+                <input asp-for="Capacity" class="form-control" type="number" min="1" step="1" />
+                <span asp-validation-for="Capacity" class="text-danger"></span>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">Aktif</label>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="form-actions">
+            @if (isModal)
+            {
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+            }
+            else
+            {
+                <a class="btn btn-outline-secondary"
+                   asp-action="@cancelAction"
+                   asp-route-id="@(isEdit ? Model.Id : null)">Vazgeç</a>
+            }
+
+            <button type="submit" class="btn btn-primary">@submitText</button>
+        </div>
+    </form>
+</section>

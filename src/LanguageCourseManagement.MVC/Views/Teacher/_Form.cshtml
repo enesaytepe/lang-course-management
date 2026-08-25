@@ -1,0 +1,129 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.TeacherFormViewModel
+@{
+    var formAction = ViewData["FormAction"] as string ?? "Create";
+    var isEdit = string.Equals(formAction, "Edit", StringComparison.OrdinalIgnoreCase);
+    var heading = ViewData["FormHeading"] as string ?? "Yeni öğretmen";
+    var description = ViewData["FormDescription"] as string ?? "Öğretmen bilgilerini girin.";
+    var cancelAction = ViewData["CancelAction"] as string ?? "Index";
+    var submitText = ViewData["SubmitText"] as string ?? "Kaydet";
+    var dayNames = new[] { "Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi" };
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@heading</h1>
+            <p>@description</p>
+        </div>
+    </div>
+
+    <form action="@Url.Action(formAction, new { id = isEdit ? Model.Id : null })"
+          method="post"
+          data-teacher-form="@(isEdit ? "update" : "create")"
+          data-teacher-id="@(isEdit ? Model.Id : null)">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" data-validation-summary></div>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label asp-for="FirstName" class="form-label">Ad</label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="LastName" class="form-label">Soyad</label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="MobilePhone" class="form-label">Cep telefonu</label>
+                <input asp-for="MobilePhone" class="form-control" type="tel" />
+                <span asp-validation-for="MobilePhone" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="HomePhone" class="form-label">Ev telefonu</label>
+                <input asp-for="HomePhone" class="form-control" type="tel" />
+                <span asp-validation-for="HomePhone" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email" class="form-label">E-posta</label>
+                <input asp-for="Email" class="form-control" type="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="HireDate" class="form-label">İşe başlama tarihi</label>
+                <input asp-for="HireDate" class="form-control" type="date" />
+                <span asp-validation-for="HireDate" class="text-danger"></span>
+            </div>
+            @if (isEdit)
+            {
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">Aktif</label>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Dil ve Şube Seçimi -->
+        <hr class="my-4" />
+        <h5>Dil ve Şube Bilgileri</h5>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label asp-for="LanguageIds" class="form-label">Öğretebildiği Diller</label>
+                <select asp-for="LanguageIds" asp-items="Model.AvailableLanguages" class="form-select" multiple></select>
+                <span asp-validation-for="LanguageIds" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="BranchIds" class="form-label">Çalışabileceği Şubeler</label>
+                <select asp-for="BranchIds" asp-items="Model.AvailableBranches" class="form-select" multiple></select>
+                <span asp-validation-for="BranchIds" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Müsaitlik Tablosu -->
+        <hr class="my-4" />
+        <h5>Haftalık Müsaitlik</h5>
+        <table id="availabilityTable" class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>Gün</th>
+                    <th>Başlangıç</th>
+                    <th>Bitiş</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Availabilities.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <select name="Availabilities[@i].DayOfWeek" class="form-select form-select-sm">
+                                @for (var d = 0; d < 7; d++)
+                                {
+                                    <option value="@d" selected="@(Model.Availabilities[i].DayOfWeek == (DayOfWeek)d)">@dayNames[d]</option>
+                                }
+                            </select>
+                            <input type="hidden" name="Availabilities[@i].Id" value="@(Model.Availabilities[i].Id?.ToString() ?? "")" />
+                        </td>
+                        <td>
+                            <input type="time" name="Availabilities[@i].StartTime" class="form-control form-control-sm" value="@Model.Availabilities[i].StartTime.ToString("HH:mm")" />
+                        </td>
+                        <td>
+                            <input type="time" name="Availabilities[@i].EndTime" class="form-control form-control-sm" value="@Model.Availabilities[i].EndTime.ToString("HH:mm")" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-remove-availability>Sil</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <button type="button" id="addAvailabilityRow" class="btn btn-sm btn-outline-success">+ Müsaitlik Ekle</button>
+
+        <div class="form-actions mt-4">
+            <a class="btn btn-outline-secondary" asp-action="@cancelAction" asp-route-id="@(isEdit ? Model.Id : null)">Vazgeç</a>
+            <button type="submit" class="btn btn-primary">@submitText</button>
+        </div>
+    </form>
+</section>

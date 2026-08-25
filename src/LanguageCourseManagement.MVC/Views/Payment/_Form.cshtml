@@ -1,0 +1,143 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.PaymentFormViewModel
+@{
+    var heading = "Yeni Tahsilat";
+    var description = "Nakit tam tahsilat gerçekleştirin.";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@heading</h1>
+            <p>@description</p>
+        </div>
+    </div>
+
+    <form id="paymentForm" data-payment-form>
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" data-validation-summary></div>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <label asp-for="EnrollmentId" class="form-label">Kayıt</label>
+                <select asp-for="EnrollmentId" class="form-select" id="enrollmentSelect"
+                        asp-items="@(new SelectList(Model.UnsettledEnrollments, "Id", "StudentName"))">
+                    <option value="">-- Kayıt seçin --</option>
+                </select>
+                <span asp-validation-for="EnrollmentId" class="text-danger"></span>
+            </div>
+
+            <div class="col-12" id="enrollmentInfo" style="display:none;">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">Seçilen Kayıt Bilgileri</h5>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-3">Öğrenci</dt>
+                            <dd class="col-sm-9" id="infoStudentName">-</dd>
+                            <dt class="col-sm-3">Ders</dt>
+                            <dd class="col-sm-9" id="infoCourseName">-</dd>
+                            <dt class="col-sm-3">Şube</dt>
+                            <dd class="col-sm-9" id="infoBranchName">-</dd>
+                            <dt class="col-sm-3">Tahsilat tutarı</dt>
+                            <dd class="col-sm-9"><strong id="infoFinalAmount">-</strong></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Description" class="form-label">Açıklama (isteğe bağlı)</label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Tahsilat açıklaması girin..."></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Tahsilat Yap</button>
+            <a class="btn btn-outline-secondary ms-2" asp-action="Index">İptal</a>
+        </div>
+    </form>
+</section>
+
+<script>
+    $(function () {
+        var enrollmentData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.UnsettledEnrollments.Select(e => new {
+                id = e.Id,
+                studentName = e.StudentName,
+                courseName = e.CourseName,
+                branchName = e.BranchName,
+                finalAmount = e.FinalAmount
+            })));
+
+        var $select = $('#enrollmentSelect');
+        var $info = $('#enrollmentInfo');
+        var $submitBtn = $('#submitBtn');
+
+        function updateEnrollmentInfo() {
+            var selectedId = $select.val();
+            if (!selectedId) {
+                $info.hide();
+                $submitBtn.prop('disabled', true);
+                return;
+            }
+
+            var enrollment = enrollmentData.find(function (e) { return e.id === selectedId; });
+            if (enrollment) {
+                $('#infoStudentName').text(enrollment.studentName);
+                $('#infoCourseName').text(enrollment.courseName);
+                $('#infoBranchName').text(enrollment.branchName || '-');
+                $('#infoFinalAmount').text(new Intl.NumberFormat('tr-TR', { style: 'decimal', minimumFractionDigits: 2 }).format(enrollment.finalAmount) + ' ₺');
+                $info.show();
+                $submitBtn.prop('disabled', false);
+            }
+        }
+
+        $select.on('change', updateEnrollmentInfo);
+        updateEnrollmentInfo();
+
+        // Form submit via AJAX
+        $('#paymentForm').on('submit', function (event) {
+            event.preventDefault();
+            var form = $(this);
+            var token = form.find('input[name="__RequestVerificationToken"]').val();
+            var enrollmentId = $select.val();
+
+            if (!enrollmentId) {
+                Swal.fire('Uyarı', 'Lütfen bir kayıt seçin.', 'warning');
+                return;
+            }
+
+            var description = $('#Description').val() || '';
+
+            $submitBtn.prop('disabled', true).text('İşleniyor...');
+
+            $.ajax({
+                url: '/api/payments',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: { 'X-XSRF-TOKEN': token },
+                data: JSON.stringify({
+                    enrollmentId: enrollmentId,
+                    description: description
+                })
+            }).done(function (data) {
+                Swal.fire({
+                    title: 'Başarılı',
+                    text: 'Tahsilat başarıyla gerçekleştirildi.',
+                    icon: 'success'
+                }).then(function () {
+                    window.location.href = '/Payment/Details/' + data.id;
+                });
+            }).fail(function (xhr) {
+                var message = 'Tahsilat gerçekleştirilemedi.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    message = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                }
+                Swal.fire('Hata', message, 'error');
+                $submitBtn.prop('disabled', false).text('Tahsilat Yap');
+            });
+        });
+    });
+</script>

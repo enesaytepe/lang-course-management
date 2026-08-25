@@ -1,0 +1,6 @@
+{
+  "[csharp]": {
+    "files.insertFinalNewline": false,
+    "files.trimFinalNewlines": true
+  }
+}

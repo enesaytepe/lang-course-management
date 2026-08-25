@@ -1,0 +1,36 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.EnrollmentDetailViewModel
+@{
+    ViewData["Title"] = "Kayıt durumunu düzenle";
+}
+
+<section class="content-card" id="enrollment-edit-page">
+    <div class="section-heading">
+        <div>
+            <h1>Kayıt durumunu düzenle</h1>
+            <p>@Model.StudentName - @Model.CourseName</p>
+        </div>
+    </div>
+
+    <form id="enrollmentStatusForm"
+          data-enrollment-form="update"
+          data-enrollment-id="@Model.Id"
+          method="post">
+        @Html.AntiForgeryToken()
+        <div data-validation-summary class="validation-summary-valid text-danger" asp-validation-summary="All"></div>
+        <div class="mb-3">
+            <label class="form-label" for="Status">Yeni durum</label>
+            <select class="form-select" id="Status" name="Status" required>
+                <option value="Completed">Tamamlandı</option>
+                <option value="Cancelled">İptal edildi</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Kaydet</button>
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Vazgeç</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <script src="~/js/pages/enrollments-page.js" asp-append-version="true"></script>
+}

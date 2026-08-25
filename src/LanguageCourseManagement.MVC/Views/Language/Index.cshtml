@@ -1,0 +1,16 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.LanguageFormViewModel
+@{ ViewData["Title"] = "Diller"; var isSystemAdmin = User.IsInRole("SystemAdmin"); }
+<section class="content-card" id="languages-page" data-can-edit="@(isSystemAdmin.ToString().ToLowerInvariant())">
+    <div class="section-heading"><div><h1>Diller</h1><p>Dil yönetimi</p></div>
+        @if (isSystemAdmin) { <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#languageCreateModal">Yeni dil</button> }
+    </div>
+    <div class="table-responsive"><table class="table" id="languagesTable" data-datatable><caption class="visually-hidden">Dil listesi</caption><thead><tr><th scope="col">Dil adı</th><th scope="col">Kod</th><th scope="col">Durum</th>@if (isSystemAdmin) { <th scope="col">İşlemler</th> }</tr></thead><tbody></tbody></table></div>
+</section>
+@if (isSystemAdmin)
+{
+    <div class="modal fade" id="languageCreateModal" tabindex="-1" aria-labelledby="languageCreateModalLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="languageCreateModalLabel">Yeni dil</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button></div><div class="modal-body">
+        @{ ViewData["FormAction"] = "Create"; ViewData["FormHeading"] = ""; ViewData["FormDescription"] = "Dil bilgilerini girin."; ViewData["IsModal"] = true; }<partial name="_Form" model="Model" view-data="ViewData" />
+    </div></div></div></div>
+    <form id="languageDeleteAntiforgeryForm" class="d-none" aria-hidden="true">@Html.AntiForgeryToken()</form>
+}
+@section Scripts { <script src="~/js/pages/languages-page.js" asp-append-version="true"></script><partial name="_ValidationScriptsPartial" /> }

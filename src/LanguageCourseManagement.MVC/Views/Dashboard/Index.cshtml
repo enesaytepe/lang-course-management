@@ -1,0 +1,64 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Yönetim Panosu";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>Yönetim Panosu</h1>
+            <p>Sistem genelinde genel bakış</p>
+        </div>
+    </div>
+
+    <div class="metric-grid">
+        <a class="metric-card metric-card-link" asp-controller="Branch" asp-action="Index">
+            <i class="bi bi-building" aria-hidden="true"></i>
+            <p>Şubeler</p>
+            <strong>@Model.ActiveBranchCount</strong>
+            <span>Aktif şube</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Classroom" asp-action="Index">
+            <i class="bi bi-door-open" aria-hidden="true"></i>
+            <p>Derslikler</p>
+            <strong>@Model.ActiveClassroomCount</strong>
+            <span>Aktif derslik</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Teacher" asp-action="Index">
+            <i class="bi bi-person-workspace" aria-hidden="true"></i>
+            <p>Öğretmenler</p>
+            <strong>@Model.ActiveTeacherCount</strong>
+            <span>Aktif öğretmen</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Student" asp-action="Index">
+            <i class="bi bi-people" aria-hidden="true"></i>
+            <p>Öğrenciler</p>
+            <strong>@Model.ActiveStudentCount</strong>
+            <span>Aktif öğrenci</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Course" asp-action="Index">
+            <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
+            <p>Aktif Dersler</p>
+            <strong>@Model.ActiveCourseCount</strong>
+            <span>Aktif ders</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Enrollment" asp-action="Index">
+            <i class="bi bi-card-checklist" aria-hidden="true"></i>
+            <p>Toplam Kayıt</p>
+            <strong>@Model.TotalEnrollmentCount</strong>
+            <span>Toplam kayıt</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Payment" asp-action="Index">
+            <i class="bi bi-cash-coin" aria-hidden="true"></i>
+            <p>Tahsil Edilen</p>
+            <strong>@Model.TotalSettledAmount.ToString("N2") ₺</strong>
+            <span>Toplam tahsilat</span>
+        </a>
+        <a class="metric-card metric-card-link" asp-controller="Enrollment" asp-action="Index">
+            <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+            <p>Bekleyen Ödeme</p>
+            <strong>@Model.PendingPaymentCount</strong>
+            <span>Bekleyen ödeme</span>
+        </a>
+    </div>
+</section>

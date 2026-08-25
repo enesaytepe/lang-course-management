@@ -1,0 +1,92 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.TeacherDetailsViewModel
+@{
+    ViewData["Title"] = $"{Model.FirstName} {Model.LastName}";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@Model.FirstName @Model.LastName</h1>
+            <p>Öğretmen detayı</p>
+        </div>
+        @if (User.IsInRole("SystemAdmin"))
+        {
+            <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Düzenle</a>
+        }
+    </div>
+
+    <dl class="detail-list">
+        <div><dt>Ad</dt><dd>@Model.FirstName</dd></div>
+        <div><dt>Soyad</dt><dd>@Model.LastName</dd></div>
+        <div><dt>Ev telefonu</dt><dd>@(Model.HomePhone ?? "-")</dd></div>
+        <div><dt>Cep telefonu</dt><dd>@Model.MobilePhone</dd></div>
+        <div><dt>E-posta</dt><dd>@(Model.Email ?? "-")</dd></div>
+        <div><dt>İşe başlama tarihi</dt><dd>@Model.HireDate.ToString("dd.MM.yyyy")</dd></div>
+        <div><dt>Durum</dt><dd><span class="status-pill @(Model.IsActive ? "status-active" : string.Empty)">@(Model.IsActive ? "Aktif" : "Pasif")</span></dd></div>
+    </dl>
+
+    <!-- Öğretebildiği Diller -->
+    <h5 class="mt-4">Öğretebildiği Diller</h5>
+    @if (Model.Languages.Count > 0)
+    {
+        <ul class="list-group list-group-flush mb-3">
+            @foreach (var language in Model.Languages)
+            {
+                <li class="list-group-item">@language</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">Henüz dil atanmamış.</p>
+    }
+
+    <!-- Çalışabileceği Şubeler -->
+    <h5>Çalışabileceği Şubeler</h5>
+    @if (Model.Branches.Count > 0)
+    {
+        <ul class="list-group list-group-flush mb-3">
+            @foreach (var branch in Model.Branches)
+            {
+                <li class="list-group-item">@branch</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">Henüz şube atanmamış.</p>
+    }
+
+    <!-- Haftalık Müsaitlik -->
+    <h5>Haftalık Müsaitlik</h5>
+    @if (Model.Availabilities.Count > 0)
+    {
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>Gün</th>
+                    <th>Başlangıç</th>
+                    <th>Bitiş</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Availabilities)
+                {
+                    <tr>
+                        <td>@item.DayName</td>
+                        <td>@item.StartTime</td>
+                        <td>@item.EndTime</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted">Henüz müsaitlik tanımlanmamış.</p>
+    }
+
+    <div class="form-actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+    </div>
+</section>

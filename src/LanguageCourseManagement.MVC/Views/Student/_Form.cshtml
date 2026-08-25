@@ -1,0 +1,66 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.StudentFormViewModel
+@{
+    var formAction = ViewData["FormAction"] as string ?? "Create";
+    var isEdit = string.Equals(formAction, "Edit", StringComparison.OrdinalIgnoreCase);
+    var heading = ViewData["FormHeading"] as string ?? "Yeni öğrenci";
+    var description = ViewData["FormDescription"] as string ?? "Öğrenci bilgilerini girin.";
+    var cancelAction = ViewData["CancelAction"] as string ?? "Index";
+    var submitText = ViewData["SubmitText"] as string ?? "Kaydet";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@heading</h1>
+            <p>@description</p>
+        </div>
+    </div>
+
+    <form action="@Url.Action(formAction, new { id = isEdit ? Model.Id : null })"
+          method="post"
+          data-student-form="@(isEdit ? "update" : "create")"
+          data-student-id="@(isEdit ? Model.Id : null)">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" data-validation-summary></div>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label asp-for="FirstName" class="form-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="LastName" class="form-label"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="HomePhone" class="form-label">Ev telefonu</label>
+                <input asp-for="HomePhone" class="form-control" type="tel" />
+                <span asp-validation-for="HomePhone" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="MobilePhone" class="form-label">Cep telefonu</label>
+                <input asp-for="MobilePhone" class="form-control" type="tel" />
+                <span asp-validation-for="MobilePhone" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email" class="form-label">E-posta</label>
+                <input asp-for="Email" class="form-control" type="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            @if (isEdit)
+            {
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">Aktif</label>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary" asp-action="@cancelAction" asp-route-id="@(isEdit ? Model.Id : null)">Vazgeç</a>
+            <button type="submit" class="btn btn-primary">@submitText</button>
+        </div>
+    </form>
+</section>

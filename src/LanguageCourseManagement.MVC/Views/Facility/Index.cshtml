@@ -1,0 +1,46 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.FacilityFormViewModel
+@{
+    ViewData["Title"] = "Tesisler";
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+}
+
+<section class="content-card" id="facilities-page"
+         data-list-endpoint="@ViewData["FacilityListEndpoint"]"
+         data-api-endpoint="@ViewData["FacilityEndpoint"]"
+         data-can-edit="@(isSystemAdmin.ToString().ToLowerInvariant())"
+         data-can-delete="@(isSystemAdmin.ToString().ToLowerInvariant())">
+    <div class="section-heading">
+        <div>
+            <h1>Tesisler</h1>
+            <p>Merkezi sosyal olanaklar kataloğu</p>
+        </div>
+        @if (isSystemAdmin)
+        {
+            <a class="btn btn-primary" asp-action="Create" id="facilityCreateButton">Yeni tesis</a>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="facilitiesTable" data-datatable>
+            <caption class="visually-hidden">Tesis listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Tesis</th>
+                    <th scope="col">Açıklama</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+<form id="facilityDeleteAntiforgeryForm" class="d-none" aria-hidden="true">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/facilities-page.js" asp-append-version="true"></script>
+}

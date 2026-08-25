@@ -1,0 +1,26 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.FacilityDetailsViewModel
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<section class="content-card" id="facility-details" data-facility-id="@Model.Id">
+    <div class="section-heading">
+        <div>
+            <h1>@Model.Name</h1>
+            <p>Tesis detayı</p>
+        </div>
+        @if (User.IsInRole("SystemAdmin"))
+        {
+            <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Düzenle</a>
+        }
+    </div>
+
+    <dl class="detail-list">
+        <div><dt>Açıklama</dt><dd>@(Model.Description ?? "-")</dd></div>
+        <div><dt>Durum</dt><dd><span class="status-pill @(Model.IsActive ? "status-active" : string.Empty)">@(Model.IsActive ? "Aktif" : "Pasif")</span></dd></div>
+    </dl>
+
+    <div class="form-actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
+    </div>
+</section>

@@ -1,0 +1,8 @@
+<header class="topbar">
+    <div>
+        <p class="eyebrow mb-1">YÖNETİM MERKEZİ</p><span class="topbar-title">Şube yönetimi</span>
+    </div>
+    <div class="topbar-status"><span class="status-dot" aria-hidden="true"></span><span>@User.Identity?.Name</span>
+        <form asp-controller="Account" asp-action="Logout" method="post" class="ms-3"><button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış</button></form>
+    </div>
+</header>

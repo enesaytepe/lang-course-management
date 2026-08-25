@@ -1,0 +1,35 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.EnrollmentCreateViewModel
+
+<form id="enrollmentCreateForm" data-enrollment-form="create" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="IdempotencyKey" />
+
+    <div data-validation-summary class="validation-summary-valid text-danger" asp-validation-summary="All"></div>
+
+    <div class="mb-3">
+        <label class="form-label" for="StudentId">Öğrenci</label>
+        <select class="form-select" asp-for="StudentId" id="StudentId" required>
+            <option value="">Öğrenci seçin</option>
+        </select>
+        <span class="text-danger" data-valmsg-for="StudentId"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="CourseId">Ders</label>
+        <select class="form-select" asp-for="CourseId" id="CourseId" required>
+            <option value="">Ders seçin</option>
+        </select>
+        <span class="text-danger" data-valmsg-for="CourseId"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" asp-for="DiscountAmount">İndirim tutarı</label>
+        <input class="form-control" asp-for="DiscountAmount" min="0" step="0.01" />
+        <span class="text-danger" data-valmsg-for="DiscountAmount"></span>
+    </div>
+
+    <div class="form-actions">
+        <button class="btn btn-primary" type="submit">@(ViewData["SubmitText"] ?? "Kaydet")</button>
+        <a class="btn btn-outline-secondary" asp-controller="Enrollment" asp-action="Index">Vazgeç</a>
+    </div>
+</form>
