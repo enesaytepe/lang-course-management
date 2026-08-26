@@ -68,8 +68,8 @@ public sealed class EnrollmentServiceTests
                 DiscountAmount = e.DiscountAmount,
                 FinalAmount = e.FinalAmount,
                 Status = e.Status.ToString(),
-                IsSettled = e.Payment != null,
-                PaymentId = e.Payment?.Id
+                IsSettled = e.Payments.Any(),
+                PaymentId = e.Payments.FirstOrDefault()?.Id
             });
 
         var result = await CreateService().RegisterAndSettleAsync(request, Guid.NewGuid());
@@ -94,8 +94,8 @@ public sealed class EnrollmentServiceTests
                 StudentId = e.StudentId,
                 CourseId = e.CourseId,
                 FinalAmount = e.FinalAmount,
-                IsSettled = e.Payment != null,
-                PaymentId = e.Payment?.Id
+                IsSettled = e.Payments.Any(),
+                PaymentId = e.Payments.FirstOrDefault()?.Id
             });
 
         var result = await CreateService().RegisterAndSettleAsync(request, Guid.NewGuid());

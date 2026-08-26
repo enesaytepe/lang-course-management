@@ -11,12 +11,12 @@ public sealed class SettlementTests
     {
         var enrollment = new Enrollment { FinalAmount = 250m };
         var payment = new Payment { EnrollmentId = enrollment.Id, Amount = enrollment.FinalAmount, Method = PaymentMethod.Cash, Status = PaymentStatus.Settled };
-        enrollment.Payment = payment;
+        enrollment.Payments.Add(payment);
 
         Assert.Equal(enrollment.FinalAmount, payment.Amount);
         Assert.Equal(PaymentMethod.Cash, payment.Method);
         Assert.Equal(PaymentStatus.Settled, payment.Status);
-        Assert.Same(payment, enrollment.Payment);
+        Assert.Same(payment, enrollment.Payments.First());
     }
 
     [Fact]
