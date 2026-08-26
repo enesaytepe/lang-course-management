@@ -29,13 +29,14 @@ public sealed class TeachersApiController : ControllerBase
         [FromQuery] PageRequest pageRequest,
         [FromQuery] string? search,
         [FromQuery] bool? isActive,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool showDeleted = false)
     {
         pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _teacherService.GetListAsync(pageRequest, search, isActive, cancellationToken));
+        return Ok(await _teacherService.GetListAsync(pageRequest, search, isActive ?? true, showDeleted, cancellationToken));
     }
 
     /// <summary>
@@ -83,10 +84,11 @@ public sealed class TeachersApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<TeacherResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<TeacherResponse>> Delete(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _teacherService.DeleteAsync(id, cancellationToken));
+        await _teacherService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>
@@ -125,10 +127,11 @@ public sealed class TeachersApiController : ControllerBase
     [HttpDelete("{teacherId:guid}/availabilities/{availabilityId:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<TeacherAvailabilityResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<TeacherAvailabilityResponse>> DeleteAvailability(
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteAvailability(
         Guid teacherId, Guid availabilityId, CancellationToken cancellationToken)
     {
-        return Ok(await _teacherService.DeleteAvailabilityAsync(teacherId, availabilityId, cancellationToken));
+        await _teacherService.DeleteAvailabilityAsync(teacherId, availabilityId, cancellationToken);
+        return NoContent();
     }
 }

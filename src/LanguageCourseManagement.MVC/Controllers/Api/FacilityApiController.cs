@@ -57,7 +57,7 @@ public sealed class FacilityApiController : ControllerBase
             pageRequest,
             search,
             includeInactive ? null : true,
-            cancellationToken));
+            cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -105,9 +105,10 @@ public sealed class FacilityApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<FacilityResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<FacilityResponse>> Delete(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _facilityService.DeleteAsync(id, cancellationToken));
+        await _facilityService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 }

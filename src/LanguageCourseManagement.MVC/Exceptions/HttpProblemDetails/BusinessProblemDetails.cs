@@ -12,6 +12,6 @@ public class BusinessProblemDetails : ProblemDetails
         Title = "Rule violation";
         Detail = detail;
         Status = StatusCodes.Status409Conflict;
-        Type = "https://example.com/probs/business";
+        Type = "https://api.languagemanagement.edu.tr/problems/business-rule-violation";
     }
 }

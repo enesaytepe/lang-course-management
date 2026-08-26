@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LanguageCourseManagement.MVC.Exceptions.HttpProblemDetails;
 
 /// <summary>
-/// 422 Unprocessable Entity doğrulama hatası için ProblemDetails yanıtı.
+/// 400 Bad Request doğrulama hatası için ProblemDetails yanıtı.
 /// </summary>
 public class ValidationProblemDetails : ProblemDetails
 {
@@ -22,7 +22,7 @@ public class ValidationProblemDetails : ProblemDetails
             .ToDictionary(
                 g => g.Key,
                 g => g.SelectMany(e => e.Errors ?? Enumerable.Empty<string>()).ToArray());
-        Status = StatusCodes.Status422UnprocessableEntity;
-        Type = "https://example.com/probs/validation";
+        Status = StatusCodes.Status400BadRequest;
+        Type = "https://api.languagemanagement.edu.tr/problems/validation";
     }
 }

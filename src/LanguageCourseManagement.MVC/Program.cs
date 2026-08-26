@@ -41,8 +41,14 @@ try
             if (context.Request.Path.StartsWithSegments("/api"))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsJsonAsync(new { error = "Kimlik doğrulama gerekli." });
+                context.Response.ContentType = "application/problem+json";
+                await context.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+                {
+                    Title = "Authentication required",
+                    Detail = "Kimlik doğrulama gerekli.",
+                    Status = StatusCodes.Status401Unauthorized,
+                    Type = "https://api.languagemanagement.edu.tr/problems/authentication"
+                });
                 return;
             }
 
@@ -53,8 +59,14 @@ try
             if (context.Request.Path.StartsWithSegments("/api"))
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsJsonAsync(new { error = "Bu işlem için yetkiniz yok." });
+                context.Response.ContentType = "application/problem+json";
+                await context.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+                {
+                    Title = "Access denied",
+                    Detail = "Bu işlem için yetkiniz yok.",
+                    Status = StatusCodes.Status403Forbidden,
+                    Type = "https://api.languagemanagement.edu.tr/problems/authorization"
+                });
                 return;
             }
 

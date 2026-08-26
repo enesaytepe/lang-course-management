@@ -12,6 +12,6 @@ public class InternalServerErrorProblemDetails : ProblemDetails
         Title = "Internal server error";
         Detail = "Internal server error";
         Status = StatusCodes.Status500InternalServerError;
-        Type = "https://example.com/probs/internal";
+        Type = "https://api.languagemanagement.edu.tr/problems/internal-server-error";
     }
 }

@@ -81,7 +81,9 @@
 
         getErrorMessages: function (xhr) {
             var response = xhr.responseJSON || {};
-            var messages = response.ErrorMessages || response.errorMessages || response.Errors || response.errors || response.Error || response.error;
+            // RFC 7807 ProblemDetails: detail, errors (ValidationProblemDetails)
+            // Legacy: ErrorMessages, Error
+            var messages = response.Errors || response.errors || response.Detail || response.detail || response.ErrorMessages || response.errorMessages || response.Error || response.error;
             return common.collectErrorMessages(messages, []);
         },
 
@@ -92,10 +94,14 @@
                 title = "Oturum gerekli";
             } else if (xhr.status === 403) {
                 title = "Yetkiniz yok";
+            } else if (xhr.status === 404) {
+                title = "Kaynak bulunamadı";
             } else if (xhr.status === 409) {
                 title = "Çakışan kayıt";
-            } else if (xhr.status === 422 || xhr.status === 400) {
+            } else if (xhr.status === 400) {
                 title = "Doğrulama hatası";
+            } else if (xhr.status === 423) {
+                title = "Hesap kilitli";
             }
 
             var messages = common.getErrorMessages(xhr);

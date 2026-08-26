@@ -35,7 +35,7 @@ public sealed class PaymentApiController : ControllerBase
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _paymentService.GetListAsync(pageRequest, search, cancellationToken));
+        return Ok(await _paymentService.GetListAsync(pageRequest, search, cancellationToken: cancellationToken));
     }
 
     /// <summary>

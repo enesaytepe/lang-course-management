@@ -29,6 +29,18 @@ public sealed class EnrollmentApiController : ControllerBase
     }
 
     /// <summary>
+    /// Bir öğrenciye ait tüm kayıtları getirir (geçmiş dahil).
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
+    [HttpGet("by-student/{studentId:guid}")]
+    [ProducesResponseType<IReadOnlyList<EnrollmentListItemResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<EnrollmentListItemResponse>>> GetByStudentId(
+        Guid studentId, CancellationToken cancellationToken)
+    {
+        return Ok(await _enrollmentService.GetByStudentIdAsync(studentId, cancellationToken));
+    }
+
+    /// <summary>
     /// Kayıtları sayfalı olarak listeler.
     /// </summary>
     /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
@@ -45,7 +57,7 @@ public sealed class EnrollmentApiController : ControllerBase
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _enrollmentService.GetListAsync(pageRequest, search, branchId, status, cancellationToken));
+        return Ok(await _enrollmentService.GetListAsync(pageRequest, search, branchId, status, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -95,10 +107,11 @@ public sealed class EnrollmentApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<EnrollmentDetailResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<EnrollmentDetailResponse>> Cancel(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _enrollmentService.CancelAsync(id, cancellationToken));
+        await _enrollmentService.CancelAsync(id, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>

@@ -12,6 +12,6 @@ public class AuthorizationProblemDetails : ProblemDetails
         Title = "Authorization error";
         Detail = detail;
         Status = StatusCodes.Status403Forbidden;
-        Type = "https://example.com/probs/authorization";
+        Type = "https://api.languagemanagement.edu.tr/problems/authorization";
     }
 }

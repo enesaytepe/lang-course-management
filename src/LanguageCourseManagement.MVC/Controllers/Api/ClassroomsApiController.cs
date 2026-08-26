@@ -39,7 +39,7 @@ public sealed class ClassroomsApiController : ControllerBase
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _classroomService.GetListAsync(pageRequest, search, branchId, isActive, cancellationToken));
+        return Ok(await _classroomService.GetListAsync(pageRequest, search, branchId, isActive ?? true, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -87,9 +87,10 @@ public sealed class ClassroomsApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<ClassroomResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<ClassroomResponse>> Delete(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _classroomService.DeleteAsync(id, cancellationToken));
+        await _classroomService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 }

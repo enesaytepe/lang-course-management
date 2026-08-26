@@ -1,6 +1,7 @@
 using LanguageCourseManagement.Application.Exceptions;
-using LanguageCourseManagement.Application.Results;
 using LanguageCourseManagement.MVC.Exceptions.Handlers;
+using LanguageCourseManagement.MVC.Exceptions.HttpProblemDetails;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -45,25 +46,15 @@ public class ExceptionMiddleware
 
                 if (IsEnrollmentSettlementConflict(exception))
                 {
-                    context.Response.StatusCode = StatusCodes.Status409Conflict;
-                    context.Response.ContentType = "application/json";
-                    await context.Response.WriteAsJsonAsync(new BaseResult<object>
-                    {
-                        ErrorType = ResultErrorType.Conflict,
-                        ErrorMessages = ["The requested enrollment or settlement conflicts with an existing record."]
-                    });
+                    await WriteProblemDetailsAsync(context.Response, new ConflictProblemDetails(
+                        "The requested enrollment or settlement conflicts with an existing record."));
                     return;
                 }
 
                 if (IsFacilityNameConflict(exception))
                 {
-                    context.Response.StatusCode = StatusCodes.Status409Conflict;
-                    context.Response.ContentType = "application/json";
-                    await context.Response.WriteAsJsonAsync(new BaseResult<object>
-                    {
-                        ErrorType = ResultErrorType.Conflict,
-                        ErrorMessages = ["The facility name conflicts with an existing record."]
-                    });
+                    await WriteProblemDetailsAsync(context.Response, new ConflictProblemDetails(
+                        "The facility name conflicts with an existing record."));
                     return;
                 }
 
@@ -109,12 +100,19 @@ public class ExceptionMiddleware
 
     private async Task HandleExceptionAsync(HttpResponse response, Exception exception)
     {
-        response.ContentType = "application/json";
+        response.ContentType = "application/problem+json";
         var httpExceptionHandler = new HttpExceptionHandler
         {
             Response = response
         };
         await httpExceptionHandler.HandleExceptionAsync(exception);
+    }
+
+    private static async Task WriteProblemDetailsAsync(HttpResponse response, ProblemDetails details)
+    {
+        response.StatusCode = details.Status ?? StatusCodes.Status500InternalServerError;
+        response.ContentType = "application/problem+json";
+        await response.WriteAsJsonAsync(details);
     }
 
     private static bool IsApiRequest(HttpContext context)

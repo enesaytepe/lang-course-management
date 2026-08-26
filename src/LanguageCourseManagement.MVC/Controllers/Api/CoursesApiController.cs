@@ -31,13 +31,14 @@ public sealed class CoursesApiController : ControllerBase
         [FromQuery] Guid? branchId,
         [FromQuery] Guid? offeredLanguageId,
         [FromQuery] bool? isActive,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool showDeleted = false)
     {
         pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _service.GetListAsync(pageRequest, search, branchId, offeredLanguageId, isActive, cancellationToken));
+        return Ok(await _service.GetListAsync(pageRequest, search, branchId, offeredLanguageId, isActive, showDeleted, cancellationToken));
     }
 
     /// <summary>
@@ -96,10 +97,11 @@ public sealed class CoursesApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<CourseResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<CourseResponse>> Delete(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _service.DeleteAsync(id, cancellationToken));
+        await _service.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>

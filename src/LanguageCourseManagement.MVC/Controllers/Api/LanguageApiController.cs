@@ -35,7 +35,7 @@ public sealed class LanguageApiController : ControllerBase
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _languageService.GetListAsync(pageRequest, search, isActive, cancellationToken));
+        return Ok(await _languageService.GetListAsync(pageRequest, search, isActive ?? true, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -83,9 +83,10 @@ public sealed class LanguageApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<OfferedLanguageResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<OfferedLanguageResponse>> Delete(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _languageService.DeleteAsync(id, cancellationToken));
+        await _languageService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 }

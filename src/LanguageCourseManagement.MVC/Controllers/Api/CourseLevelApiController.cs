@@ -36,7 +36,7 @@ public sealed class CourseLevelApiController : ControllerBase
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _courseLevelService.GetListAsync(pageRequest, search, offeredLanguageId, isActive, cancellationToken));
+        return Ok(await _courseLevelService.GetListAsync(pageRequest, search, offeredLanguageId, isActive ?? true, cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -84,9 +84,10 @@ public sealed class CourseLevelApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
-    [ProducesResponseType<CourseLevelResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<CourseLevelResponse>> Delete(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await _courseLevelService.DeleteAsync(id, cancellationToken));
+        await _courseLevelService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 }
