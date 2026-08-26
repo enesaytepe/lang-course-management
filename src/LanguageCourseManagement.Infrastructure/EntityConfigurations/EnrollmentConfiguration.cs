@@ -16,6 +16,7 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
         builder.Property(x => x.DiscountAmount).HasPrecision(18, 2);
         builder.Property(x => x.FinalAmount).HasPrecision(18, 2);
         builder.Property(x => x.Status).HasConversion<int>();
+        builder.Property(x => x.PaymentType).HasConversion<int>();
         builder.ToTable(x =>
         {
             x.HasCheckConstraint("CK_Enrollments_TuitionFee_NonNegative", "[TuitionFee] >= 0");
@@ -24,6 +25,7 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
             x.HasCheckConstraint("CK_Enrollments_DiscountWithinTuition", "[DiscountAmount] <= [TuitionFee]");
             x.HasCheckConstraint("CK_Enrollments_FinalAmount_Calculation", "[FinalAmount] = [TuitionFee] - [DiscountAmount]");
             x.HasCheckConstraint("CK_Enrollments_Status_Range", "[Status] BETWEEN 1 AND 3");
+            x.HasCheckConstraint("CK_Enrollments_PaymentType_Range", "[PaymentType] BETWEEN 1 AND 2");
         });
         builder.HasIndex(x => new { x.StudentId, x.CourseId }).HasDatabaseName("UX_Enrollments_Student_Course").IsUnique();
         builder.HasIndex(x => new { x.CourseId, x.Status }).HasDatabaseName("IX_Enrollments_Course_Status");

@@ -18,7 +18,7 @@ public sealed class EnrollmentProfile : Profile
             .ForMember(dest => dest.CourseName,
                 opt => opt.MapFrom(src => src.Course != null ? src.Course.Name : string.Empty))
             .ForMember(dest => dest.IsSettled,
-                opt => opt.MapFrom(src => src.Payment != null));
+                opt => opt.MapFrom(src => src.Payments.Any()));
 
         // Entity -> Detail response
         CreateMap<Enrollment, EnrollmentDetailResponse>()
@@ -29,9 +29,9 @@ public sealed class EnrollmentProfile : Profile
             .ForMember(dest => dest.CourseName,
                 opt => opt.MapFrom(src => src.Course != null ? src.Course.Name : string.Empty))
             .ForMember(dest => dest.IsSettled,
-                opt => opt.MapFrom(src => src.Payment != null))
+                opt => opt.MapFrom(src => src.Payments.Any()))
             .ForMember(dest => dest.PaymentId,
-                opt => opt.MapFrom(src => src.Payment != null ? src.Payment.Id : (Guid?)null));
+                opt => opt.MapFrom(src => src.Payments.FirstOrDefault() != null ? src.Payments.FirstOrDefault()!.Id : (Guid?)null));
 
         // Request -> Entity (ignore server-controlled fields)
         CreateMap<EnrollmentCreateRequest, Enrollment>()
@@ -42,7 +42,7 @@ public sealed class EnrollmentProfile : Profile
             .ForMember(dest => dest.RegisteredByUserId, opt => opt.Ignore())
             .ForMember(dest => dest.Status, opt => opt.Ignore())
             .ForMember(dest => dest.DiscountAmount, opt => opt.Ignore())
-            .ForMember(dest => dest.Payment, opt => opt.Ignore())
+            .ForMember(dest => dest.Payments, opt => opt.Ignore())
             .ForMember(dest => dest.Student, opt => opt.Ignore())
             .ForMember(dest => dest.Course, opt => opt.Ignore());
 

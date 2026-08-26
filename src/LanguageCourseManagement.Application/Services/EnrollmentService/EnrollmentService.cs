@@ -71,7 +71,7 @@ public sealed class EnrollmentService : IEnrollmentService
                 throw new BusinessException("İdempotensi anahtarı farklı bir tahsilatla zaten ilişkilendirilmiş.");
             }
 
-            replayEnrollment.Payment = replay;
+            replayEnrollment.Payments.Add(replay);
             return _mapper.Map<EnrollmentDetailResponse>(replayEnrollment);
         }
 
@@ -120,12 +120,13 @@ public sealed class EnrollmentService : IEnrollmentService
             Status = PaymentStatus.Settled,
             SettledAt = DateTimeOffset.UtcNow,
             CollectedByUserId = userId,
-            IdempotencyKey = idempotencyKey
+            IdempotencyKey = idempotencyKey,
+            PaymentDate = DateTime.UtcNow
         };
 
         await _paymentRepository.AddAsync(payment, cancellationToken);
 
-        enrollment.Payment = payment;
+        enrollment.Payments.Add(payment);
         return _mapper.Map<EnrollmentDetailResponse>(enrollment);
     }
 
@@ -160,7 +161,7 @@ public sealed class EnrollmentService : IEnrollmentService
             include: query => query
                 .Include(enrollment => enrollment.Student)
                 .Include(enrollment => enrollment.Course)
-                .Include(enrollment => enrollment.Payment!),
+                .Include(enrollment => enrollment.Payments),
             index: pageRequest.PageIndex,
             size: pageRequest.PageSize,
             enableTracking: false,
@@ -206,7 +207,7 @@ public sealed class EnrollmentService : IEnrollmentService
             include: query => query
                 .Include(item => item.Student)
                 .Include(item => item.Course)
-                .Include(item => item.Payment!),
+                .Include(item => item.Payments),
             cancellationToken: cancellationToken);
 
         if (enrollment is null)

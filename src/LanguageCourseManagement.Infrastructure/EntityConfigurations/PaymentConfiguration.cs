@@ -15,17 +15,19 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.IdempotencyKey).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Method).HasConversion<int>();
         builder.Property(x => x.Status).HasConversion<int>();
+        builder.Property(x => x.PaymentDate).HasColumnType("datetime2(0)");
         builder.Property(x => x.SettledAt).HasColumnType("datetimeoffset(0)");
         builder.Property(x => x.Description).HasMaxLength(1000);
         builder.ToTable(x =>
         {
             x.HasCheckConstraint("CK_Payments_Amount_NonNegative", "[Amount] >= 0");
-            x.HasCheckConstraint("CK_Payments_Method_Cash", "[Method] = 1");
-            x.HasCheckConstraint("CK_Payments_Status_Settled", "[Status] = 1");
+            x.HasCheckConstraint("CK_Payments_Method_Range", "[Method] BETWEEN 1 AND 3");
+            x.HasCheckConstraint("CK_Payments_Status_Range", "[Status] BETWEEN 1 AND 4");
         });
-        builder.HasIndex(x => x.EnrollmentId).HasDatabaseName("UX_Payments_Enrollment").IsUnique();
+        builder.HasIndex(x => x.EnrollmentId).HasDatabaseName("IX_Payments_Enrollment");
         builder.HasIndex(x => x.IdempotencyKey).HasDatabaseName("UX_Payments_IdempotencyKey").IsUnique();
-        builder.HasOne(x => x.Enrollment).WithOne(x => x.Payment).HasForeignKey<Payment>(x => x.EnrollmentId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Enrollment).WithMany(x => x.Payments).HasForeignKey(x => x.EnrollmentId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Installment).WithMany(x => x.Payments).HasForeignKey(x => x.InstallmentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasQueryFilter(x => !x.Enrollment.Student.IsDeleted && !x.Enrollment.Course.Branch.IsDeleted && !x.Enrollment.Course.OfferedLanguage.IsDeleted && !x.Enrollment.Course.CourseLevel.IsDeleted && !x.Enrollment.Course.Teacher.IsDeleted && !x.Enrollment.Course.Classroom.IsDeleted);
     }
 }

@@ -81,7 +81,7 @@ public sealed class EnrollmentRepository
             .AsNoTracking()
             .Include(e => e.Student)
             .Include(e => e.Course)
-            .Include(e => e.Payment)
+            .Include(e => e.Payments)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 }

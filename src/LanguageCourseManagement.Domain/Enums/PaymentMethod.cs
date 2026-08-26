@@ -6,7 +6,17 @@ namespace LanguageCourseManagement.Domain.Enums;
 public enum PaymentMethod
 {
     /// <summary>
-    /// Tam tutarın nakit tahsilatı
+    /// Nakit tahsilat
     /// </summary>
-    Cash = 1
+    Cash = 1,
+
+    /// <summary>
+    /// Kredi kartı ile tahsilat
+    /// </summary>
+    CreditCard = 2,
+
+    /// <summary>
+    /// Banka havalesi ile tahsilat
+    /// </summary>
+    BankTransfer = 3
 }
