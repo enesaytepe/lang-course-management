@@ -36,37 +36,6 @@ public sealed class ClassroomController : Controller
         return View(await CreateFormModelAsync(cancellationToken));
     }
 
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-        ClassroomFormViewModel model,
-        CancellationToken cancellationToken)
-    {
-        AddWhitespaceValidationError(model);
-
-        if (!ModelState.IsValid)
-        {
-            await PopulateBranchesAsync(model, includeInactive: false, cancellationToken);
-            return View(model);
-        }
-
-        try
-        {
-            var classroom = await _classroomService.CreateAsync(
-                ToCreateRequest(model),
-                cancellationToken);
-
-            return RedirectToAction(nameof(Details), new { id = classroom.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            await PopulateBranchesAsync(model, includeInactive: false, cancellationToken);
-            return View(model);
-        }
-    }
-
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(
@@ -77,45 +46,6 @@ public sealed class ClassroomController : Controller
         {
             var classroom = await _classroomService.GetByIdAsync(id, cancellationToken);
             var model = ToFormModel(classroom);
-            await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
-            return View(model);
-        }
-        catch (NotFoundException)
-        {
-            return NotFound();
-        }
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(
-        Guid id,
-        ClassroomFormViewModel model,
-        CancellationToken cancellationToken)
-    {
-        AddWhitespaceValidationError(model);
-
-        if (!ModelState.IsValid)
-        {
-            model.Id = id;
-            await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
-            return View(model);
-        }
-
-        try
-        {
-            var classroom = await _classroomService.UpdateAsync(
-                id,
-                ToUpdateRequest(model),
-                cancellationToken);
-
-            return RedirectToAction(nameof(Details), new { id = classroom.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            model.Id = id;
             await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
             return View(model);
         }
@@ -184,12 +114,6 @@ public sealed class ClassroomController : Controller
             .ToList();
     }
 
-    private void AddWhitespaceValidationError(ClassroomFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name))
-            ModelState.AddModelError(nameof(model.Name), "Derslik adı zorunludur.");
-    }
-
     private static ClassroomFormViewModel ToFormModel(ClassroomResponse classroom)
     {
         return new()
@@ -203,28 +127,5 @@ public sealed class ClassroomController : Controller
         };
     }
 
-    private static CreateClassroomRequest ToCreateRequest(
-        ClassroomFormViewModel model)
-    {
-        return new()
-        {
-            BranchId = model.BranchId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Capacity = model.Capacity
-        };
-    }
 
-    private static UpdateClassroomRequest ToUpdateRequest(
-        ClassroomFormViewModel model)
-    {
-        return new()
-        {
-            BranchId = model.BranchId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Capacity = model.Capacity,
-            IsActive = model.IsActive
-        };
-    }
 }

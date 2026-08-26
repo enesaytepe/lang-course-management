@@ -38,30 +38,6 @@ public sealed class CourseLevelController : Controller
         return View(model);
     }
 
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CourseLevelFormViewModel model, CancellationToken cancellationToken)
-    {
-        AddWhitespaceValidationError(model);
-        if (!ModelState.IsValid)
-        {
-            await PopulateLanguagesAsync(model, false, cancellationToken);
-            return View(model);
-        }
-        try
-        {
-            var level = await _courseLevelService.CreateAsync(ToCreateRequest(model), cancellationToken);
-            return RedirectToAction(nameof(Details), new { id = level.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            await PopulateLanguagesAsync(model, false, cancellationToken);
-            return View(model);
-        }
-    }
-
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -70,32 +46,6 @@ public sealed class CourseLevelController : Controller
         {
             var level = await _courseLevelService.GetByIdAsync(id, cancellationToken);
             var model = ToFormModel(level);
-            await PopulateLanguagesAsync(model, true, cancellationToken);
-            return View(model);
-        }
-        catch (NotFoundException) { return NotFound(); }
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, CourseLevelFormViewModel model, CancellationToken cancellationToken)
-    {
-        model.Id = id;
-        AddWhitespaceValidationError(model);
-        if (!ModelState.IsValid)
-        {
-            await PopulateLanguagesAsync(model, true, cancellationToken);
-            return View(model);
-        }
-        try
-        {
-            var level = await _courseLevelService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken);
-            return RedirectToAction(nameof(Details), new { id = level.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
             await PopulateLanguagesAsync(model, true, cancellationToken);
             return View(model);
         }
@@ -113,27 +63,6 @@ public sealed class CourseLevelController : Controller
         catch (NotFoundException)
         {
             return NotFound();
-        }
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _courseLevelService.DeleteAsync(id, cancellationToken);
-            return RedirectToAction(nameof(Index));
-        }
-        catch (NotFoundException)
-        {
-            return NotFound();
-        }
-        catch (BusinessException exception)
-        {
-            TempData["ErrorMessage"] = exception.Message;
-            return RedirectToAction(nameof(Index));
         }
     }
 
@@ -156,12 +85,6 @@ public sealed class CourseLevelController : Controller
         model.Languages = options.OrderBy(language => language.Name).ToList();
     }
 
-    private void AddWhitespaceValidationError(CourseLevelFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name))
-            ModelState.AddModelError(nameof(model.Name), "Seviye adı zorunludur.");
-    }
-
     private static CourseLevelFormViewModel ToFormModel(CourseLevelResponse level)
     {
         return new()
@@ -172,29 +95,6 @@ public sealed class CourseLevelController : Controller
             Description = level.Description,
             Order = level.Order,
             IsActive = level.IsActive
-        };
-    }
-
-    private static CreateCourseLevelRequest ToCreateRequest(CourseLevelFormViewModel model)
-    {
-        return new()
-        {
-            OfferedLanguageId = model.OfferedLanguageId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Order = model.Order
-        };
-    }
-
-    private static UpdateCourseLevelRequest ToUpdateRequest(CourseLevelFormViewModel model)
-    {
-        return new()
-        {
-            OfferedLanguageId = model.OfferedLanguageId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Order = model.Order,
-            IsActive = model.IsActive
         };
     }
 }

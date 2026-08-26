@@ -43,31 +43,6 @@ public sealed class TeacherController : Controller
         return View(model);
     }
 
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TeacherFormViewModel model, CancellationToken cancellationToken)
-    {
-        AddWhitespaceValidationErrors(model);
-        if (!ModelState.IsValid)
-        {
-            await PopulateFormSelectListsAsync(model, cancellationToken: cancellationToken);
-            return View(model);
-        }
-
-        try
-        {
-            var teacher = await _teacherService.CreateAsync(ToCreateRequest(model), cancellationToken);
-            return RedirectToAction(nameof(Details), new { id = teacher.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            await PopulateFormSelectListsAsync(model, cancellationToken: cancellationToken);
-            return View(model);
-        }
-    }
-
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -77,37 +52,6 @@ public sealed class TeacherController : Controller
             var teacher = await _teacherService.GetByIdAsync(id, cancellationToken);
             var model = ToFormModel(teacher);
             await PopulateFormSelectListsAsync(model, teacher, cancellationToken);
-            return View(model);
-        }
-        catch (NotFoundException)
-        {
-            return NotFound();
-        }
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, TeacherFormViewModel model, CancellationToken cancellationToken)
-    {
-        AddWhitespaceValidationErrors(model);
-        if (!ModelState.IsValid)
-        {
-            model.Id = id;
-            await PopulateFormSelectListsAsync(model, cancellationToken: cancellationToken);
-            return View(model);
-        }
-
-        try
-        {
-            var teacher = await _teacherService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken);
-            return RedirectToAction(nameof(Details), new { id = teacher.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            model.Id = id;
-            await PopulateFormSelectListsAsync(model, cancellationToken: cancellationToken);
             return View(model);
         }
         catch (NotFoundException)
@@ -129,27 +73,6 @@ public sealed class TeacherController : Controller
         catch (NotFoundException)
         {
             return NotFound();
-        }
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _teacherService.DeleteAsync(id, cancellationToken);
-            return RedirectToAction(nameof(Index));
-        }
-        catch (NotFoundException)
-        {
-            return NotFound();
-        }
-        catch (BusinessException exception)
-        {
-            TempData["ErrorMessage"] = exception.Message;
-            return RedirectToAction(nameof(Index));
         }
     }
 
@@ -184,16 +107,6 @@ public sealed class TeacherController : Controller
                     EndTime = a.EndTime
                 }).ToList();
         }
-    }
-
-    private void AddWhitespaceValidationErrors(TeacherFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.FirstName))
-            ModelState.AddModelError(nameof(model.FirstName), "Ad zorunludur.");
-        if (string.IsNullOrWhiteSpace(model.LastName))
-            ModelState.AddModelError(nameof(model.LastName), "Soyad zorunludur.");
-        if (string.IsNullOrWhiteSpace(model.MobilePhone))
-            ModelState.AddModelError(nameof(model.MobilePhone), "Cep telefonu zorunludur.");
     }
 
     private static TeacherFormViewModel ToFormModel(TeacherResponse teacher)
@@ -260,34 +173,4 @@ public sealed class TeacherController : Controller
         };
     }
 
-    private static CreateTeacherRequest ToCreateRequest(TeacherFormViewModel model)
-    {
-        return new()
-        {
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            HomePhone = model.HomePhone,
-            MobilePhone = model.MobilePhone,
-            Email = model.Email,
-            HireDate = model.HireDate,
-            LanguageIds = model.LanguageIds,
-            BranchIds = model.BranchIds
-        };
-    }
-
-    private static UpdateTeacherRequest ToUpdateRequest(TeacherFormViewModel model)
-    {
-        return new()
-        {
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            HomePhone = model.HomePhone,
-            MobilePhone = model.MobilePhone,
-            Email = model.Email,
-            HireDate = model.HireDate,
-            IsActive = model.IsActive,
-            LanguageIds = model.LanguageIds,
-            BranchIds = model.BranchIds
-        };
-    }
 }

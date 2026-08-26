@@ -6,7 +6,7 @@
     var branchesPage = {
         $page: null,
         $table: null,
-        $form: null,
+        $antiForgeryForm: null,
         $createModal: null,
         $createForm: null,
         $standaloneForm: null,
@@ -15,19 +15,19 @@
         canEdit: false,
 
         canInitialize: function () {
-            return $("#branches-page").length > 0 && $("#branchesTable").length > 0
+            return ($("#branches-page").length > 0 && $("#branchesTable").length > 0)
                 || $("[data-branch-form]").length > 0;
         },
 
         init: function () {
             this.$page = $("#branches-page");
             this.$table = $("#branchesTable");
-            this.$form = $("#branchDeleteAntiforgeryForm");
+            this.$antiForgeryForm = $("#branchDeleteAntiforgeryForm");
             this.$createModal = $("#branchCreateModal");
             this.$createForm = $("#branchCreateForm");
             this.$standaloneForm = $("[data-branch-form]");
-            if (!this.$form.length) {
-                this.$form = this.$standaloneForm;
+            if (!this.$antiForgeryForm.length) {
+                this.$antiForgeryForm = this.$standaloneForm;
             }
             this.canEdit = app.Common.toBoolean(this.$page.data("can-edit"));
 
@@ -107,11 +107,7 @@
                     self.refreshTable();
                 })
                 .fail(function (xhr) {
-                    if (xhr.status === 400 || xhr.status === 422 || xhr.status === 409) {
-                        self.showCreateErrors(xhr);
-                    } else {
-                        app.Common.showApiError(xhr);
-                    }
+                    self.showFormErrors(self.$createForm, xhr);
                 })
                 .always(function () {
                     $submit.prop("disabled", false);
@@ -136,7 +132,9 @@
                     var branchId = branch.id || branch.Id;
                     window.location.assign("/Branch/Details/" + encodeURIComponent(branchId));
                 })
-                .fail(app.Common.showApiError)
+                .fail(function (xhr) {
+                    self.showFormErrors($form, xhr);
+                })
                 .always(function () {
                     $submit.prop("disabled", false);
                 });
@@ -164,24 +162,25 @@
                 method: isUpdate ? "PUT" : "POST",
                 contentType: "application/json; charset=utf-8",
                 headers: {
-                    "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(this.$form)
+                    "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(this.$antiForgeryForm)
                 },
                 data: JSON.stringify(this.getBranchPayload($form, isUpdate))
             });
         },
 
-        showCreateErrors: function (xhr) {
+        showFormErrors: function ($form, xhr) {
             var response = xhr.responseJSON || {};
             var messages = [];
             var errors = response.errors || response.Errors;
             var self = this;
-            this.$createForm.find("[data-validation-summary]").empty();
+            $form.find("[data-valmsg-for]").text("");
+            $form.find("[data-validation-summary]").empty();
 
             if (errors && typeof errors === "object") {
                 $.each(errors, function (key, value) {
                     var fieldMessages = $.isArray(value) ? value : [value];
                     var normalized = key.replace(/^\$?\./, "").toLowerCase();
-                    var $field = self.$createForm.find("[data-valmsg-for]").filter(function () {
+                    var $field = $form.find("[data-valmsg-for]").filter(function () {
                         return String($(this).data("valmsg-for")).toLowerCase() === normalized;
                     }).first();
                     if ($field.length) {
@@ -201,7 +200,7 @@
                 return message && $.inArray(message, messages) === index;
             });
             if (messages.length) {
-                var $summary = this.$createForm.find("[data-validation-summary]");
+                var $summary = $form.find("[data-validation-summary]");
                 $summary.removeClass("validation-summary-valid").addClass("validation-summary-errors")
                     .append($("<ul>").append($.map(messages, function (message) {
                         return $("<li>").text(message);
@@ -315,7 +314,9 @@
         },
 
         refreshTable: function () {
-            this.dataTable.ajax.reload(null, false);
+            if (this.dataTable) {
+                this.dataTable.ajax.reload(null, false);
+            }
         },
 
         handleDelete: function (event) {
@@ -338,7 +339,7 @@
                     url: "/api/branches/" + encodeURIComponent(id),
                     method: "DELETE",
                     headers: {
-                        "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(self.$form)
+                        "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(self.$antiForgeryForm)
                     }
                 })
                     .done(function () {
