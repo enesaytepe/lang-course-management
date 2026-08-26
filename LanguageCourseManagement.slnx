@@ -10,7 +10,6 @@
     <Project Path="src/LanguageCourseManagement.Domain/LanguageCourseManagement.Domain.csproj" Id="84c8af7f-c86e-4fa5-9080-b55b69d0ecbe" />
     <Project Path="src/LanguageCourseManagement.Infrastructure/LanguageCourseManagement.Infrastructure.csproj" Id="05574d99-bf0c-4003-a36d-1c58f2312f55" />
     <Project Path="src/LanguageCourseManagement.MVC/LanguageCourseManagement.MVC.csproj" Id="9ca62369-b778-46f9-8e3d-89d799c92194" />
-    <Project Path="src/LanguageCourseManagement.Shared/LanguageCourseManagement.Shared.csproj" Id="7aba9dee-22bc-4314-b544-adfa06539c8b" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LanguageCourseManagement.Tests/LanguageCourseManagement.Tests.csproj" />
