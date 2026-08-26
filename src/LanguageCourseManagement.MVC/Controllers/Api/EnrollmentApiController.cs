@@ -3,6 +3,7 @@ using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
 using LanguageCourseManagement.Application.Services.InstallmentService;
+using LanguageCourseManagement.Application.Services.PaymentService;
 using LanguageCourseManagement.MVC.Models.Api;
 using LanguageCourseManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -20,11 +21,13 @@ namespace LanguageCourseManagement.MVC.Controllers.Api;
 public sealed class EnrollmentApiController : ControllerBase
 {
     private readonly IEnrollmentService _enrollmentService;
+    private readonly IPaymentService _paymentService;
     private readonly IInstallmentService _installmentService;
 
-    public EnrollmentApiController(IEnrollmentService enrollmentService, IInstallmentService installmentService)
+    public EnrollmentApiController(IEnrollmentService enrollmentService, IPaymentService paymentService, IInstallmentService installmentService)
     {
         _enrollmentService = enrollmentService;
+        _paymentService = paymentService;
         _installmentService = installmentService;
     }
 
@@ -83,7 +86,7 @@ public sealed class EnrollmentApiController : ControllerBase
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
             return Unauthorized();
 
-        var result = await _enrollmentService.RegisterAndSettleAsync(model.ToRequest(), userId, cancellationToken);
+        var result = await _paymentService.EnrollWithPaymentAsync(model.ToRequest(), userId, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 

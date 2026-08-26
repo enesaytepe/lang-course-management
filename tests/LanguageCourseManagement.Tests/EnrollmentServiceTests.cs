@@ -2,27 +2,27 @@ using AutoMapper;
 using FluentValidation;
 using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.Exceptions;
-using LanguageCourseManagement.Application.Services.EnrollmentService;
+using LanguageCourseManagement.Application.Services.PaymentService;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Domain.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
 namespace LanguageCourseManagement.Tests;
 
-public sealed class EnrollmentServiceTests
+public sealed class PaymentServiceTests
 {
     private readonly Mock<IEnrollmentRepository> enrollmentRepository = new();
     private readonly Mock<IPaymentRepository> paymentRepository = new();
     private readonly Mock<IValidator<EnrollmentCreateRequest>> createValidator = new();
-    private readonly Mock<IValidator<UpdateEnrollmentRequest>> updateValidator = new();
     private readonly Mock<IMapper> mapper = new();
     private readonly Mock<ITransactionManager> transactionManager = new();
 
     [Fact]
-    public async Task RegisterAndSettleAsync_rejects_duplicate_enrollment_and_does_not_stage_payment()
+    public async Task EnrollWithPaymentAsync_rejects_duplicate_enrollment_and_does_not_stage_payment()
     {
         var request = Request();
         var existing = new Enrollment { Id = Guid.NewGuid(), StudentId = request.StudentId, CourseId = request.CourseId };
@@ -33,14 +33,14 @@ public sealed class EnrollmentServiceTests
         transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         transactionManager.Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await Assert.ThrowsAsync<BusinessException>(() => CreateService().RegisterAndSettleAsync(request, Guid.NewGuid()));
+        await Assert.ThrowsAsync<BusinessException>(() => CreateService().EnrollWithPaymentAsync(request, Guid.NewGuid()));
 
         enrollmentRepository.Verify(x => x.AddAsync(It.IsAny<Enrollment>(), It.IsAny<CancellationToken>()), Times.Never);
         paymentRepository.Verify(x => x.AddAsync(It.IsAny<Payment>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task RegisterAndSettleAsync_rejects_full_capacity_and_does_not_stage_enrollment()
+    public async Task EnrollWithPaymentAsync_rejects_full_capacity_and_does_not_stage_enrollment()
     {
         var request = Request();
         var course = Course(capacity: 1);
@@ -51,13 +51,13 @@ public sealed class EnrollmentServiceTests
         transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         transactionManager.Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await Assert.ThrowsAsync<BusinessException>(() => CreateService().RegisterAndSettleAsync(request, Guid.NewGuid()));
+        await Assert.ThrowsAsync<BusinessException>(() => CreateService().EnrollWithPaymentAsync(request, Guid.NewGuid()));
 
         enrollmentRepository.Verify(x => x.AddAsync(It.IsAny<Enrollment>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task RegisterAndSettleAsync_stages_exactly_one_enrollment_and_cash_payment()
+    public async Task EnrollWithPaymentAsync_stages_exactly_one_enrollment_and_cash_payment()
     {
         var request = Request();
         var course = Course(capacity: 2);
@@ -81,7 +81,7 @@ public sealed class EnrollmentServiceTests
         transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         transactionManager.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        var result = await CreateService().RegisterAndSettleAsync(request, Guid.NewGuid());
+        var result = await CreateService().EnrollWithPaymentAsync(request, Guid.NewGuid());
 
         Assert.Equal(course.TuitionFee - request.DiscountAmount, result.FinalAmount);
         Assert.True(result.IsSettled);
@@ -90,7 +90,7 @@ public sealed class EnrollmentServiceTests
     }
 
     [Fact]
-    public async Task RegisterAndSettleAsync_replays_matching_idempotency_key_without_creating_second_payment()
+    public async Task EnrollWithPaymentAsync_replays_matching_idempotency_key_without_creating_second_payment()
     {
         var request = Request();
         var enrollment = new Enrollment { Id = Guid.NewGuid(), StudentId = request.StudentId, CourseId = request.CourseId, TuitionFee = 100m, DiscountAmount = 10m, FinalAmount = 90m };
@@ -107,23 +107,23 @@ public sealed class EnrollmentServiceTests
                 PaymentId = e.Payments?.FirstOrDefault()?.Id
             });
 
-        var result = await CreateService().RegisterAndSettleAsync(request, Guid.NewGuid());
+        var result = await CreateService().EnrollWithPaymentAsync(request, Guid.NewGuid());
 
         Assert.Equal(enrollment.Id, result.Id);
         paymentRepository.Verify(x => x.AddAsync(It.IsAny<Payment>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task RegisterAndSettleAsync_rejects_idempotency_key_conflict()
+    public async Task EnrollWithPaymentAsync_rejects_idempotency_key_conflict()
     {
         var request = Request();
         var enrollment = new Enrollment { Id = Guid.NewGuid(), StudentId = Guid.NewGuid(), CourseId = request.CourseId, TuitionFee = 100m, FinalAmount = 100m };
         paymentRepository.Setup(x => x.FindByIdempotencyKeyAsync(request.IdempotencyKey, It.IsAny<CancellationToken>())).ReturnsAsync(new Payment { Enrollment = enrollment, Amount = 100m, Method = PaymentMethod.Cash });
 
-        await Assert.ThrowsAsync<BusinessException>(() => CreateService().RegisterAndSettleAsync(request, Guid.NewGuid()));
+        await Assert.ThrowsAsync<BusinessException>(() => CreateService().EnrollWithPaymentAsync(request, Guid.NewGuid()));
     }
 
-    private EnrollmentService CreateService()
+    private PaymentService CreateService()
     {
         mapper.Setup(x => x.Map<Enrollment>(It.IsAny<EnrollmentCreateRequest>()))
             .Returns((EnrollmentCreateRequest request) => new Enrollment { StudentId = request.StudentId, CourseId = request.CourseId, DiscountAmount = request.DiscountAmount });
@@ -131,16 +131,13 @@ public sealed class EnrollmentServiceTests
         createValidator.Setup(x => x.ValidateAsync(It.IsAny<EnrollmentCreateRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
-        updateValidator.Setup(x => x.ValidateAsync(It.IsAny<UpdateEnrollmentRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
-
-        return new EnrollmentService(
-            enrollmentRepository.Object,
+        return new PaymentService(
             paymentRepository.Object,
+            enrollmentRepository.Object,
             transactionManager.Object,
             createValidator.Object,
-            updateValidator.Object,
-            mapper.Object);
+            mapper.Object,
+            NullLogger<PaymentService>.Instance);
     }
 
     private static EnrollmentCreateRequest Request() => new() { StudentId = Guid.NewGuid(), CourseId = Guid.NewGuid(), DiscountAmount = 10m, IdempotencyKey = "enrollment-001", PaymentType = PaymentType.Cash };

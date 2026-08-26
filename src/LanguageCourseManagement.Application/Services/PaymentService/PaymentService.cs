@@ -1,9 +1,12 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
+using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.DTOs.Payments;
 using LanguageCourseManagement.Application.Exceptions;
+using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Paging;
@@ -19,19 +22,140 @@ public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
     private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly ITransactionManager _transactionManager;
+    private readonly IValidator<EnrollmentCreateRequest> _createValidator;
     private readonly IMapper _mapper;
     private readonly ILogger<PaymentService> _logger;
 
     public PaymentService(
         IPaymentRepository paymentRepository,
         IEnrollmentRepository enrollmentRepository,
+        ITransactionManager transactionManager,
+        IValidator<EnrollmentCreateRequest> createValidator,
         IMapper mapper,
         ILogger<PaymentService> logger)
     {
         _paymentRepository = paymentRepository;
         _enrollmentRepository = enrollmentRepository;
+        _transactionManager = transactionManager;
+        _createValidator = createValidator;
         _mapper = mapper;
         _logger = logger;
+    }
+
+    /// <inheritdoc />
+    public async Task<EnrollmentDetailResponse> EnrollWithPaymentAsync(
+        EnrollmentCreateRequest request,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var validationResult = await _createValidator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+            throw new Exceptions.ValidationException(validationResult.Errors.Select(f => new ValidationExceptionModel
+            {
+                Property = f.PropertyName,
+                Errors = new[] { f.ErrorMessage }
+            }));
+
+        var idempotencyKey = request.IdempotencyKey.Trim();
+
+        // Idempotency check: find existing payment with the same key
+        var replay = await _paymentRepository.FindByIdempotencyKeyAsync(idempotencyKey, cancellationToken);
+
+        if (replay is not null)
+        {
+            var replayEnrollment = replay.Enrollment;
+            if (replayEnrollment.StudentId != request.StudentId ||
+                replayEnrollment.CourseId != request.CourseId ||
+                replayEnrollment.TuitionFee - request.DiscountAmount != replay.Amount)
+            {
+                throw new BusinessException("İdempotensi anahtarı farklı bir tahsilatla zaten ilişkilendirilmiş.");
+            }
+
+            replayEnrollment.Payments ??= new List<Payment>();
+            replayEnrollment.Payments.Add(replay);
+            return _mapper.Map<EnrollmentDetailResponse>(replayEnrollment);
+        }
+
+        await _transactionManager.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            // Validate course
+            var course = await _enrollmentRepository.GetCourseForSettlementAsync(request.CourseId, cancellationToken)
+                ?? throw new NotFoundException("Ders bulunamadı.");
+
+            if (!course.IsActive || course.Status != CourseStatus.Open)
+                throw new BusinessException("Seçilen ders kullanıma uygun değil.");
+
+            // Validate student
+            var student = await _enrollmentRepository.GetActiveStudentAsync(request.StudentId, cancellationToken)
+                ?? throw new NotFoundException("Aktif öğrenci bulunamadı.");
+
+            // Duplicate enrollment check
+            if (await _enrollmentRepository.FindByStudentAndCourseAsync(request.StudentId, request.CourseId, cancellationToken) is not null)
+                throw new BusinessException("Öğrenci bu derse zaten kayıtlı.");
+
+            // Capacity check
+            var activeCount = await _enrollmentRepository.CountActiveByCourseIdForUpdateAsync(course.Id, cancellationToken);
+
+            if (activeCount >= course.Capacity)
+                throw new BusinessException("Ders kontenjanı dolu.");
+
+            if (request.DiscountAmount > course.TuitionFee)
+                throw new BusinessException("İndirim tutarı ders ücretini aşamaz.");
+
+            // Create enrollment
+            var enrollment = _mapper.Map<Enrollment>(request);
+            enrollment.Id = Guid.NewGuid();
+            enrollment.EnrollmentDate = DateTime.UtcNow;
+            enrollment.RegisteredByUserId = userId;
+            enrollment.TuitionFee = course.TuitionFee;
+            enrollment.FinalAmount = course.TuitionFee - request.DiscountAmount;
+            enrollment.Status = EnrollmentStatus.Active;
+
+            await _enrollmentRepository.AddAsync(enrollment, cancellationToken);
+
+            // Cash: create immediate settled payment
+            if (request.PaymentType == PaymentType.Cash)
+            {
+                var payment = new Payment
+                {
+                    Id = Guid.NewGuid(),
+                    EnrollmentId = enrollment.Id,
+                    Amount = enrollment.FinalAmount,
+                    Method = PaymentMethod.Cash,
+                    Status = PaymentStatus.Settled,
+                    SettledAt = DateTimeOffset.UtcNow,
+                    CollectedByUserId = userId,
+                    IdempotencyKey = idempotencyKey,
+                    PaymentDate = DateTime.UtcNow
+                };
+
+                await _paymentRepository.AddAsync(payment, cancellationToken);
+                enrollment.Payments ??= new List<Payment>();
+                enrollment.Payments.Add(payment);
+            }
+
+            await _transactionManager.CommitAsync(cancellationToken);
+
+            _logger.LogInformation("[PaymentService] Kayıt ve tahsilat oluşturuldu - Kayıt: {EnrollmentId}, Öğrenci: {StudentId}, Ders: {CourseId}", enrollment.Id, request.StudentId, request.CourseId);
+
+            return _mapper.Map<EnrollmentDetailResponse>(enrollment);
+        }
+        catch
+        {
+            await _transactionManager.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SettlementResponse>> GetAllSettlementsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _paymentRepository.Query()
+            .OrderByDescending(p => p.SettledAt)
+            .ProjectTo<SettlementResponse>(_mapper.ConfigurationProvider)
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

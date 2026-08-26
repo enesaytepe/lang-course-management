@@ -5,7 +5,7 @@ using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Mapping;
 using LanguageCourseManagement.Application.Persistence;
-using LanguageCourseManagement.Application.Services.EnrollmentService;
+using LanguageCourseManagement.Application.Services.PaymentService;
 using LanguageCourseManagement.Application.Validators;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
@@ -65,7 +65,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
         await SeedCourseAsync(context, courseId, branchId, languageId, courseLevelId, teacherId, classroomId, capacity: 5);
         await SeedStudentAsync(context, studentId);
 
-        var service = CreateEnrollmentService(context);
+        var service = CreatePaymentService(context);
 
         var request = new EnrollmentCreateRequest
         {
@@ -76,7 +76,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
             PaymentType = PaymentType.Cash
         };
 
-        var result = await service.RegisterAndSettleAsync(request, userId);
+        var result = await service.EnrollWithPaymentAsync(request, userId);
 
         Assert.NotEqual(Guid.Empty, result.Id);
         Assert.Equal(studentId, result.StudentId);
@@ -104,7 +104,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
 
         // Aynı öğrenci + aynı ders tekrar kaydedilemez (idempotent koruma)
         await Assert.ThrowsAsync<BusinessException>(
-            () => service.RegisterAndSettleAsync(request, userId));
+            () => service.EnrollWithPaymentAsync(request, userId));
 
         // İkinci denemede hâlâ sadece 1 enrollment olmalı
         var countAfter = await verifyContext.Enrollments
@@ -149,7 +149,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
         var task1 = Task.Run(async () =>
         {
             await using var ctx = CreateContext();
-            var svc = CreateEnrollmentService(ctx);
+            var svc = CreatePaymentService(ctx);
             var req = new EnrollmentCreateRequest
             {
                 StudentId = student1Id,
@@ -158,13 +158,13 @@ public sealed class EnrollmentTransactionTests : IDisposable
                 IdempotencyKey = key1,
                 PaymentType = PaymentType.Cash
             };
-            return await svc.RegisterAndSettleAsync(req, userId);
+            return await svc.EnrollWithPaymentAsync(req, userId);
         });
 
         var task2 = Task.Run(async () =>
         {
             await using var ctx = CreateContext();
-            var svc = CreateEnrollmentService(ctx);
+            var svc = CreatePaymentService(ctx);
             var req = new EnrollmentCreateRequest
             {
                 StudentId = student2Id,
@@ -173,7 +173,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
                 IdempotencyKey = key2,
                 PaymentType = PaymentType.Cash
             };
-            return await svc.RegisterAndSettleAsync(req, userId);
+            return await svc.EnrollWithPaymentAsync(req, userId);
         });
 
         var allTasks = Task.WhenAll(task1, task2);
@@ -230,16 +230,15 @@ public sealed class EnrollmentTransactionTests : IDisposable
     }
 
     // ────────────────────────────────────────────
-    //  Helper: EnrollmentService factory (real repos + real transaction manager)
+    //  Helper: PaymentService factory (real repos + real transaction manager)
     // ────────────────────────────────────────────
-    private static EnrollmentService CreateEnrollmentService(AppDbContext context)
+    private static PaymentService CreatePaymentService(AppDbContext context)
     {
         var enrollmentRepo = new EnrollmentRepository(context);
         var paymentRepo = new PaymentRepository(context);
         var transactionManager = new EfTransactionManager(context);
 
         IValidator<EnrollmentCreateRequest> createValidator = new EnrollmentCreateRequestValidator();
-        IValidator<UpdateEnrollmentRequest> updateValidator = new UpdateEnrollmentRequestValidator();
 
         var mapperConfig = new MapperConfiguration(cfg =>
         {
@@ -248,13 +247,13 @@ public sealed class EnrollmentTransactionTests : IDisposable
         mapperConfig.AssertConfigurationIsValid();
         var mapper = mapperConfig.CreateMapper();
 
-        return new EnrollmentService(
-            enrollmentRepo,
+        return new PaymentService(
             paymentRepo,
+            enrollmentRepo,
             transactionManager,
             createValidator,
-            updateValidator,
-            mapper);
+            mapper,
+            NullLogger<PaymentService>.Instance);
     }
 
     // ────────────────────────────────────────────

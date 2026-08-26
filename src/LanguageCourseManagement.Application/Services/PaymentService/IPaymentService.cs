@@ -1,14 +1,25 @@
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
+using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.DTOs.Payments;
 
 namespace LanguageCourseManagement.Application.Services.PaymentService;
 
 /// <summary>
-/// Nakit tahsilat işlemlerini tanımlar.
+/// Tahsilat ve ödeme işlemlerini tanımlar.
 /// </summary>
 public interface IPaymentService
 {
+    /// <summary>
+    /// Kayıt oluşturur ve ilk tahsilatı (nakit) gerçekleştirir.
+    /// </summary>
+    Task<EnrollmentDetailResponse> EnrollWithPaymentAsync(EnrollmentCreateRequest request, Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tüm tahsilatları getirir (dashboard için).
+    /// </summary>
+    Task<IReadOnlyList<SettlementResponse>> GetAllSettlementsAsync(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// ID'ye göre tahsilatı getirir.
     /// </summary>
