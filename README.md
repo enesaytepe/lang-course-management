@@ -1,47 +1,48 @@
-# Language Course Management
+# Dil Kursu Otomasyon Yazilimi
 
-"Bir Lisan Bir İnsan" dil kursu için geliştirilen, birden fazla şubenin merkezi olarak yönetilebildiği dil kursu otomasyon sistemidir.
+Bir Lisan Bir Insan dil kursu icin gelistirilen, birden fazla subenin merkezi olarak yonetilebildigi dil kursu otomasyon sistemidir.
 
-## Özellikler
+## Ozellikler
 
-- Şube ve derslik yönetimi
-- Öğretmen, dil ve çalışma zamanı yönetimi
-- Ders ve öğrenci kayıt işlemleri
-- Öğretmen ve derslik müsaitlik kontrolleri
-- Öğrenci kayıt ve ödeme takibi
-- ASP.NET Core Identity ile giriş ve rol bazlı yetkilendirme
-- `SystemAdmin` ve `RegistrationOfficer` kullanıcı rolleri
-- MVC arayüzü ve `/api` JSON API desteği
-
-> Ödeme işlemleri nakit, kredi kartı ve banka havalesi ile yapılabilir; tek seferde veya taksitli olarak desteklenmektedir.
+- Sube ve derslik yonetimi
+- Ogretmen ve musaitlik yonetimi
+- Kurs olusturma ve planlama
+- Ogrenci kayit ve enrollment yonetimi
+- Taksitli odeme altyapisi
+- Dashboard ve raporlama
+- ASP.NET Core Identity ile giris ve rol bazli yetkilendirme
+- MVC arayuzu ve `/api` JSON API destegi
 
 ## Teknolojiler
 
-- C# / .NET 10
-- ASP.NET Core MVC
-- Entity Framework Core / Code First
-- Microsoft SQL Server
+- .NET 10, ASP.NET Core MVC
+- Entity Framework Core + SQL Server
+- AutoMapper (ProjectTo)
+- Dapper (aggregate queries)
 - ASP.NET Core Identity
-- Bootstrap
-- jQuery / AJAX
-- SweetAlert2
 - jQuery DataTables
-- xUnit / Moq
 
-## Mimari
-
-Proje, Clean Architecture prensiplerinden yararlanan katmanlı bir mimari ile geliştirilmiştir:
+## Proje Yapisi
 
 ```text
 src/
-├── LanguageCourseManagement.Domain
-├── LanguageCourseManagement.Application
-├── LanguageCourseManagement.Infrastructure
-├── LanguageCourseManagement.MVC
+├── LanguageCourseManagement.Domain       # Entity ve enum'lari icerir
+├── LanguageCourseManagement.Application  # Service arayuzleri ve is mantigi
+├── LanguageCourseManagement.Infrastructure  # EF Core, Repository, Identity
+├── LanguageCourseManagement.MVC          # Controller, View, JavaScript
 └── LanguageCourseManagement.Shared
 
 tests/
 └── LanguageCourseManagement.Tests
+```
+
+## Mimari
+
+Proje, Clean Architecture prensiplerinden yararlanan katmanli bir mimari ile gelistirilmistir. Projection pattern ile veri transferi saglanmaktadir.
+
+```text
+Domain  -->  Application  -->  Infrastructure  -->  MVC
+ (Entity)    (Service/Logic)   (EF Core/Identity)   (UI)
 ```
 
 ## Kurulum
@@ -52,30 +53,28 @@ Gereksinimler:
 - SQL Server
 - Entity Framework Core CLI
 
-Connection string'i ortam değişkeni olarak tanımlayın:
-
 ```powershell
-$env:ConnectionStrings__DefaultConnection = "Server=(localdb)\MSSQLLocalDB;Database=LanguageCourseManagement;Trusted_Connection=True;TrustServerCertificate=True"
-```
-
-Veritabanını oluşturup uygulamayı çalıştırın:
-
-```powershell
+# Depolari yukleyin
 dotnet restore LanguageCourseManagement.slnx
 
+# Connection string'i ayarlayin
+$env:ConnectionStrings__DefaultConnection = "Server=(localdb)\MSSQLLocalDB;Database=LanguageCourseManagement;Trusted_Connection=True;TrustServerCertificate=True"
+
+# Veritabani olusturun
 dotnet ef database update `
   --project src/LanguageCourseManagement.Infrastructure `
   --startup-project src/LanguageCourseManagement.MVC
 
+# Uygulamayi calistirin
 dotnet run --project src/LanguageCourseManagement.MVC
 ```
 
-## Kullanıcı Rolleri
+## Kullanici Rolleri
 
-- `SystemAdmin`: Sistem ve yönetim işlemleri
-- `RegistrationOfficer`: Öğrenci kayıt ve tahsilat işlemleri
+- `SystemAdmin`: Sistem ve yonetim islemleri
+- `RegistrationOfficer`: Ogrenci kayit ve tahsilat islemleri
 
-Development ortamında demo kullanıcıları `Authentication__SeedDemoUsers=true` ayarıyla etkinleştirilebilir.
+Development ortaminda demo kullanici `Authentication__SeedDemoUsers=true` ayariyla etkinlestirilebilir.
 
 ## Testler
 
