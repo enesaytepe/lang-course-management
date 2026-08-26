@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers;
 
+/// <summary>
+/// Derslik yönetimi endpoint'leri.
+/// </summary>
 public sealed class ClassroomController : Controller
 {
     private readonly IClassroomService _classroomService;
@@ -26,6 +29,9 @@ public sealed class ClassroomController : Controller
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Derslik listesini görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -33,6 +39,9 @@ public sealed class ClassroomController : Controller
         return View(await CreateFormModelAsync(cancellationToken));
     }
 
+    /// <summary>
+    /// Yeni derslik oluşturma ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Create(CancellationToken cancellationToken)
@@ -40,6 +49,9 @@ public sealed class ClassroomController : Controller
         return View(await CreateFormModelAsync(cancellationToken));
     }
 
+    /// <summary>
+    /// Yeni derslik oluşturur.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
@@ -71,6 +83,9 @@ public sealed class ClassroomController : Controller
         }
     }
 
+    /// <summary>
+    /// Derslik düzenleme ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(
@@ -90,6 +105,9 @@ public sealed class ClassroomController : Controller
         }
     }
 
+    /// <summary>
+    /// Derslik bilgilerini günceller.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
@@ -129,6 +147,9 @@ public sealed class ClassroomController : Controller
         }
     }
 
+    /// <summary>
+    /// Derslik detaylarını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Details(

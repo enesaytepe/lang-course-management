@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LanguageCourseManagement.MVC.Controllers;
 
 /// <summary>
-/// Global facility catalog screens. Mutations are owned by the Facility API.
+/// Tesis yönetimi endpoint'leri.
 /// </summary>
 [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
 public sealed class FacilityController : Controller
@@ -19,6 +19,9 @@ public sealed class FacilityController : Controller
         _facilityService = facilityService;
     }
 
+    /// <summary>
+    /// Tesis listesini görüntüler.
+    /// </summary>
     [HttpGet]
     public IActionResult Index()
     {
@@ -27,6 +30,9 @@ public sealed class FacilityController : Controller
         return View(new FacilityFormViewModel());
     }
 
+    /// <summary>
+    /// Yeni tesis oluşturma ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public IActionResult Create()
@@ -34,6 +40,9 @@ public sealed class FacilityController : Controller
         return View(new FacilityFormViewModel());
     }
 
+    /// <summary>
+    /// Tesis düzenleme ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -55,6 +64,9 @@ public sealed class FacilityController : Controller
         }
     }
 
+    /// <summary>
+    /// Tesis detaylarını görüntüler.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
     {

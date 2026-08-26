@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers;
 
+/// <summary>
+/// Kurs seviyesi yönetimi endpoint'leri.
+/// </summary>
 public sealed class CourseLevelController : Controller
 {
     private readonly ICourseLevelService _courseLevelService;
@@ -23,6 +26,9 @@ public sealed class CourseLevelController : Controller
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Kurs seviyesi listesini görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -32,6 +38,9 @@ public sealed class CourseLevelController : Controller
         return View(model);
     }
 
+    /// <summary>
+    /// Yeni kurs seviyesi oluşturma ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Create(CancellationToken cancellationToken)
@@ -41,6 +50,9 @@ public sealed class CourseLevelController : Controller
         return View(model);
     }
 
+    /// <summary>
+    /// Yeni kurs seviyesi oluşturur.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
@@ -65,6 +77,9 @@ public sealed class CourseLevelController : Controller
         }
     }
 
+    /// <summary>
+    /// Kurs seviyesi düzenleme ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -76,9 +91,15 @@ public sealed class CourseLevelController : Controller
             await PopulateLanguagesAsync(model, true, cancellationToken);
             return View(model);
         }
-        catch (NotFoundException) { return NotFound(); }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
     }
 
+    /// <summary>
+    /// Kurs seviyesi bilgilerini günceller.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
@@ -102,9 +123,15 @@ public sealed class CourseLevelController : Controller
             await PopulateLanguagesAsync(model, true, cancellationToken);
             return View(model);
         }
-        catch (NotFoundException) { return NotFound(); }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
     }
 
+    /// <summary>
+    /// Kurs seviyesi detaylarını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)

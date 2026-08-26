@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers;
 
+/// <summary>
+/// Dil yönetimi endpoint'leri.
+/// </summary>
 public sealed class LanguageController : Controller
 {
     private readonly IOfferedLanguageService _languageService;
@@ -19,19 +22,32 @@ public sealed class LanguageController : Controller
         _mapper = mapper;
     }
 
-    [HttpGet, Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
+    /// <summary>
+    /// Dil listesini görüntüler.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public IActionResult Index()
     {
         return View(new LanguageFormViewModel());
     }
 
-    [HttpGet, Authorize(Roles = "SystemAdmin")]
+    /// <summary>
+    /// Yeni dil oluşturma ekranını görüntüler.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "SystemAdmin")]
     public IActionResult Create()
     {
         return View(new LanguageFormViewModel());
     }
 
-    [HttpPost, Authorize(Roles = "SystemAdmin"), ValidateAntiForgeryToken]
+    /// <summary>
+    /// Yeni dil oluşturur.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(LanguageFormViewModel model, CancellationToken cancellationToken)
     {
         AddWhitespaceValidationError(model);
@@ -49,14 +65,29 @@ public sealed class LanguageController : Controller
         }
     }
 
-    [HttpGet, Authorize(Roles = "SystemAdmin")]
+    /// <summary>
+    /// Dil düzenleme ekranını görüntüler.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
     {
-        try { return View(_mapper.Map<LanguageFormViewModel>(await _languageService.GetByIdAsync(id, cancellationToken))); }
-        catch (NotFoundException) { return NotFound(); }
+        try
+        {
+            return View(_mapper.Map<LanguageFormViewModel>(await _languageService.GetByIdAsync(id, cancellationToken)));
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
     }
 
-    [HttpPost, Authorize(Roles = "SystemAdmin"), ValidateAntiForgeryToken]
+    /// <summary>
+    /// Dil bilgilerini günceller.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, LanguageFormViewModel model, CancellationToken cancellationToken)
     {
         model.Id = id;
@@ -72,16 +103,32 @@ public sealed class LanguageController : Controller
             ModelState.AddModelError(string.Empty, exception.Message);
             return View(model);
         }
-        catch (NotFoundException) { return NotFound(); }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
     }
 
-    [HttpGet, Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
+    /// <summary>
+    /// Dil detaylarını görüntüler.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
     {
-        try { return View(await _languageService.GetByIdAsync(id, cancellationToken)); }
-        catch (NotFoundException) { return NotFound(); }
+        try
+        {
+            return View(await _languageService.GetByIdAsync(id, cancellationToken));
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
     }
 
+    /// <summary>
+    /// Dili siler.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
