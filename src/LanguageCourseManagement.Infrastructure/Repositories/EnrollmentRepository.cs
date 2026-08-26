@@ -71,30 +71,4 @@ public sealed class EnrollmentRepository
             .FirstOrDefaultAsync(s => s.Id == studentId && s.IsActive, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Enrollment>> GetListWithIncludesAsync(
-        CancellationToken cancellationToken = default)
-    {
-        return await Context.Enrollments
-            .AsNoTracking()
-            .Include(e => e.Student)
-            .Include(e => e.Course)
-            .Include(e => e.Installments)
-            .OrderByDescending(e => e.EnrollmentDate)
-            .ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<Enrollment?> GetDetailsWithIncludesAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-    {
-        return Context.Enrollments
-            .AsNoTracking()
-            .Include(e => e.Student)
-            .Include(e => e.Course)
-            .Include(e => e.Payments)
-            .Include(e => e.Installments)
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
-    }
 }

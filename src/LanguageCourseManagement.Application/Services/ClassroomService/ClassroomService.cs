@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
@@ -42,16 +43,15 @@ public sealed class ClassroomService : IClassroomService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var classroom = await _classroomRepository.GetAsync(
-            item => item.Id == id,
-            include: query => query.Include(item => item.Branch),
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var classroom = await _classroomRepository.Query()
+            .Where(item => item.Id == id)
+            .ProjectTo<ClassroomResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (classroom is null)
             throw new NotFoundException("Derslik bulunamadı.");
 
-        return _mapper.Map<ClassroomResponse>(classroom);
+        return classroom;
     }
 
     public async Task<GetListResponse<ClassroomListResponse>> GetListAsync(
@@ -71,16 +71,11 @@ public sealed class ClassroomService : IClassroomService
              (classroom.Description != null && classroom.Description.Contains(normalizedSearch)) ||
              classroom.Branch.Name.Contains(normalizedSearch));
 
-        IPaginate<Classroom> classrooms = await _classroomRepository.GetListAsync(
-            predicate: predicate,
-            orderBy: query => query
-                .OrderBy(classroom => classroom.Branch.Name)
-                .ThenBy(classroom => classroom.Name),
-            include: query => query.Include(classroom => classroom.Branch),
-            index: pageRequest.PageIndex,
-            size: pageRequest.PageSize,
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var classrooms = await _classroomRepository.Query()
+            .Where(predicate)
+            .OrderBy(classroom => classroom.Branch.Name).ThenBy(classroom => classroom.Name)
+            .ProjectTo<ClassroomListResponse>(_mapper.ConfigurationProvider)
+            .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, cancellationToken: cancellationToken);
 
         return new GetListResponse<ClassroomListResponse>
         {
@@ -90,9 +85,7 @@ public sealed class ClassroomService : IClassroomService
             Pages = classrooms.Pages,
             HasPrevious = classrooms.HasPrevious,
             HasNext = classrooms.HasNext,
-            Items = classrooms.Items
-                .Select(_mapper.Map<ClassroomListResponse>)
-                .ToList()
+            Items = classrooms.Items.ToList()
         };
     }
 
@@ -184,13 +177,16 @@ public sealed class ClassroomService : IClassroomService
     {
         var classroom = await _classroomRepository.GetAsync(
             item => item.Id == id,
-            include: query => query.Include(item => item.Branch),
             cancellationToken: cancellationToken);
 
         if (classroom is null)
             throw new NotFoundException("Derslik bulunamadı.");
 
-        var response = _mapper.Map<ClassroomResponse>(classroom);
+        var response = await _classroomRepository.Query()
+            .Where(item => item.Id == id)
+            .ProjectTo<ClassroomResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException("Derslik bulunamadı.");
+
         await _classroomRepository.DeleteAsync(classroom);
 
         _logger.LogInformation(

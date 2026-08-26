@@ -1,10 +1,12 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Payments;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
+using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -35,22 +37,16 @@ public class PaymentService : IPaymentService
     /// <inheritdoc />
     public async Task<PaymentResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        Payment? payment = await _paymentRepository.GetAsync(
-            p => p.Id == id,
-            include: q => q
-                .Include(p => p.Enrollment)
-                    .ThenInclude(e => e.Student)
-                .Include(p => p.Enrollment)
-                    .ThenInclude(e => e.Course)
-                        .ThenInclude(c => c.Branch)
-                .Include(p => p.Installment),
-            cancellationToken: cancellationToken);
+        var response = await _paymentRepository.Query()
+            .Where(p => p.Id == id)
+            .ProjectTo<PaymentResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (payment is null)
+        if (response is null)
             throw new NotFoundException("Tahsilat bulunamadı.");
 
         _logger.LogInformation("[PaymentService] Tahsilat detay getirildi - {PaymentId}", id);
-        return ToResponse(payment);
+        return response;
     }
 
     /// <inheritdoc />
@@ -59,30 +55,21 @@ public class PaymentService : IPaymentService
         string? search,
         CancellationToken cancellationToken = default)
     {
-        Expression<Func<Payment, bool>>? predicate = null;
+        IQueryable<Payment> query = _paymentRepository.Query();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var searchLower = search.ToLowerInvariant();
-            predicate = p =>
+            query = query.Where(p =>
                 p.Enrollment.Student.FirstName.ToLower().Contains(searchLower) ||
                 p.Enrollment.Student.LastName.ToLower().Contains(searchLower) ||
-                p.Enrollment.Course.Name.ToLower().Contains(searchLower);
+                p.Enrollment.Course.Name.ToLower().Contains(searchLower));
         }
 
-        var payments = await _paymentRepository.GetListAsync(
-            predicate: predicate,
-            orderBy: q => q.OrderByDescending(p => p.SettledAt),
-            include: q => q
-                .Include(p => p.Enrollment)
-                    .ThenInclude(e => e.Student)
-                .Include(p => p.Enrollment)
-                    .ThenInclude(e => e.Course)
-                        .ThenInclude(c => c.Branch)
-                .Include(p => p.Installment),
-            index: pageRequest.PageIndex,
-            size: pageRequest.PageSize,
-            cancellationToken: cancellationToken);
+        var payments = await query
+            .OrderByDescending(p => p.SettledAt)
+            .ProjectTo<PaymentListResponse>(_mapper.ConfigurationProvider)
+            .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, cancellationToken: cancellationToken);
 
         _logger.LogInformation("[PaymentService] Tahsilat listesi getirildi - Sayfa: {PageIndex}, Boyut: {PageSize}", pageRequest.PageIndex, pageRequest.PageSize);
         return new GetListResponse<PaymentListResponse>
@@ -93,7 +80,7 @@ public class PaymentService : IPaymentService
             Pages = payments.Pages,
             HasPrevious = payments.HasPrevious,
             HasNext = payments.HasNext,
-            Items = payments.Items.Select(ToListResponse).ToList()
+            Items = payments.Items.ToList()
         };
     }
 

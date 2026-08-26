@@ -13,8 +13,7 @@ using LanguageCourseManagement.Infrastructure;
 using LanguageCourseManagement.Infrastructure.Repositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
+
 using Xunit;
 
 namespace LanguageCourseManagement.Tests;
@@ -249,16 +248,13 @@ public sealed class EnrollmentTransactionTests : IDisposable
         mapperConfig.AssertConfigurationIsValid();
         var mapper = mapperConfig.CreateMapper();
 
-        var logger = new Mock<ILogger<EnrollmentService>>();
-
         return new EnrollmentService(
             enrollmentRepo,
             paymentRepo,
             transactionManager,
             createValidator,
             updateValidator,
-            mapper,
-            logger.Object);
+            mapper);
     }
 
     // ────────────────────────────────────────────

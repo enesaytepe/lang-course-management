@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
@@ -147,8 +148,10 @@ public sealed class EnrollmentService : IEnrollmentService
     /// <inheritdoc />
     public async Task<IReadOnlyList<EnrollmentListItemResponse>> GetListAsync(CancellationToken cancellationToken = default)
     {
-        var enrollments = await _enrollmentRepository.GetListWithIncludesAsync(cancellationToken);
-        return enrollments.Select(_mapper.Map<EnrollmentListItemResponse>).ToList();
+        return await _enrollmentRepository.Query()
+            .OrderByDescending(e => e.EnrollmentDate)
+            .ProjectTo<EnrollmentListItemResponse>(_mapper.ConfigurationProvider)
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -169,17 +172,11 @@ public sealed class EnrollmentService : IEnrollmentService
              enrollment.Student.LastName.Contains(normalizedSearch) ||
              enrollment.Course.Name.Contains(normalizedSearch));
 
-        IPaginate<Enrollment> enrollmentsPage = await _enrollmentRepository.GetListAsync(
-            predicate: predicate,
-            orderBy: query => query.OrderByDescending(enrollment => enrollment.EnrollmentDate),
-            include: query => query
-                .Include(enrollment => enrollment.Student)
-                .Include(enrollment => enrollment.Course)
-                .Include(enrollment => enrollment.Payments),
-            index: pageRequest.PageIndex,
-            size: pageRequest.PageSize,
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var enrollmentsPage = await _enrollmentRepository.Query()
+            .Where(predicate)
+            .OrderByDescending(enrollment => enrollment.EnrollmentDate)
+            .ProjectTo<EnrollmentListItemResponse>(_mapper.ConfigurationProvider)
+            .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, cancellationToken: cancellationToken);
 
         return new GetListResponse<EnrollmentListItemResponse>
         {
@@ -189,17 +186,18 @@ public sealed class EnrollmentService : IEnrollmentService
             Pages = enrollmentsPage.Pages,
             HasPrevious = enrollmentsPage.HasPrevious,
             HasNext = enrollmentsPage.HasNext,
-            Items = enrollmentsPage.Items.Select(_mapper.Map<EnrollmentListItemResponse>).ToList()
+            Items = enrollmentsPage.Items.ToList()
         };
     }
 
     /// <inheritdoc />
     public async Task<EnrollmentDetailResponse> GetDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var enrollment = await _enrollmentRepository.GetDetailsWithIncludesAsync(id, cancellationToken)
+        return await _enrollmentRepository.Query()
+            .Where(e => e.Id == id)
+            .ProjectTo<EnrollmentDetailResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Kayıt bulunamadı.");
-
-        return _mapper.Map<EnrollmentDetailResponse>(enrollment);
     }
 
     /// <inheritdoc />
@@ -245,16 +243,19 @@ public sealed class EnrollmentService : IEnrollmentService
     /// <inheritdoc />
     public async Task<IReadOnlyList<SettlementResponse>> GetPaymentsAsync(CancellationToken cancellationToken = default)
     {
-        var payments = await _paymentRepository.GetListWithIncludesAsync(cancellationToken);
-        return payments.Select(_mapper.Map<SettlementResponse>).ToList();
+        return await _paymentRepository.Query()
+            .OrderByDescending(p => p.SettledAt)
+            .ProjectTo<SettlementResponse>(_mapper.ConfigurationProvider)
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<SettlementResponse> GetPaymentDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var payment = await _paymentRepository.GetDetailsWithIncludesAsync(id, cancellationToken)
+        return await _paymentRepository.Query()
+            .Where(p => p.Id == id)
+            .ProjectTo<SettlementResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Tahsilat bulunamadı.");
-
-        return _mapper.Map<SettlementResponse>(payment);
     }
 }
