@@ -41,6 +41,10 @@
             <dd>@Model.FinalAmount.ToString("N2") ₺</dd>
         </div>
         <div>
+            <dt>Ödeme türü</dt>
+            <dd>@(Model.PaymentType == "Installment" ? "Taksitli" : "Nakit")</dd>
+        </div>
+        <div>
             <dt>Durum</dt>
             <dd>
                 <span class="status-pill @(Model.Status == "Active" ? "status-active" : string.Empty)">
@@ -60,4 +64,38 @@
             </div>
         }
     </dl>
+
+    @if (Model.Installments.Any())
+    {
+        <h5 class="mt-4 mb-3">Taksit Planı</h5>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Taksit</th>
+                        <th>Tutar</th>
+                        <th>Vade</th>
+                        <th>Durum</th>
+                        <th>Ödenen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var installment in Model.Installments)
+                    {
+                        <tr>
+                            <td>@installment.InstallmentNumber</td>
+                            <td>@installment.Amount.ToString("N2") ₺</td>
+                            <td>@installment.DueDate.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <span class="status-pill @(installment.IsPaid ? "status-active" : string.Empty)">
+                                    @(installment.Status == "Settled" ? "Ödendi" : installment.Status == "Overdue" ? "Vadesi geçti" : installment.Status == "Cancelled" ? "İptal" : "Bekliyor")
+                                </span>
+                            </td>
+                            <td>@installment.PaidAmount.ToString("N2") ₺</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </section>

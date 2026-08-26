@@ -9,7 +9,7 @@ public sealed class SettlementTests
     [Fact]
     public void Settlement_contract_requires_one_settled_cash_payment_for_the_final_amount()
     {
-        var enrollment = new Enrollment { FinalAmount = 250m };
+        var enrollment = new Enrollment { FinalAmount = 250m, Payments = new List<Payment>() };
         var payment = new Payment { EnrollmentId = enrollment.Id, Amount = enrollment.FinalAmount, Method = PaymentMethod.Cash, Status = PaymentStatus.Settled };
         enrollment.Payments.Add(payment);
 

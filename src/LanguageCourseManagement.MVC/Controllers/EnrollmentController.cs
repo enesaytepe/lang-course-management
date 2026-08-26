@@ -86,8 +86,10 @@ public sealed class EnrollmentController : Controller
             DiscountAmount = detail.DiscountAmount,
             FinalAmount = detail.FinalAmount,
             Status = detail.Status,
+            PaymentType = detail.PaymentType,
             IsSettled = detail.IsSettled,
-            PaymentId = detail.PaymentId
+            PaymentId = detail.PaymentId,
+            Installments = detail.Installments
         };
     }
 }

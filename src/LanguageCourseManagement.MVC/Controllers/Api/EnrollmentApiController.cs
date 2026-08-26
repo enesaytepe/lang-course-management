@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
+using LanguageCourseManagement.Application.Services.InstallmentService;
 using LanguageCourseManagement.MVC.Models.Api;
 using LanguageCourseManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -19,10 +20,12 @@ namespace LanguageCourseManagement.MVC.Controllers.Api;
 public sealed class EnrollmentApiController : ControllerBase
 {
     private readonly IEnrollmentService _enrollmentService;
+    private readonly IInstallmentService _installmentService;
 
-    public EnrollmentApiController(IEnrollmentService enrollmentService)
+    public EnrollmentApiController(IEnrollmentService enrollmentService, IInstallmentService installmentService)
     {
         _enrollmentService = enrollmentService;
+        _installmentService = installmentService;
     }
 
     /// <summary>
@@ -96,5 +99,28 @@ public sealed class EnrollmentApiController : ControllerBase
     public async Task<ActionResult<EnrollmentDetailResponse>> Cancel(Guid id, CancellationToken cancellationToken)
     {
         return Ok(await _enrollmentService.CancelAsync(id, cancellationToken));
+    }
+
+    /// <summary>
+    /// Kaydın taksitlerini getirir.
+    /// </summary>
+    [HttpGet("{id:guid}/installments")]
+    [ProducesResponseType(typeof(IReadOnlyList<InstallmentResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<InstallmentResponse>>> GetInstallments(Guid id, CancellationToken cancellationToken)
+    {
+        return Ok(await _installmentService.GetByEnrollmentIdAsync(id, cancellationToken));
+    }
+
+    /// <summary>
+    /// Kayıt için taksit planı oluşturur.
+    /// </summary>
+    [HttpPost("{id:guid}/installments")]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    [ProducesResponseType(typeof(IReadOnlyList<InstallmentResponse>), StatusCodes.Status201Created)]
+    public async Task<ActionResult<IReadOnlyList<InstallmentResponse>>> CreateInstallmentPlan(Guid id, [FromQuery] int installmentCount, CancellationToken cancellationToken)
+    {
+        var result = await _installmentService.CreateInstallmentPlanAsync(id, installmentCount, cancellationToken);
+        return CreatedAtAction(nameof(GetInstallments), new { id }, result);
     }
 }

@@ -100,7 +100,8 @@
                 StudentId: form.StudentId.value,
                 CourseId: form.CourseId.value,
                 DiscountAmount: Number(form.DiscountAmount.value) || 0,
-                IdempotencyKey: form.IdempotencyKey.value
+                IdempotencyKey: form.IdempotencyKey.value,
+                PaymentType: form.PaymentType.value
             };
         },
 
@@ -126,7 +127,7 @@
                 data: JSON.stringify(this.getPayload($form))
             })
                 .done(function (result) {
-                    app.Common.showSuccess("Kayıt oluşturuldu ve tam tahsilat alındı");
+                    app.Common.showSuccess("Kayıt başarıyla oluşturuldu");
                     window.location.assign("/Enrollment/Details/" + encodeURIComponent(app.Common.getValue(result, "Id")));
                 })
                 .fail(function (xhr) {
@@ -225,6 +226,12 @@
                             : data === "Cancelled" ? "İptal edildi"
                             : "Aktif";
                         return '<span class="status-pill">' + text + '</span>';
+                    }
+                },
+                {
+                    data: "paymentType",
+                    render: function (data) {
+                        return data === "Installment" ? "Taksitli" : "Nakit";
                     }
                 }
             ];

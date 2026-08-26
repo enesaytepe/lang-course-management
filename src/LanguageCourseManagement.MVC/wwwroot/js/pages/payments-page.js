@@ -44,6 +44,22 @@
                     }
                 },
                 {
+                    data: "method",
+                    render: function (data) {
+                        var text = data === "Cash" ? "Nakit"
+                            : data === "CreditCard" ? "Kredi Kartı"
+                            : data === "BankTransfer" ? "Havale"
+                            : data || "-";
+                        return app.Common.escapeHtml(text);
+                    }
+                },
+                {
+                    data: "installmentNumber",
+                    render: function (data) {
+                        return data ? '#' + data : '-';
+                    }
+                },
+                {
                     data: "status",
                     render: function (data) {
                         var text = data === "Settled" ? "Tamamlandı" : data || "-";
@@ -76,6 +92,8 @@
             this.dataTable = this.$table.DataTable({
                 processing: true,
                 serverSide: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 ajax: function (request, callback) {
                     var pageSize = Math.min(Math.max(Number(request.length) || 10, 1), 100);
                     var pageIndex = Math.floor((Number(request.start) || 0) / pageSize);
@@ -104,8 +122,6 @@
                             });
                         });
                 },
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 columns: this.getColumns(),
                 responsive: true,
                 language: {

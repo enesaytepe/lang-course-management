@@ -134,7 +134,7 @@ public sealed class EnrollmentServiceTests
             logger.Object);
     }
 
-    private static EnrollmentCreateRequest Request() => new() { StudentId = Guid.NewGuid(), CourseId = Guid.NewGuid(), DiscountAmount = 10m, IdempotencyKey = "enrollment-001", Method = PaymentMethod.Cash };
+    private static EnrollmentCreateRequest Request() => new() { StudentId = Guid.NewGuid(), CourseId = Guid.NewGuid(), DiscountAmount = 10m, IdempotencyKey = "enrollment-001", PaymentType = PaymentType.Cash };
 
     private static Course Course(int capacity) => new() { Id = Guid.NewGuid(), Name = "English A1", Capacity = capacity, TuitionFee = 100m, IsActive = true, Status = CourseStatus.Open };
 

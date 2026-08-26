@@ -68,6 +68,7 @@ public sealed class EnrollmentRepository
             .AsNoTracking()
             .Include(e => e.Student)
             .Include(e => e.Course)
+            .Include(e => e.Installments)
             .OrderByDescending(e => e.EnrollmentDate)
             .ToListAsync(cancellationToken);
     }
@@ -82,6 +83,7 @@ public sealed class EnrollmentRepository
             .Include(e => e.Student)
             .Include(e => e.Course)
             .Include(e => e.Payments)
+            .Include(e => e.Installments)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 }

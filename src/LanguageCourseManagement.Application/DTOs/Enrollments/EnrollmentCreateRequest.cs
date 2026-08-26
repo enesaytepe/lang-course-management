@@ -8,5 +8,5 @@ public sealed class EnrollmentCreateRequest
     public Guid CourseId { get; set; }
     public decimal DiscountAmount { get; set; }
     public string IdempotencyKey { get; set; } = string.Empty;
-    public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
+    public PaymentType PaymentType { get; set; } = PaymentType.Cash;
 }

@@ -1,4 +1,4 @@
-@model LanguageCourseManagement.MVC.Models.ViewModels.PaymentSettlementViewModel
+@model LanguageCourseManagement.MVC.Models.ViewModels.PaymentDetailsViewModel
 @{
     ViewData["Title"] = "Tahsilat detayı";
 }
@@ -18,7 +18,21 @@
         </div>
         <div>
             <dt>Kayıt numarası</dt>
-            <dd>@Model.EnrollmentId</dd>
+            <dd>
+                <a href="/Enrollment/Details/@Model.EnrollmentId">@Model.EnrollmentId</a>
+            </dd>
+        </div>
+        <div>
+            <dt>Öğrenci</dt>
+            <dd>@Model.StudentName</dd>
+        </div>
+        <div>
+            <dt>Ders</dt>
+            <dd>@Model.CourseName</dd>
+        </div>
+        <div>
+            <dt>Şube</dt>
+            <dd>@Model.BranchName</dd>
         </div>
         <div>
             <dt>Tutar</dt>
@@ -29,9 +43,24 @@
             <dd>@Model.Method</dd>
         </div>
         <div>
+            <dt>Durum</dt>
+            <dd>
+                <span class="status-pill @(Model.Status == "Settled" ? "status-active" : string.Empty)">
+                    @(Model.Status == "Settled" ? "Tamamlandı" : Model.Status)
+                </span>
+            </dd>
+        </div>
+        <div>
             <dt>Tahsilat tarihi</dt>
             <dd>@Model.SettledAt.ToString("dd.MM.yyyy HH:mm")</dd>
         </div>
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <div>
+                <dt>Açıklama</dt>
+                <dd>@Model.Description</dd>
+            </div>
+        }
     </dl>
 
     <div class="form-actions">

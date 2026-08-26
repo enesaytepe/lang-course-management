@@ -1,7 +1,7 @@
 namespace LanguageCourseManagement.Application.DTOs.Payments;
 
 /// <summary>
-/// Yeni nakit tahsilat oluşturma isteği. Tutar otomatik olarak kaydın nihai tutarına eşitlenir.
+/// Yeni tahsilat oluşturma isteği.
 /// </summary>
 public sealed class CreatePaymentRequest
 {
@@ -9,6 +9,11 @@ public sealed class CreatePaymentRequest
     /// Tahsilat yapılacak kayıt Id
     /// </summary>
     public Guid EnrollmentId { get; set; }
+
+    /// <summary>
+    /// Tahsilat yapılacak taksit Id (nakit ödemelerde null)
+    /// </summary>
+    public Guid? InstallmentId { get; set; }
 
     /// <summary>
     /// Tahsilat açıklaması (isteğe bağlı)

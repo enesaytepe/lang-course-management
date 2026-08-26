@@ -42,7 +42,8 @@ public class PaymentService : IPaymentService
                     .ThenInclude(e => e.Student)
                 .Include(p => p.Enrollment)
                     .ThenInclude(e => e.Course)
-                        .ThenInclude(c => c.Branch),
+                        .ThenInclude(c => c.Branch)
+                .Include(p => p.Installment),
             cancellationToken: cancellationToken);
 
         if (payment is null)
@@ -77,7 +78,8 @@ public class PaymentService : IPaymentService
                     .ThenInclude(e => e.Student)
                 .Include(p => p.Enrollment)
                     .ThenInclude(e => e.Course)
-                        .ThenInclude(c => c.Branch),
+                        .ThenInclude(c => c.Branch)
+                .Include(p => p.Installment),
             index: pageRequest.PageIndex,
             size: pageRequest.PageSize,
             cancellationToken: cancellationToken);
@@ -105,7 +107,8 @@ public class PaymentService : IPaymentService
                 .Include(e => e.Student)
                 .Include(e => e.Course)
                     .ThenInclude(c => c.Branch)
-                .Include(e => e.Payments),
+                .Include(e => e.Payments)
+                .Include(e => e.Installments),
             cancellationToken: cancellationToken);
 
         if (enrollment is null)
@@ -122,17 +125,40 @@ public class PaymentService : IPaymentService
                 throw new BusinessException("Bu kayıt için tahsilat zaten yapılmıştır.");
         }
 
-        // Tutar: nakit ise tam tutar, taksitli ise kalan bakiye kadar
-        decimal totalPaid = enrollment.Payments?.Where(p => p.Status == PaymentStatus.Settled).Sum(p => p.Amount) ?? 0;
-        decimal remainingBalance = enrollment.FinalAmount - totalPaid;
-        decimal paymentAmount = enrollment.PaymentType == PaymentType.Cash
-            ? enrollment.FinalAmount
-            : remainingBalance;
+        decimal paymentAmount;
+        Guid? installmentId = null;
+        int? installmentNumber = null;
+
+        if (enrollment.PaymentType == PaymentType.Installment)
+        {
+            if (!request.InstallmentId.HasValue)
+                throw new BusinessException("Taksitli ödemede taksit Id'si zorunludur.");
+
+            var installment = enrollment.Installments?.FirstOrDefault(i => i.Id == request.InstallmentId.Value)
+                ?? throw new NotFoundException("Taksit bulunamadı.");
+
+            if (installment.Status != PaymentStatus.Pending)
+                throw new BusinessException("Bu taksit için tahsilat zaten yapılmış veya iptal edilmiş.");
+
+            installment.Status = PaymentStatus.Settled;
+            paymentAmount = installment.Amount;
+            installmentId = installment.Id;
+            installmentNumber = installment.InstallmentNumber;
+        }
+        else
+        {
+            decimal totalPaid = enrollment.Payments?.Where(p => p.Status == PaymentStatus.Settled).Sum(p => p.Amount) ?? 0;
+            paymentAmount = enrollment.FinalAmount - totalPaid;
+
+            if (paymentAmount <= 0)
+                throw new BusinessException("Bu kayıt için tahsilat zaten tamamlanmıştır.");
+        }
 
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
             EnrollmentId = request.EnrollmentId,
+            InstallmentId = installmentId,
             Amount = paymentAmount,
             Method = PaymentMethod.Cash,
             Status = PaymentStatus.Settled,
@@ -144,14 +170,14 @@ public class PaymentService : IPaymentService
         };
 
         await _paymentRepository.AddAsync(payment);
+
         _logger.LogInformation("[PaymentService] Yeni tahsilat olusturuldu - {PaymentId}, Kayit: {EnrollmentId}, Tutar: {Amount}", payment.Id, request.EnrollmentId, payment.Amount);
 
-        // Navigation'ları response için doldur
         payment.Enrollment = enrollment;
-        return ToResponse(payment);
+        return ToResponse(payment, installmentNumber);
     }
 
-    private static PaymentResponse ToResponse(Payment payment)
+    private static PaymentResponse ToResponse(Payment payment, int? installmentNumber = null)
     {
         return new()
         {
@@ -181,8 +207,10 @@ public class PaymentService : IPaymentService
             CourseName = payment.Enrollment?.Course?.Name ?? string.Empty,
             BranchName = payment.Enrollment?.Course?.Branch?.Name ?? string.Empty,
             Amount = payment.Amount,
+            Method = payment.Method.ToString(),
             Status = payment.Status.ToString(),
-            SettledAt = payment.SettledAt
+            SettledAt = payment.SettledAt,
+            InstallmentNumber = payment.Installment?.InstallmentNumber
         };
     }
 }

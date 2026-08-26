@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LanguageCourseManagement.Domain.Enums;
 
 namespace LanguageCourseManagement.MVC.Models.ViewModels;
 
@@ -15,6 +16,11 @@ public sealed class PaymentFormViewModel
     public Guid EnrollmentId { get; set; }
 
     /// <summary>
+    /// Tahsilat yapılacak taksit Id (nakit ödemelerde null)
+    /// </summary>
+    public Guid? InstallmentId { get; set; }
+
+    /// <summary>
     /// Tahsilat açıklaması (isteğe bağlı)
     /// </summary>
     [StringLength(500)]
@@ -26,11 +32,17 @@ public sealed class PaymentFormViewModel
     public string CourseName { get; set; } = string.Empty;
     public string BranchName { get; set; } = string.Empty;
     public decimal FinalAmount { get; set; }
+    public string EnrollmentPaymentType { get; set; } = string.Empty;
 
     /// <summary>
     /// Henüz tahsilat yapılmamış aktif kayıtlar (dropdown için)
     /// </summary>
     public IReadOnlyList<EnrollmentOptionViewModel> UnsettledEnrollments { get; set; } = [];
+
+    /// <summary>
+    /// Kayıtlara ait taksit seçenekleri (taksitli ödemeler için)
+    /// </summary>
+    public Dictionary<Guid, List<InstallmentOptionViewModel>> EnrollmentInstallments { get; set; } = new();
 }
 
 /// <summary>
@@ -43,4 +55,17 @@ public sealed class EnrollmentOptionViewModel
     public string CourseName { get; init; } = string.Empty;
     public string BranchName { get; init; } = string.Empty;
     public decimal FinalAmount { get; init; }
+    public string PaymentType { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Taksit seçeneği için bilgi.
+/// </summary>
+public sealed class InstallmentOptionViewModel
+{
+    public Guid Id { get; init; }
+    public int InstallmentNumber { get; init; }
+    public decimal Amount { get; init; }
+    public DateOnly DueDate { get; init; }
+    public string Status { get; init; } = string.Empty;
 }

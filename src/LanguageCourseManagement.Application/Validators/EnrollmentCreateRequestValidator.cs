@@ -32,8 +32,8 @@ public sealed class EnrollmentCreateRequestValidator : AbstractValidator<Enrollm
             .Matches("^[A-Za-z0-9._:-]+$")
             .WithMessage("İdempotensi anahtarı yalnızca harf, rakam ve (_, ., :, -) karakterleri içerebilir.");
 
-        RuleFor(x => x.Method)
-            .Equal(PaymentMethod.Cash)
-            .WithMessage("Yalnızca nakit ödeme yöntemi desteklenmektedir.");
+        RuleFor(x => x.PaymentType)
+            .IsInEnum()
+            .WithMessage("Geçersiz ödeme türü.");
     }
 }

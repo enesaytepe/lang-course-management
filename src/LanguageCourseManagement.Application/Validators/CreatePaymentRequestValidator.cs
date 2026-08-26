@@ -14,6 +14,11 @@ public sealed class CreatePaymentRequestValidator : AbstractValidator<CreatePaym
             .NotEmpty()
             .WithMessage("Kayıt seçimi zorunludur.");
 
+        RuleFor(x => x.InstallmentId)
+            .NotEmpty()
+            .WithMessage("Taksit Id boş olamaz.")
+            .When((CreatePaymentRequest x) => x.InstallmentId.HasValue);
+
         RuleFor(x => x.Description)
             .MaximumLength(500)
             .WithMessage("Açıklama en fazla 500 karakter olabilir.");

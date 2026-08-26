@@ -65,12 +65,12 @@ public sealed class EnrollmentService : IEnrollmentService
             var replayEnrollment = replay.Enrollment;
             if (replayEnrollment.StudentId != request.StudentId ||
                 replayEnrollment.CourseId != request.CourseId ||
-                replayEnrollment.TuitionFee - request.DiscountAmount != replay.Amount ||
-                request.Method != PaymentMethod.Cash)
+                replayEnrollment.TuitionFee - request.DiscountAmount != replay.Amount)
             {
                 throw new BusinessException("İdempotensi anahtarı farklı bir tahsilatla zaten ilişkilendirilmiş.");
             }
 
+            replayEnrollment.Payments ??= new List<Payment>();
             replayEnrollment.Payments.Add(replay);
             return _mapper.Map<EnrollmentDetailResponse>(replayEnrollment);
         }
@@ -110,23 +110,27 @@ public sealed class EnrollmentService : IEnrollmentService
 
         await _enrollmentRepository.AddAsync(enrollment, cancellationToken);
 
-        // Create settlement payment
-        var payment = new Payment
+        // Cash: create immediate settled payment
+        if (request.PaymentType == PaymentType.Cash)
         {
-            Id = Guid.NewGuid(),
-            EnrollmentId = enrollment.Id,
-            Amount = enrollment.FinalAmount,
-            Method = PaymentMethod.Cash,
-            Status = PaymentStatus.Settled,
-            SettledAt = DateTimeOffset.UtcNow,
-            CollectedByUserId = userId,
-            IdempotencyKey = idempotencyKey,
-            PaymentDate = DateTime.UtcNow
-        };
+            var payment = new Payment
+            {
+                Id = Guid.NewGuid(),
+                EnrollmentId = enrollment.Id,
+                Amount = enrollment.FinalAmount,
+                Method = PaymentMethod.Cash,
+                Status = PaymentStatus.Settled,
+                SettledAt = DateTimeOffset.UtcNow,
+                CollectedByUserId = userId,
+                IdempotencyKey = idempotencyKey,
+                PaymentDate = DateTime.UtcNow
+            };
 
-        await _paymentRepository.AddAsync(payment, cancellationToken);
+            await _paymentRepository.AddAsync(payment, cancellationToken);
+            enrollment.Payments ??= new List<Payment>();
+            enrollment.Payments.Add(payment);
+        }
 
-        enrollment.Payments.Add(payment);
         return _mapper.Map<EnrollmentDetailResponse>(enrollment);
     }
 

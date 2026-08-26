@@ -1,7 +1,7 @@
 @model LanguageCourseManagement.MVC.Models.ViewModels.PaymentFormViewModel
 @{
     var heading = "Yeni Tahsilat";
-    var description = "Nakit tam tahsilat gerçekleştirin.";
+    var description = "Tahsilat gerçekleştirin.";
 }
 
 <section class="content-card">
@@ -37,9 +37,33 @@
                             <dd class="col-sm-9" id="infoCourseName">-</dd>
                             <dt class="col-sm-3">Şube</dt>
                             <dd class="col-sm-9" id="infoBranchName">-</dd>
+                            <dt class="col-sm-3">Ödeme türü</dt>
+                            <dd class="col-sm-9" id="infoPaymentType">-</dd>
                             <dt class="col-sm-3">Tahsilat tutarı</dt>
                             <dd class="col-sm-9"><strong id="infoFinalAmount">-</strong></dd>
                         </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12" id="installmentSection" style="display:none;">
+                <label class="form-label">Taksit seçin</label>
+                <select class="form-select" id="installmentSelect">
+                    <option value="">-- Taksit seçin --</option>
+                </select>
+                <span class="text-danger" id="installmentError"></span>
+                <div id="installmentInfo" class="mt-2" style="display:none;">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">Taksit</dt>
+                                <dd class="col-sm-9" id="infoInstallmentNumber">-</dd>
+                                <dt class="col-sm-3">Tutar</dt>
+                                <dd class="col-sm-9" id="infoInstallmentAmount">-</dd>
+                                <dt class="col-sm-3">Vade</dt>
+                                <dd class="col-sm-9" id="infoInstallmentDueDate">-</dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -66,17 +90,38 @@
                 studentName = e.StudentName,
                 courseName = e.CourseName,
                 branchName = e.BranchName,
-                finalAmount = e.FinalAmount
+                finalAmount = e.FinalAmount,
+                paymentType = e.PaymentType
             })));
+
+        var installmentData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.EnrollmentInstallments.ToDictionary(
+                kvp => kvp.Key.ToString(),
+                kvp => kvp.Value.Select(i => new {
+                    id = i.Id,
+                    installmentNumber = i.InstallmentNumber,
+                    amount = i.Amount,
+                    dueDate = i.DueDate,
+                    status = i.Status
+                }))));
+        installmentData = installmentData || {};
 
         var $select = $('#enrollmentSelect');
         var $info = $('#enrollmentInfo');
         var $submitBtn = $('#submitBtn');
+        var $installmentSection = $('#installmentSection');
+        var $installmentSelect = $('#installmentSelect');
+        var $installmentInfo = $('#installmentInfo');
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('tr-TR', { style: 'decimal', minimumFractionDigits: 2 }).format(value) + ' ₺';
+        }
 
         function updateEnrollmentInfo() {
             var selectedId = $select.val();
             if (!selectedId) {
                 $info.hide();
+                $installmentSection.hide();
                 $submitBtn.prop('disabled', true);
                 return;
             }
@@ -86,13 +131,51 @@
                 $('#infoStudentName').text(enrollment.studentName);
                 $('#infoCourseName').text(enrollment.courseName);
                 $('#infoBranchName').text(enrollment.branchName || '-');
-                $('#infoFinalAmount').text(new Intl.NumberFormat('tr-TR', { style: 'decimal', minimumFractionDigits: 2 }).format(enrollment.finalAmount) + ' ₺');
+                $('#infoPaymentType').text(enrollment.paymentType === 'Installment' ? 'Taksitli' : 'Nakit');
+                $('#infoFinalAmount').text(formatCurrency(enrollment.finalAmount));
                 $info.show();
-                $submitBtn.prop('disabled', false);
+
+                if (enrollment.paymentType === 'Installment') {
+                    var installments = installmentData[selectedId] || [];
+                    $installmentSelect.find('option:gt(0)').remove();
+                    $.each(installments, function (_, inst) {
+                        $installmentSelect.append($('<option>', {
+                            value: inst.id,
+                            text: '#' + inst.installmentNumber + ' - ' + formatCurrency(inst.amount) + ' (Vade: ' + inst.dueDate + ')'
+                        }));
+                    });
+                    $installmentSection.show();
+                    $installmentInfo.hide();
+                    $submitBtn.prop('disabled', true);
+                } else {
+                    $installmentSection.hide();
+                    $submitBtn.prop('disabled', false);
+                }
             }
         }
 
         $select.on('change', updateEnrollmentInfo);
+
+        $installmentSelect.on('change', function () {
+            var selectedId = $select.val();
+            var installmentId = $(this).val();
+            if (!installmentId) {
+                $installmentInfo.hide();
+                $submitBtn.prop('disabled', true);
+                return;
+            }
+
+            var installments = installmentData[selectedId] || [];
+            var inst = installments.find(function (i) { return i.id === installmentId; });
+            if (inst) {
+                $('#infoInstallmentNumber').text(inst.installmentNumber + '. taksit');
+                $('#infoInstallmentAmount').text(formatCurrency(inst.amount));
+                $('#infoInstallmentDueDate').text(inst.dueDate);
+                $installmentInfo.show();
+                $submitBtn.prop('disabled', false);
+            }
+        });
+
         updateEnrollmentInfo();
 
         // Form submit via AJAX
@@ -107,7 +190,20 @@
                 return;
             }
 
-            var description = $('#Description').val() || '';
+            var enrollment = enrollmentData.find(function (e) { return e.id === enrollmentId; });
+            var payload = {
+                enrollmentId: enrollmentId,
+                description: $('#Description').val() || ''
+            };
+
+            if (enrollment && enrollment.paymentType === 'Installment') {
+                var installmentId = $installmentSelect.val();
+                if (!installmentId) {
+                    Swal.fire('Uyarı', 'Lütfen bir taksit seçin.', 'warning');
+                    return;
+                }
+                payload.installmentId = installmentId;
+            }
 
             $submitBtn.prop('disabled', true).text('İşleniyor...');
 
@@ -116,10 +212,7 @@
                 method: 'POST',
                 contentType: 'application/json',
                 headers: { 'X-XSRF-TOKEN': token },
-                data: JSON.stringify({
-                    enrollmentId: enrollmentId,
-                    description: description
-                })
+                data: JSON.stringify(payload)
             }).done(function (data) {
                 Swal.fire({
                     title: 'Başarılı',

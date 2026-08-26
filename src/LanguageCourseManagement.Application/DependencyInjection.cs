@@ -6,6 +6,7 @@ using LanguageCourseManagement.Application.Services.FacilityService;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
 using LanguageCourseManagement.Application.Services.CourseLevelService;
 using LanguageCourseManagement.Application.Services.CourseService;
+using LanguageCourseManagement.Application.Services.InstallmentService;
 using LanguageCourseManagement.Application.Services.OfferedLanguageService;
 using LanguageCourseManagement.Application.Services.PaymentService;
 using LanguageCourseManagement.Application.Services.StudentService;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseService, CourseService>();
         services.AddScoped<IOfferedLanguageService, OfferedLanguageService>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IInstallmentService, InstallmentService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ITeacherService, TeacherService>();
 

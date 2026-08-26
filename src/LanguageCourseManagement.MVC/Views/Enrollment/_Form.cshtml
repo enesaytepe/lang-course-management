@@ -28,6 +28,15 @@
         <span class="text-danger" data-valmsg-for="DiscountAmount"></span>
     </div>
 
+    <div class="mb-3">
+        <label class="form-label" asp-for="PaymentType">Ödeme türü</label>
+        <select class="form-select" asp-for="PaymentType" id="PaymentType">
+            <option value="Cash">Nakit (Tek seferde)</option>
+            <option value="Installment">Taksitli ödeme</option>
+        </select>
+        <span class="text-danger" data-valmsg-for="PaymentType"></span>
+    </div>
+
     <div class="form-actions">
         <button class="btn btn-primary" type="submit">@(ViewData["SubmitText"] ?? "Kaydet")</button>
         <a class="btn btn-outline-secondary" asp-controller="Enrollment" asp-action="Index">Vazgeç</a>

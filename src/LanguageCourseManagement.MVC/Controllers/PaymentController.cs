@@ -1,6 +1,8 @@
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
+using LanguageCourseManagement.Application.Services.InstallmentService;
 using LanguageCourseManagement.Application.Services.PaymentService;
+using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.MVC.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +17,16 @@ public sealed class PaymentController : Controller
 {
     private readonly IPaymentService _paymentService;
     private readonly IEnrollmentService _enrollmentService;
+    private readonly IInstallmentService _installmentService;
 
-    public PaymentController(IPaymentService paymentService, IEnrollmentService enrollmentService)
+    public PaymentController(
+        IPaymentService paymentService,
+        IEnrollmentService enrollmentService,
+        IInstallmentService installmentService)
     {
         _paymentService = paymentService;
         _enrollmentService = enrollmentService;
+        _installmentService = installmentService;
     }
 
     /// <summary>
@@ -53,11 +60,38 @@ public sealed class PaymentController : Controller
                 StudentName = e.StudentName,
                 CourseName = e.CourseName,
                 BranchName = string.Empty,
-                FinalAmount = e.FinalAmount
+                FinalAmount = e.FinalAmount,
+                PaymentType = e.PaymentType
             })
             .ToList();
 
         model.UnsettledEnrollments = unsettled;
+
+        // Taksitli kayıtlar için taksit bilgilerini yükle
+        foreach (var enrollment in unsettled.Where(e => e.PaymentType == PaymentType.Installment.ToString()))
+        {
+            try
+            {
+                var installments = await _installmentService.GetByEnrollmentIdAsync(enrollment.Id, cancellationToken);
+                var pendingInstallments = installments
+                    .Where(i => i.Status == PaymentStatus.Pending.ToString())
+                    .Select(i => new InstallmentOptionViewModel
+                    {
+                        Id = i.Id,
+                        InstallmentNumber = i.InstallmentNumber,
+                        Amount = i.Amount,
+                        DueDate = i.DueDate,
+                        Status = i.Status
+                    })
+                    .ToList();
+                model.EnrollmentInstallments[enrollment.Id] = pendingInstallments;
+            }
+            catch (NotFoundException)
+            {
+                // Taksit planı henüz oluşturulmamış olabilir
+                model.EnrollmentInstallments[enrollment.Id] = [];
+            }
+        }
 
         // Eğer enrollmentId belirtilmişse ilgili kaydın bilgilerini doldur
         if (enrollmentId.HasValue)
@@ -69,6 +103,7 @@ public sealed class PaymentController : Controller
                 model.CourseName = selected.CourseName;
                 model.BranchName = selected.BranchName;
                 model.FinalAmount = selected.FinalAmount;
+                model.EnrollmentPaymentType = selected.PaymentType;
             }
         }
 

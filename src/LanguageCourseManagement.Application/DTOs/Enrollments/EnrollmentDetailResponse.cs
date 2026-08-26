@@ -15,5 +15,7 @@ public sealed class EnrollmentDetailResponse
     public decimal FinalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public bool IsSettled { get; set; }
+    public string PaymentType { get; set; } = string.Empty;
     public Guid? PaymentId { get; set; }
+    public List<InstallmentResponse> Installments { get; set; } = [];
 }
