@@ -68,3 +68,37 @@
 - "Ex Alpha Free" modeli opencode-go üzerinde küçük ve sınırlı görevler için kullanılabilir.
 - Orchestrator yalnızca yönetir ve yönlendirir; uygulama yapmaz.
 - Large work into small, independent pieces for parallel delegation.
+
+## Mimari Standartlar
+
+- Clean Architecture: Domain → Application → Infrastructure → MVC
+- Domain katmanı EF Core veya Infrastructure bağımlılığı içermez
+- Application iş mantığını ve service akışlarını yönetir
+- Controller'lar ince tutulur, iş mantığı taşımaz
+- MVC controller'lar sayfa/navigasyon sorumluluğundadır
+- Create/update/delete mutation'ları AJAX ile /api/* endpoint'lerine gider
+- MediatR/CQRS kullanılmaz, service-based yapı korunur
+
+## Kod Standartları
+
+- async/await ve CancellationToken tüm service methodlarında kullanılır
+- Nullable reference types aktif yönetilir
+- Controller içinde business logic tutulmaz
+- Service layer'da validation ve iş kuralları uygulanır
+- Repository pattern generic base + specialized method olarak kullanılır
+- Para alanlarında decimal kullanılır, float/double kullanılmaz
+
+## Güvenlik
+
+- Hardcoded secret, password veya connection string commit edilmez
+- Demo credentials environment variable veya user secrets ile yönetilir
+- Authorization yalnız UI'da değil API endpoint'lerinde de uygulanır
+- Raw SQL hata mesajları client'a dönülmez
+
+## Test Stratejisi
+
+- Kritik business logic için unit test yazılır
+- DB constraint ve transaction testleri integration test gerektirir
+- Concurrency testleri integration test gerektirir
+- Mock tabanlı unit test, DB constraint testi yerine geçmez
+- Kritik testler Skip durumda bırakılmaz
