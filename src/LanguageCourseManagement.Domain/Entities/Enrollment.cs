@@ -48,15 +48,27 @@ public class Enrollment : BaseEntity
     public EnrollmentStatus Status { get; set; }
 
     /// <summary>
+    /// Ödeme türü: nakit tek seferde veya taksitli
+    /// </summary>
+    public PaymentType PaymentType { get; set; }
+
+    /// <summary>
     /// Kaydı yapılan öğrenci
     /// </summary>
     public virtual Student Student { get; set; } = null!;
+
     /// <summary>
     /// Öğrencinin kaydolduğu ders
     /// </summary>
     public virtual Course Course { get; set; } = null!;
+
     /// <summary>
-    /// Kayıt için oluşturulabilecek nakit tahsilat
+    /// Kayıt için oluşturulan tahsilatlar
     /// </summary>
-    public virtual Payment? Payment { get; set; }
+    public virtual List<Payment>? Payments { get; set; }
+
+    /// <summary>
+    /// Kayıt için oluşturulan taksitler
+    /// </summary>
+    public virtual List<Installment>? Installments { get; set; }
 }

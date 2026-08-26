@@ -98,18 +98,14 @@ public class PaymentService : IPaymentService
     /// <inheritdoc />
     public async Task<PaymentResponse> CreateAsync(CreatePaymentRequest request, Guid userId, CancellationToken cancellationToken = default)
     {
-        // Idempotency: Aynı kayıt için birden fazla tahsilat engellenir
-        Payment? existingPayment = await _paymentRepository.GetByEnrollmentIdAsync(request.EnrollmentId, cancellationToken);
-        if (existingPayment is not null)
-            throw new BusinessException("Bu kayıt için tahsilat zaten yapılmıştır.");
-
-        // Kayıt doğrulaması
+        // Kayıt doğrulaması (taksitli ödemeler için RemainingBalance hesaplaması Payments koleksiyonuna bağlıdır)
         Enrollment? enrollment = await _enrollmentRepository.GetAsync(
             e => e.Id == request.EnrollmentId,
             include: q => q
                 .Include(e => e.Student)
                 .Include(e => e.Course)
-                    .ThenInclude(c => c.Branch),
+                    .ThenInclude(c => c.Branch)
+                .Include(e => e.Payments),
             cancellationToken: cancellationToken);
 
         if (enrollment is null)
@@ -118,18 +114,33 @@ public class PaymentService : IPaymentService
         if (enrollment.Status != EnrollmentStatus.Active)
             throw new BusinessException("Yalnızca aktif kayıtlar için tahsilat yapılabilir.");
 
-        // İlk sürümde sadece nakit tam tahsilat: Tutar otomatik olarak kaydın nihai tutarına eşitlenir
+        // Nakit ödemede mükerrer tahsilat engeli; taksitli ödemeye izin verilir
+        if (enrollment.PaymentType == PaymentType.Cash)
+        {
+            Payment? existingPayment = await _paymentRepository.GetByEnrollmentIdAsync(request.EnrollmentId, cancellationToken);
+            if (existingPayment is not null)
+                throw new BusinessException("Bu kayıt için tahsilat zaten yapılmıştır.");
+        }
+
+        // Tutar: nakit ise tam tutar, taksitli ise kalan bakiye kadar
+        decimal totalPaid = enrollment.Payments?.Where(p => p.Status == PaymentStatus.Settled).Sum(p => p.Amount) ?? 0;
+        decimal remainingBalance = enrollment.FinalAmount - totalPaid;
+        decimal paymentAmount = enrollment.PaymentType == PaymentType.Cash
+            ? enrollment.FinalAmount
+            : remainingBalance;
+
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
             EnrollmentId = request.EnrollmentId,
-            Amount = enrollment.FinalAmount,
+            Amount = paymentAmount,
             Method = PaymentMethod.Cash,
             Status = PaymentStatus.Settled,
             SettledAt = DateTimeOffset.UtcNow,
             CollectedByUserId = userId,
             IdempotencyKey = Guid.NewGuid().ToString("N"),
-            Description = request.Description
+            Description = request.Description,
+            PaymentDate = DateTime.UtcNow
         };
 
         await _paymentRepository.AddAsync(payment);
