@@ -17,6 +17,7 @@ public interface ICourseService
         Guid? branchId,
         Guid? offeredLanguageId,
         bool? isActive,
+        bool showDeleted = false,
         CancellationToken cancellationToken = default);
 
     Task<CourseResponse> CreateAsync(CreateCourseRequest request, CancellationToken cancellationToken = default);

@@ -52,6 +52,7 @@ public class BranchService : IBranchService
         PageRequest pageRequest,
         string? search,
         bool? isActive,
+        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         // Arama ve şube durumuna göre dinamik filtre oluştur
@@ -77,12 +78,25 @@ public class BranchService : IBranchService
             predicate = b => b.IsActive == isActive.Value;
         }
 
-        IPaginate<Branch> branches = await _branchRepository.GetListAsync(
-            predicate: predicate,
-            orderBy: q => q.OrderByDescending(b => b.CreatedAt),
-            index: pageRequest.PageIndex,
-            size: pageRequest.PageSize,
-            cancellationToken: cancellationToken);
+        IPaginate<Branch> branches;
+        if (showDeleted)
+        {
+            var queryable = _branchRepository.QueryWithIgnoreFilters().AsNoTracking();
+            if (predicate != null)
+                queryable = queryable.Where(predicate);
+            branches = await queryable
+                .OrderByDescending(b => b.CreatedAt)
+                .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, from: 0, cancellationToken);
+        }
+        else
+        {
+            branches = await _branchRepository.GetListAsync(
+                predicate: predicate,
+                orderBy: q => q.OrderByDescending(b => b.CreatedAt),
+                index: pageRequest.PageIndex,
+                size: pageRequest.PageSize,
+                cancellationToken: cancellationToken);
+        }
 
         _logger.LogInformation("[BranchService] Sube listesi getirildi - Sayfa: {PageIndex}, Boyut: {PageSize}", pageRequest.PageIndex, pageRequest.PageSize);
         return new GetListResponse<BranchListResponse>

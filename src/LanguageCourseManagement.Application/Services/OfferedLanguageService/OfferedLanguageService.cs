@@ -7,6 +7,7 @@ using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
@@ -37,14 +38,26 @@ public sealed class OfferedLanguageService : IOfferedLanguageService
         return _mapper.Map<OfferedLanguageResponse>(language);
     }
 
-    public async Task<GetListResponse<OfferedLanguageListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default)
+    public async Task<GetListResponse<OfferedLanguageListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         Expression<Func<OfferedLanguage, bool>> predicate = language =>
             (!isActive.HasValue || language.IsActive == isActive.Value) &&
             (normalizedSearch == null || language.Name.Contains(normalizedSearch) || (language.Code != null && language.Code.Contains(normalizedSearch)));
 
-        IPaginate<OfferedLanguage> languages = await _offeredLanguageRepository.GetListAsync(predicate: predicate, orderBy: query => query.OrderBy(language => language.Name), index: pageRequest.PageIndex, size: pageRequest.PageSize, enableTracking: false, cancellationToken: cancellationToken);
+        IPaginate<OfferedLanguage> languages;
+        if (showDeleted)
+        {
+            var queryable = _offeredLanguageRepository.QueryWithIgnoreFilters().AsNoTracking();
+            queryable = queryable.Where(predicate);
+            languages = await queryable
+                .OrderBy(language => language.Name)
+                .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, from: 0, cancellationToken);
+        }
+        else
+        {
+            languages = await _offeredLanguageRepository.GetListAsync(predicate: predicate, orderBy: query => query.OrderBy(language => language.Name), index: pageRequest.PageIndex, size: pageRequest.PageSize, enableTracking: false, cancellationToken: cancellationToken);
+        }
         return new GetListResponse<OfferedLanguageListResponse>
         {
             Index = languages.Index, Size = languages.Size, Count = languages.Count, Pages = languages.Pages,

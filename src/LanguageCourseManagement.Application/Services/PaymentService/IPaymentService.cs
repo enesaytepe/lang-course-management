@@ -17,7 +17,7 @@ public interface IPaymentService
     /// <summary>
     /// Arama kriterlerine göre tahsilatları sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<PaymentListResponse>> GetListAsync(PageRequest pageRequest, string? search, CancellationToken cancellationToken = default);
+    Task<GetListResponse<PaymentListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool showDeleted = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Nakit tam tahsilat gerçekleştirir.

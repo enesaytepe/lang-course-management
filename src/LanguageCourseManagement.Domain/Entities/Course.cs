@@ -5,7 +5,7 @@ namespace LanguageCourseManagement.Domain.Entities;
 /// <summary>
 /// Açılan kurs
 /// </summary>
-public class Course : BaseEntity
+public class Course : SoftDeletableEntity
 {
     /// <summary>
     /// Dersin açıldığı şube Id

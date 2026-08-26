@@ -29,3 +29,51 @@
         <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>
     </div>
 </section>
+
+<section class="content-card" style="margin-top: 1.5rem;">
+    <div class="section-heading">
+        <div>
+            <h2>Kayıt Geçmişi</h2>
+            <p>Bu öğrenciye ait tüm kurs kayıtları</p>
+        </div>
+    </div>
+
+    @if (Model.Enrollments.Count == 0)
+    {
+        <p class="text-muted">Henüz bir kurs kaydı bulunmuyor.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Ders</th>
+                        <th>Kayıt Tarihi</th>
+                        <th>Ücret</th>
+                        <th>İndirim</th>
+                        <th>Ödeme Türü</th>
+                        <th>Durum</th>
+                        <th>Tahsilat</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var enrollment in Model.Enrollments)
+                    {
+                        <tr>
+                            <td>@enrollment.CourseName</td>
+                            <td>-</td>
+                            <td>@enrollment.FinalAmount.ToString("C")</td>
+                            <td>-</td>
+                            <td>@enrollment.PaymentType</td>
+                            <td><span class="status-pill @(enrollment.Status == "Active" ? "status-active" : string.Empty)">@enrollment.Status</span></td>
+                            <td><span class="status-pill @(enrollment.IsSettled ? "status-active" : string.Empty)">@(enrollment.IsSettled ? "Tamamlandı" : "Bekliyor")</span></td>
+                            <td><a asp-controller="Enrollment" asp-action="Details" asp-route-id="@enrollment.Id" class="btn btn-sm btn-outline-secondary">Detay</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

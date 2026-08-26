@@ -5,7 +5,7 @@ namespace LanguageCourseManagement.Domain.Entities;
 /// <summary>
 /// Taksitli ödeme planının bir taksidi
 /// </summary>
-public class Installment : BaseEntity
+public class Installment : SoftDeletableEntity
 {
     /// <summary>
     /// Taksidin ait olduğu kayıt Id

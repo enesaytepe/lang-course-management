@@ -10,7 +10,7 @@ namespace LanguageCourseManagement.Application.Services.TeacherService;
 public interface ITeacherService
 {
     Task<TeacherResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default);
+    Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
     Task<TeacherResponse> CreateAsync(CreateTeacherRequest request, CancellationToken cancellationToken = default);
     Task<TeacherResponse> UpdateAsync(Guid id, UpdateTeacherRequest request, CancellationToken cancellationToken = default);
     Task<TeacherResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default);

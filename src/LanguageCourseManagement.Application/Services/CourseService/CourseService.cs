@@ -70,6 +70,7 @@ public sealed class CourseService : ICourseService
         Guid? branchId,
         Guid? offeredLanguageId,
         bool? isActive,
+        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
@@ -86,7 +87,8 @@ public sealed class CourseService : ICourseService
              (course.Teacher != null && (course.Teacher.FirstName.Contains(normalizedSearch) || course.Teacher.LastName.Contains(normalizedSearch))) ||
              (course.Classroom != null && course.Classroom.Name.Contains(normalizedSearch)));
 
-        var courses = await _courseRepository.Query()
+        var courseQuery = showDeleted ? _courseRepository.QueryWithIgnoreFilters() : _courseRepository.Query();
+        var courses = await courseQuery
             .Where(predicate)
             .OrderByDescending(course => course.StartDate).ThenBy(course => course.Name)
             .ProjectTo<CourseListResponse>(_mapper.ConfigurationProvider)

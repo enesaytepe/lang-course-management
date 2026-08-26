@@ -1,6 +1,7 @@
 using AutoMapper;
 using LanguageCourseManagement.Application.DTOs.Students;
 using LanguageCourseManagement.Application.Exceptions;
+using LanguageCourseManagement.Application.Services.EnrollmentService;
 using LanguageCourseManagement.Application.Services.StudentService;
 using LanguageCourseManagement.MVC.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,13 @@ namespace LanguageCourseManagement.MVC.Controllers;
 public sealed class StudentController : Controller
 {
     private readonly IStudentService _studentService;
+    private readonly IEnrollmentService _enrollmentService;
     private readonly IMapper _mapper;
 
-    public StudentController(IStudentService studentService, IMapper mapper)
+    public StudentController(IStudentService studentService, IEnrollmentService enrollmentService, IMapper mapper)
     {
         _studentService = studentService;
+        _enrollmentService = enrollmentService;
         _mapper = mapper;
     }
 
@@ -131,7 +134,10 @@ public sealed class StudentController : Controller
         try
         {
             var student = await _studentService.GetByIdAsync(id, cancellationToken);
-            return View(_mapper.Map<StudentDetailsViewModel>(student));
+            var enrollments = await _enrollmentService.GetByStudentIdAsync(id, cancellationToken);
+            var viewModel = _mapper.Map<StudentDetailsViewModel>(student);
+            viewModel.Enrollments = enrollments;
+            return View(viewModel);
         }
         catch (NotFoundException)
         {

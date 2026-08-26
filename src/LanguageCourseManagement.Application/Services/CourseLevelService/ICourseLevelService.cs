@@ -10,7 +10,7 @@ namespace LanguageCourseManagement.Application.Services.CourseLevelService;
 public interface ICourseLevelService
 {
     Task<CourseLevelResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, CancellationToken cancellationToken = default);
+    Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
     Task<CourseLevelResponse> CreateAsync(CreateCourseLevelRequest request, CancellationToken cancellationToken = default);
     Task<CourseLevelResponse> UpdateAsync(Guid id, UpdateCourseLevelRequest request, CancellationToken cancellationToken = default);
     Task<CourseLevelResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default);

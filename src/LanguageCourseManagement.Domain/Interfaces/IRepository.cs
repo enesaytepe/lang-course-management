@@ -13,6 +13,9 @@ public interface IRepository<TEntity> where TEntity : BaseEntity
     /// <summary>Entity sorgusu döndürür.</summary>
     IQueryable<TEntity> Query();
 
+    /// <summary>Global query filter'ları hariç tutarak entity sorgusu döndürür.</summary>
+    IQueryable<TEntity> QueryWithIgnoreFilters();
+
     /// <summary>Koşula göre tek entity getirir; bulunamazsa null döndürür.</summary>
     Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null, bool enableTracking = true, CancellationToken cancellationToken = default);
 

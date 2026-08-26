@@ -52,11 +52,11 @@ public sealed class DashboardController : Controller
             pageRequest,
             search: null,
             isActive: true,
-            cancellationToken);
-        var classrooms = await _classroomService.GetListAsync(pageRequest, search: null, branchId: null, isActive: true, cancellationToken);
-        var teachers = await _teacherService.GetListAsync(pageRequest, search: null, isActive: true, cancellationToken);
-        var students = await _studentService.GetListAsync(pageRequest, search: null, isActive: true, cancellationToken);
-        var courses = await _courseService.GetListAsync(pageRequest, search: null, branchId: null, offeredLanguageId: null, isActive: true, cancellationToken);
+            cancellationToken: cancellationToken);
+        var classrooms = await _classroomService.GetListAsync(pageRequest, search: null, branchId: null, isActive: true, cancellationToken: cancellationToken);
+        var teachers = await _teacherService.GetListAsync(pageRequest, search: null, isActive: true, cancellationToken: cancellationToken);
+        var students = await _studentService.GetListAsync(pageRequest, search: null, isActive: true, cancellationToken: cancellationToken);
+        var courses = await _courseService.GetListAsync(pageRequest, search: null, branchId: null, offeredLanguageId: null, isActive: true, cancellationToken: cancellationToken);
         var enrollments = await _enrollmentService.GetListAsync(cancellationToken);
         var payments = await _enrollmentService.GetPaymentsAsync(cancellationToken);
 

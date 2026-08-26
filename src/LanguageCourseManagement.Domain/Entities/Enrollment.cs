@@ -5,7 +5,7 @@ namespace LanguageCourseManagement.Domain.Entities;
 /// <summary>
 /// Öğrenci kaydı
 /// </summary>
-public class Enrollment : BaseEntity
+public class Enrollment : SoftDeletableEntity
 {
     /// <summary>
     /// Kaydı yapılan öğrenci Id

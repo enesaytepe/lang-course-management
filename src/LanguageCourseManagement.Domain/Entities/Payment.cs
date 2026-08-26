@@ -5,7 +5,7 @@ namespace LanguageCourseManagement.Domain.Entities;
 /// <summary>
 /// Kayıt için tahsilat kaydı
 /// </summary>
-public class Payment : BaseEntity
+public class Payment : SoftDeletableEntity
 {
     /// <summary>
     /// Tahsilatın ait olduğu kayıt Id

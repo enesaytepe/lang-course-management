@@ -189,7 +189,7 @@ public sealed class ClassroomController : Controller
                 new PageRequest { PageIndex = pageIndex, PageSize = pageSize },
                 search: null,
                 isActive: includeInactive ? null : true,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             options.AddRange(branches.Items.Select(branch => new ClassroomBranchOptionViewModel
             {

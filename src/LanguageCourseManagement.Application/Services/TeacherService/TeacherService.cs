@@ -56,7 +56,7 @@ public sealed class TeacherService : ITeacherService
         return ToResponse(teacher);
     }
 
-    public async Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default)
+    public async Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         var searchLower = normalizedSearch?.ToLowerInvariant();
@@ -68,13 +68,25 @@ public sealed class TeacherService : ITeacherService
              teacher.MobilePhone.ToLower().Contains(searchLower) ||
              (teacher.Email != null && teacher.Email.ToLower().Contains(searchLower)));
 
-        IPaginate<Teacher> teachers = await _teacherRepository.GetListAsync(
-            predicate: predicate,
-            orderBy: query => query.OrderBy(teacher => teacher.LastName).ThenBy(teacher => teacher.FirstName),
-            index: pageRequest.PageIndex,
-            size: pageRequest.PageSize,
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        IPaginate<Teacher> teachers;
+        if (showDeleted)
+        {
+            var queryable = _teacherRepository.QueryWithIgnoreFilters().AsNoTracking();
+            queryable = queryable.Where(predicate);
+            teachers = await queryable
+                .OrderBy(teacher => teacher.LastName).ThenBy(teacher => teacher.FirstName)
+                .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, from: 0, cancellationToken);
+        }
+        else
+        {
+            teachers = await _teacherRepository.GetListAsync(
+                predicate: predicate,
+                orderBy: query => query.OrderBy(teacher => teacher.LastName).ThenBy(teacher => teacher.FirstName),
+                index: pageRequest.PageIndex,
+                size: pageRequest.PageSize,
+                enableTracking: false,
+                cancellationToken: cancellationToken);
+        }
 
         return new GetListResponse<TeacherListResponse>
         {
@@ -159,10 +171,8 @@ public sealed class TeacherService : ITeacherService
         if (teacher is null)
             throw new NotFoundException("Öğretmen bulunamadı.");
 
-        teacher.IsDeleted = true;
-        teacher.DeletedAt = DateTimeOffset.UtcNow;
-        await _teacherRepository.UpdateAsync(teacher, cancellationToken);
-        _logger.LogInformation("[TeacherService] Öğretmen silindi - {TeacherId}", teacher.Id);
+        await _teacherRepository.DeleteAsync(teacher, cancellationToken);
+        _logger.LogInformation("[TeacherService] Öğretmen silindi - {TeacherId}", id);
         return ToResponse(teacher);
     }
 

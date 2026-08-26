@@ -15,6 +15,7 @@ public interface IFacilityRepository
         int size,
         string? search = null,
         bool? isActive = null,
+        bool ignoreQueryFilters = false,
         CancellationToken cancellationToken = default);
 
     Task<Facility?> GetByIdAsync(
