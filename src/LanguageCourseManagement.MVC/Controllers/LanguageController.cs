@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.DTOs.OfferedLanguages;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.OfferedLanguageService;
@@ -10,10 +11,12 @@ namespace LanguageCourseManagement.MVC.Controllers;
 public sealed class LanguageController : Controller
 {
     private readonly IOfferedLanguageService _languageService;
+    private readonly IMapper _mapper;
 
-    public LanguageController(IOfferedLanguageService languageService)
+    public LanguageController(IOfferedLanguageService languageService, IMapper mapper)
     {
         _languageService = languageService;
+        _mapper = mapper;
     }
 
     [HttpGet, Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
@@ -36,7 +39,7 @@ public sealed class LanguageController : Controller
 
         try
         {
-            var language = await _languageService.CreateAsync(ToCreateRequest(model), cancellationToken);
+            var language = await _languageService.CreateAsync(_mapper.Map<CreateOfferedLanguageRequest>(model), cancellationToken);
             return RedirectToAction(nameof(Details), new { id = language.Id });
         }
         catch (BusinessException exception)
@@ -49,7 +52,7 @@ public sealed class LanguageController : Controller
     [HttpGet, Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
     {
-        try { return View(ToFormModel(await _languageService.GetByIdAsync(id, cancellationToken))); }
+        try { return View(_mapper.Map<LanguageFormViewModel>(await _languageService.GetByIdAsync(id, cancellationToken))); }
         catch (NotFoundException) { return NotFound(); }
     }
 
@@ -61,7 +64,7 @@ public sealed class LanguageController : Controller
         if (!ModelState.IsValid) return View(model);
         try
         {
-            var language = await _languageService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken);
+            var language = await _languageService.UpdateAsync(id, _mapper.Map<UpdateOfferedLanguageRequest>(model), cancellationToken);
             return RedirectToAction(nameof(Details), new { id = language.Id });
         }
         catch (BusinessException exception)
@@ -103,35 +106,5 @@ public sealed class LanguageController : Controller
     private void AddWhitespaceValidationError(LanguageFormViewModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Name)) ModelState.AddModelError(nameof(model.Name), "Dil adı zorunludur.");
-    }
-
-    private static LanguageFormViewModel ToFormModel(OfferedLanguageResponse language)
-    {
-        return new()
-        {
-            Id = language.Id,
-            Name = language.Name,
-            Code = language.Code,
-            IsActive = language.IsActive
-        };
-    }
-
-    private static CreateOfferedLanguageRequest ToCreateRequest(LanguageFormViewModel model)
-    {
-        return new()
-        {
-            Name = model.Name,
-            Code = model.Code
-        };
-    }
-
-    private static UpdateOfferedLanguageRequest ToUpdateRequest(LanguageFormViewModel model)
-    {
-        return new()
-        {
-            Name = model.Name,
-            Code = model.Code,
-            IsActive = model.IsActive
-        };
     }
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.DTOs.Students;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.StudentService;
@@ -10,10 +11,12 @@ namespace LanguageCourseManagement.MVC.Controllers;
 public sealed class StudentController : Controller
 {
     private readonly IStudentService _studentService;
+    private readonly IMapper _mapper;
 
-    public StudentController(IStudentService studentService)
+    public StudentController(IStudentService studentService, IMapper mapper)
     {
         _studentService = studentService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -42,7 +45,7 @@ public sealed class StudentController : Controller
 
         try
         {
-            var student = await _studentService.CreateAsync(ToCreateRequest(model), cancellationToken);
+            var student = await _studentService.CreateAsync(_mapper.Map<CreateStudentRequest>(model), cancellationToken);
             return RedirectToAction(nameof(Details), new { id = student.Id });
         }
         catch (BusinessException exception)
@@ -59,7 +62,7 @@ public sealed class StudentController : Controller
         try
         {
             var student = await _studentService.GetByIdAsync(id, cancellationToken);
-            return View(ToFormModel(student));
+            return View(_mapper.Map<StudentFormViewModel>(student));
         }
         catch (NotFoundException)
         {
@@ -85,7 +88,7 @@ public sealed class StudentController : Controller
 
         try
         {
-            var student = await _studentService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken);
+            var student = await _studentService.UpdateAsync(id, _mapper.Map<UpdateStudentRequest>(model), cancellationToken);
             return RedirectToAction(nameof(Details), new { id = student.Id });
         }
         catch (BusinessException exception)
@@ -107,7 +110,7 @@ public sealed class StudentController : Controller
         try
         {
             var student = await _studentService.GetByIdAsync(id, cancellationToken);
-            return View(ToDetailsViewModel(student));
+            return View(_mapper.Map<StudentDetailsViewModel>(student));
         }
         catch (NotFoundException)
         {
@@ -146,59 +149,5 @@ public sealed class StudentController : Controller
 
         if (string.IsNullOrWhiteSpace(model.MobilePhone))
             ModelState.AddModelError(nameof(model.MobilePhone), "Cep telefonu zorunludur.");
-    }
-
-    private static StudentFormViewModel ToFormModel(StudentResponse student)
-    {
-        return new()
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            HomePhone = student.HomePhone,
-            MobilePhone = student.MobilePhone,
-            Email = student.Email,
-            IsActive = student.IsActive
-        };
-    }
-
-    private static StudentDetailsViewModel ToDetailsViewModel(StudentResponse student)
-    {
-        return new()
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            HomePhone = student.HomePhone,
-            MobilePhone = student.MobilePhone,
-            Email = student.Email,
-            RegistrationDate = student.RegistrationDate,
-            IsActive = student.IsActive
-        };
-    }
-
-    private static CreateStudentRequest ToCreateRequest(StudentFormViewModel model)
-    {
-        return new()
-        {
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            HomePhone = model.HomePhone,
-            MobilePhone = model.MobilePhone,
-            Email = model.Email
-        };
-    }
-
-    private static UpdateStudentRequest ToUpdateRequest(StudentFormViewModel model)
-    {
-        return new()
-        {
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            HomePhone = model.HomePhone,
-            MobilePhone = model.MobilePhone,
-            Email = model.Email,
-            IsActive = model.IsActive
-        };
     }
 }

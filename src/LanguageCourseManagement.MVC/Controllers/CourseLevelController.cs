@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.DTOs.CourseLevels;
 using LanguageCourseManagement.Application.Exceptions;
@@ -13,11 +14,13 @@ public sealed class CourseLevelController : Controller
 {
     private readonly ICourseLevelService _courseLevelService;
     private readonly IOfferedLanguageService _languageService;
+    private readonly IMapper _mapper;
 
-    public CourseLevelController(ICourseLevelService courseLevelService, IOfferedLanguageService languageService)
+    public CourseLevelController(ICourseLevelService courseLevelService, IOfferedLanguageService languageService, IMapper mapper)
     {
         _courseLevelService = courseLevelService;
         _languageService = languageService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -51,7 +54,7 @@ public sealed class CourseLevelController : Controller
         }
         try
         {
-            var level = await _courseLevelService.CreateAsync(ToCreateRequest(model), cancellationToken);
+            var level = await _courseLevelService.CreateAsync(_mapper.Map<CreateCourseLevelRequest>(model), cancellationToken);
             return RedirectToAction(nameof(Details), new { id = level.Id });
         }
         catch (BusinessException exception)
@@ -69,7 +72,7 @@ public sealed class CourseLevelController : Controller
         try
         {
             var level = await _courseLevelService.GetByIdAsync(id, cancellationToken);
-            var model = ToFormModel(level);
+            var model = _mapper.Map<CourseLevelFormViewModel>(level);
             await PopulateLanguagesAsync(model, true, cancellationToken);
             return View(model);
         }
@@ -90,7 +93,7 @@ public sealed class CourseLevelController : Controller
         }
         try
         {
-            var level = await _courseLevelService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken);
+            var level = await _courseLevelService.UpdateAsync(id, _mapper.Map<UpdateCourseLevelRequest>(model), cancellationToken);
             return RedirectToAction(nameof(Details), new { id = level.Id });
         }
         catch (BusinessException exception)
@@ -162,39 +165,4 @@ public sealed class CourseLevelController : Controller
             ModelState.AddModelError(nameof(model.Name), "Seviye adı zorunludur.");
     }
 
-    private static CourseLevelFormViewModel ToFormModel(CourseLevelResponse level)
-    {
-        return new()
-        {
-            Id = level.Id,
-            OfferedLanguageId = level.OfferedLanguageId,
-            Name = level.Name,
-            Description = level.Description,
-            Order = level.Order,
-            IsActive = level.IsActive
-        };
-    }
-
-    private static CreateCourseLevelRequest ToCreateRequest(CourseLevelFormViewModel model)
-    {
-        return new()
-        {
-            OfferedLanguageId = model.OfferedLanguageId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Order = model.Order
-        };
-    }
-
-    private static UpdateCourseLevelRequest ToUpdateRequest(CourseLevelFormViewModel model)
-    {
-        return new()
-        {
-            OfferedLanguageId = model.OfferedLanguageId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Order = model.Order,
-            IsActive = model.IsActive
-        };
-    }
 }

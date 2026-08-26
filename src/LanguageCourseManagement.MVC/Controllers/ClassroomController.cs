@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.DTOs.Classrooms;
 using LanguageCourseManagement.Application.Exceptions;
@@ -13,13 +14,16 @@ public sealed class ClassroomController : Controller
 {
     private readonly IClassroomService _classroomService;
     private readonly IBranchService _branchService;
+    private readonly IMapper _mapper;
 
     public ClassroomController(
         IClassroomService classroomService,
-        IBranchService branchService)
+        IBranchService branchService,
+        IMapper mapper)
     {
         _classroomService = classroomService;
         _branchService = branchService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -54,7 +58,7 @@ public sealed class ClassroomController : Controller
         try
         {
             var classroom = await _classroomService.CreateAsync(
-                ToCreateRequest(model),
+                _mapper.Map<CreateClassroomRequest>(model),
                 cancellationToken);
 
             return RedirectToAction(nameof(Details), new { id = classroom.Id });
@@ -76,7 +80,7 @@ public sealed class ClassroomController : Controller
         try
         {
             var classroom = await _classroomService.GetByIdAsync(id, cancellationToken);
-            var model = ToFormModel(classroom);
+            var model = _mapper.Map<ClassroomFormViewModel>(classroom);
             await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
             return View(model);
         }
@@ -107,7 +111,7 @@ public sealed class ClassroomController : Controller
         {
             var classroom = await _classroomService.UpdateAsync(
                 id,
-                ToUpdateRequest(model),
+                _mapper.Map<UpdateClassroomRequest>(model),
                 cancellationToken);
 
             return RedirectToAction(nameof(Details), new { id = classroom.Id });
@@ -188,43 +192,5 @@ public sealed class ClassroomController : Controller
     {
         if (string.IsNullOrWhiteSpace(model.Name))
             ModelState.AddModelError(nameof(model.Name), "Derslik adı zorunludur.");
-    }
-
-    private static ClassroomFormViewModel ToFormModel(ClassroomResponse classroom)
-    {
-        return new()
-        {
-            Id = classroom.Id,
-            BranchId = classroom.BranchId,
-            Name = classroom.Name,
-            Description = classroom.Description,
-            Capacity = classroom.Capacity,
-            IsActive = classroom.IsActive
-        };
-    }
-
-    private static CreateClassroomRequest ToCreateRequest(
-        ClassroomFormViewModel model)
-    {
-        return new()
-        {
-            BranchId = model.BranchId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Capacity = model.Capacity
-        };
-    }
-
-    private static UpdateClassroomRequest ToUpdateRequest(
-        ClassroomFormViewModel model)
-    {
-        return new()
-        {
-            BranchId = model.BranchId.GetValueOrDefault(),
-            Name = model.Name,
-            Description = model.Description,
-            Capacity = model.Capacity,
-            IsActive = model.IsActive
-        };
     }
 }
