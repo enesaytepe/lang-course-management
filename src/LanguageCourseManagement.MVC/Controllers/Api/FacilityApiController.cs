@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers.Api;
 
+/// <summary>
+/// Tesis yönetimi API endpoint'leri.
+/// </summary>
 [ApiController]
 [Route("api/facilities")]
 [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
@@ -19,7 +22,12 @@ public sealed class FacilityApiController : ControllerBase
         _facilityService = facilityService;
     }
 
+    /// <summary>
+    /// Aktif tesisleri listeler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet]
+    [ProducesResponseType<IReadOnlyCollection<FacilityResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<FacilityResponse>>> GetActive(
         [FromQuery] bool includeInactive = false,
         CancellationToken cancellationToken = default)
@@ -29,6 +37,10 @@ public sealed class FacilityApiController : ControllerBase
             : await _facilityService.GetActiveAsync(cancellationToken));
     }
 
+    /// <summary>
+    /// Tesisleri sayfalı olarak listeler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet("crud-list")]
     [ProducesResponseType<GetListResponse<FacilityListResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<GetListResponse<FacilityListResponse>>> GetList(
@@ -48,46 +60,53 @@ public sealed class FacilityApiController : ControllerBase
             cancellationToken));
     }
 
+    /// <summary>
+    /// ID'ye göre tesis getirir.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet("{id:guid}")]
     [ProducesResponseType<FacilityResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<FacilityResponse>> GetById(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<FacilityResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         return Ok(await _facilityService.GetByIdAsync(id, cancellationToken));
     }
 
+    /// <summary>
+    /// Yeni tesis oluşturur.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<FacilityResponse>(StatusCodes.Status201Created)]
-    public async Task<ActionResult<FacilityResponse>> Create(
-        CreateFacilityRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<FacilityResponse>> Create(CreateFacilityRequest request, CancellationToken cancellationToken)
     {
         var result = await _facilityService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    /// <summary>
+    /// Mevcut tesisin bilgilerini günceller.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<FacilityResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<FacilityResponse>> Update(
-        Guid id,
-        UpdateFacilityRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<FacilityResponse>> Update(Guid id, UpdateFacilityRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _facilityService.UpdateAsync(id, request, cancellationToken));
     }
 
+    /// <summary>
+    /// Tesisi soft delete ile siler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<FacilityResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<FacilityResponse>> Delete(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<FacilityResponse>> Delete(Guid id, CancellationToken cancellationToken)
     {
         return Ok(await _facilityService.DeleteAsync(id, cancellationToken));
     }
