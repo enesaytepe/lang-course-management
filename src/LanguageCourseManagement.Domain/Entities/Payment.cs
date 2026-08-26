@@ -3,7 +3,7 @@ using LanguageCourseManagement.Domain.Enums;
 namespace LanguageCourseManagement.Domain.Entities;
 
 /// <summary>
-/// Kayıt için nakit tahsilat
+/// Kayıt için tahsilat kaydı
 /// </summary>
 public class Payment : BaseEntity
 {
@@ -11,6 +11,11 @@ public class Payment : BaseEntity
     /// Tahsilatın ait olduğu kayıt Id
     /// </summary>
     public Guid EnrollmentId { get; set; }
+
+    /// <summary>
+    /// Tahsilatın ait olduğu taksit Id (nakit ödemelerde null)
+    /// </summary>
+    public Guid? InstallmentId { get; set; }
 
     public string IdempotencyKey { get; set; } = string.Empty;
 
@@ -30,6 +35,11 @@ public class Payment : BaseEntity
     public PaymentStatus Status { get; set; }
 
     /// <summary>
+    /// Tahsilatın yapıldığı tarih
+    /// </summary>
+    public DateTime PaymentDate { get; set; }
+
+    /// <summary>
     /// Tahsilatın tamamlandığı tarih
     /// </summary>
     public DateTimeOffset SettledAt { get; set; }
@@ -47,5 +57,10 @@ public class Payment : BaseEntity
     /// <summary>
     /// Tahsilatın ait olduğu öğrenci kaydı
     /// </summary>
-    public Enrollment Enrollment { get; set; } = null!;
+    public virtual Enrollment Enrollment { get; set; } = null!;
+
+    /// <summary>
+    /// Tahsilatın ait olduğu taksit
+    /// </summary>
+    public virtual Installment? Installment { get; set; }
 }
