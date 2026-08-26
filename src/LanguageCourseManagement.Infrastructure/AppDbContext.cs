@@ -22,6 +22,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Facility> Facilities { get; set; }
     public DbSet<OfferedLanguage> OfferedLanguages { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    public DbSet<Installment> Installments { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Teacher> Teachers { get; set; }
     public DbSet<TeacherAvailability> TeacherAvailabilities { get; set; }
