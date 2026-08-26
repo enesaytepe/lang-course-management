@@ -48,15 +48,47 @@ public sealed class AuthApiController : ControllerBase
     [ValidateAntiForgeryToken]
     [ProducesResponseType<AuthUserResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status423Locked)]
     public async Task<ActionResult<AuthUserResponse>> Login(ApiLoginRequest request)
     {
-        var result = await _signInManager.PasswordSignInAsync(request.UserName, request.Password, request.RememberMe, false);
+        var result = await _signInManager.PasswordSignInAsync(request.UserName, request.Password, request.RememberMe, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+        {
+            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Title = "Account locked",
+                Detail = "Hesap çok fazla başarısız deneme nedeniyle kilitlendi. Lütfen daha sonra tekrar deneyin.",
+                Status = StatusCodes.Status423Locked,
+                Type = "https://api.languagemanagement.edu.tr/problems/account-locked"
+            };
+            return StatusCode(StatusCodes.Status423Locked, problemDetails);
+        }
+
         if (!result.Succeeded)
-            return Unauthorized(new { error = "Kullanıcı adı veya şifre hatalı." });
+        {
+            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Title = "Authentication failed",
+                Detail = "Kullanıcı adı veya şifre hatalı.",
+                Status = StatusCodes.Status401Unauthorized,
+                Type = "https://api.languagemanagement.edu.tr/problems/authentication"
+            };
+            return Unauthorized(problemDetails);
+        }
 
         var user = await _userManager.FindByNameAsync(request.UserName);
         if (user is null)
-            return Unauthorized(new { error = "Kimlik doğrulama başarısız." });
+        {
+            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Title = "Authentication failed",
+                Detail = "Kimlik doğrulama başarısız.",
+                Status = StatusCodes.Status401Unauthorized,
+                Type = "https://api.languagemanagement.edu.tr/problems/authentication"
+            };
+            return Unauthorized(problemDetails);
+        }
 
         var roles = await _userManager.GetRolesAsync(user);
         return Ok(new AuthUserResponse { UserName = user.UserName ?? request.UserName, Roles = roles.ToArray() });

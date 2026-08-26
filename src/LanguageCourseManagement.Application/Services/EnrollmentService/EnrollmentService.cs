@@ -160,6 +160,7 @@ public sealed class EnrollmentService : IEnrollmentService
         string? search,
         Guid? branchId,
         EnrollmentStatus? status,
+        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
@@ -172,7 +173,8 @@ public sealed class EnrollmentService : IEnrollmentService
              enrollment.Student.LastName.Contains(normalizedSearch) ||
              enrollment.Course.Name.Contains(normalizedSearch));
 
-        var enrollmentsPage = await _enrollmentRepository.Query()
+        var enrollmentQuery = showDeleted ? _enrollmentRepository.QueryWithIgnoreFilters() : _enrollmentRepository.Query();
+        var enrollmentsPage = await enrollmentQuery
             .Where(predicate)
             .OrderByDescending(enrollment => enrollment.EnrollmentDate)
             .ProjectTo<EnrollmentListItemResponse>(_mapper.ConfigurationProvider)
@@ -201,6 +203,16 @@ public sealed class EnrollmentService : IEnrollmentService
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<EnrollmentListItemResponse>> GetByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
+    {
+        return await _enrollmentRepository.Query()
+            .Where(e => e.StudentId == studentId)
+            .OrderByDescending(e => e.EnrollmentDate)
+            .ProjectTo<EnrollmentListItemResponse>(_mapper.ConfigurationProvider)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<EnrollmentDetailResponse> UpdateStatusAsync(
         Guid id,
         UpdateEnrollmentRequest request,
@@ -219,7 +231,7 @@ public sealed class EnrollmentService : IEnrollmentService
             include: query => query
                 .Include(item => item.Student)
                 .Include(item => item.Course)
-                .Include(item => item.Payments),
+                .Include(item => item.Payments!),
             cancellationToken: cancellationToken);
 
         if (enrollment is null)

@@ -74,8 +74,8 @@ public sealed class EnrollmentServiceTests
                 DiscountAmount = e.DiscountAmount,
                 FinalAmount = e.FinalAmount,
                 Status = e.Status.ToString(),
-                IsSettled = e.Payments.Any(),
-                PaymentId = e.Payments.FirstOrDefault()?.Id
+                IsSettled = e.Payments?.Any() == true,
+                PaymentId = e.Payments?.FirstOrDefault()?.Id
             });
 
         transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -103,8 +103,8 @@ public sealed class EnrollmentServiceTests
                 StudentId = e.StudentId,
                 CourseId = e.CourseId,
                 FinalAmount = e.FinalAmount,
-                IsSettled = e.Payments.Any(),
-                PaymentId = e.Payments.FirstOrDefault()?.Id
+                IsSettled = e.Payments?.Any() == true,
+                PaymentId = e.Payments?.FirstOrDefault()?.Id
             });
 
         var result = await CreateService().RegisterAndSettleAsync(request, Guid.NewGuid());

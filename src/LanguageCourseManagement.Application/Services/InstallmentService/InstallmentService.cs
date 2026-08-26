@@ -35,7 +35,7 @@ public sealed class InstallmentService : IInstallmentService
         var enrollment = await _enrollmentRepository.GetAsync(
             e => e.Id == enrollmentId,
             include: q => q
-                .Include(e => e.Installments),
+                .Include(e => e.Installments!),
             cancellationToken: cancellationToken)
             ?? throw new NotFoundException("Kayıt bulunamadı.");
 
@@ -89,8 +89,8 @@ public sealed class InstallmentService : IInstallmentService
         var enrollment = await _enrollmentRepository.GetAsync(
             e => e.Id == enrollmentId,
             include: q => q
-                .Include(e => e.Installments)
-                    .ThenInclude(i => i.Payments),
+                .Include(e => e.Installments!)
+                    .ThenInclude(i => i.Payments!),
             cancellationToken: cancellationToken)
             ?? throw new NotFoundException("Kayıt bulunamadı.");
 

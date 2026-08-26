@@ -40,7 +40,12 @@ public sealed class AccountController : Controller
             return View(model);
 
         var result = await _signInManager.PasswordSignInAsync(
-            model.UserName, model.Password, model.RememberMe, lockoutOnFailure: false);
+            model.UserName, model.Password, model.RememberMe, lockoutOnFailure: true);
+        if (result.IsLockedOut)
+        {
+            ModelState.AddModelError(string.Empty, "Hesap çok fazla başarısız deneme nedeniyle kilitlendi. Lütfen daha sonra tekrar deneyin.");
+            return View(model);
+        }
         if (result.Succeeded)
             return Redirect(IsLocalUrl(model.ReturnUrl) ? model.ReturnUrl! : "/");
 

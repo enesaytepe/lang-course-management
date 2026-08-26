@@ -20,6 +20,11 @@ public sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
         builder.Property(x => x.Longitude).HasPrecision(9, 6);
         builder.Property(x => x.IsDeleted).IsRequired().HasDefaultValue(false);
         builder.Property(x => x.DeletedAt).HasColumnType("datetimeoffset(0)");
+        builder.ToTable(x =>
+        {
+            x.HasCheckConstraint("CK_Branches_Latitude_Range", "[Latitude] >= -90 AND [Latitude] <= 90");
+            x.HasCheckConstraint("CK_Branches_Longitude_Range", "[Longitude] >= -180 AND [Longitude] <= 180");
+        });
         builder.HasIndex(x => x.Name).HasDatabaseName("UX_Branches_Name_Active").IsUnique().HasFilter("[IsDeleted] = 0");
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

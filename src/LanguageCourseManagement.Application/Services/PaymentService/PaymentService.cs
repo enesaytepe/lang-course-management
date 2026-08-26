@@ -53,9 +53,10 @@ public class PaymentService : IPaymentService
     public async Task<GetListResponse<PaymentListResponse>> GetListAsync(
         PageRequest pageRequest,
         string? search,
+        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Payment> query = _paymentRepository.Query();
+        IQueryable<Payment> query = showDeleted ? _paymentRepository.QueryWithIgnoreFilters() : _paymentRepository.Query();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -95,7 +96,7 @@ public class PaymentService : IPaymentService
                 .Include(e => e.Course)
                     .ThenInclude(c => c.Branch)
                 .Include(e => e.Payments)
-                .Include(e => e.Installments),
+                .Include(e => e.Installments!),
             cancellationToken: cancellationToken);
 
         if (enrollment is null)

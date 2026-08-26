@@ -6,6 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>LanguageCourseManagement.MVC</RootNamespace>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<UserSecretsId>a3f7b2c1-8d4e-4f9a-b6c3-2e5d8a1f7c9b</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
