@@ -1,6 +1,5 @@
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Paging;
-using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
 namespace LanguageCourseManagement.Domain.Interfaces;
@@ -17,10 +16,10 @@ public interface IRepository<TEntity> where TEntity : BaseEntity
     IQueryable<TEntity> QueryWithIgnoreFilters();
 
     /// <summary>Koşula göre tek entity getirir; bulunamazsa null döndürür.</summary>
-    Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null, bool enableTracking = true, CancellationToken cancellationToken = default);
+    Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include = null, bool enableTracking = true, CancellationToken cancellationToken = default);
 
     /// <summary>Koşula göre sayfalanmış entity listesi getirir.</summary>
-    Task<IPaginate<TEntity>> GetListAsync(Expression<Func<TEntity, bool>>? predicate = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null, int index = 0, int size = 10, bool enableTracking = true, CancellationToken cancellationToken = default);
+    Task<IPaginate<TEntity>> GetListAsync(Expression<Func<TEntity, bool>>? predicate = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null, Func<IQueryable<TEntity>, IQueryable<TEntity>>? include = null, int index = 0, int size = 10, bool enableTracking = true, CancellationToken cancellationToken = default);
 
     /// <summary>Koşula uyan herhangi bir kayıt var mı kontrol eder.</summary>
     Task<bool> AnyAsync(Expression<Func<TEntity, bool>>? predicate = null, bool enableTracking = true, CancellationToken cancellationToken = default);

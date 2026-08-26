@@ -2,7 +2,6 @@ using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Interfaces;
 using LanguageCourseManagement.Domain.Paging;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
 namespace LanguageCourseManagement.Infrastructure.Repositories;
@@ -73,7 +72,7 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
     public async Task<IPaginate<TEntity>> GetListAsync(
         Expression<Func<TEntity, bool>>? predicate = null,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>>? include = null,
         int index = 0,
         int size = 10,
         bool enableTracking = true,
@@ -94,7 +93,7 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
 
     public async Task<TEntity?> GetAsync(
         Expression<Func<TEntity, bool>> predicate,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+        Func<IQueryable<TEntity>, IQueryable<TEntity>>? include = null,
         bool enableTracking = true,
         CancellationToken cancellationToken = default
     )

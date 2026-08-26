@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace LanguageCourseManagement.Domain.Paging;
 
 /// <summary>
@@ -9,8 +7,9 @@ public static class IQueryablePaginateExtensions
 {
     /// <summary>
     /// Asenkron olarak sorguyu sayfalayıp <see cref="IPaginate{T}"/> döndürür.
+    /// EF Core'dan bağımsız standart LINQ kullanır.
     /// </summary>
-    public static async Task<IPaginate<T>> ToPaginateAsync<T>(
+    public static Task<IPaginate<T>> ToPaginateAsync<T>(
         this IQueryable<T> source,
         int index,
         int size,
@@ -21,8 +20,8 @@ public static class IQueryablePaginateExtensions
         if (from > index)
             throw new ArgumentException($"From: {from} > Index: {index}, must from <= Index");
 
-        int count = await source.CountAsync(cancellationToken).ConfigureAwait(false);
-        List<T> items = await source.Skip((index - from) * size).Take(size).ToListAsync(cancellationToken).ConfigureAwait(false); // from: sıfır tabanlı olmayan sayfalama için başlangıç ofseti; varsayılan 0
+        int count = source.Count();
+        List<T> items = source.Skip((index - from) * size).Take(size).ToList(); // from: sıfır tabanlı olmayan sayfalama için başlangıç ofseti; varsayılan 0
 
         Paginate<T> list = new()
         {
@@ -34,7 +33,7 @@ public static class IQueryablePaginateExtensions
             Pages = (int)Math.Ceiling(count / (double)size) // double cast: tam sayı bölümündeki kesme hatasını önler
         };
 
-        return list;
+        return Task.FromResult<IPaginate<T>>(list);
     }
 
     /// <summary>
