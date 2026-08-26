@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
 using LanguageCourseManagement.MVC.Models.ViewModels;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,10 +15,12 @@ namespace LanguageCourseManagement.MVC.Controllers;
 public sealed class EnrollmentController : Controller
 {
     private readonly IEnrollmentService _enrollmentService;
+    private readonly IMapper _mapper;
 
-    public EnrollmentController(IEnrollmentService enrollmentService)
+    public EnrollmentController(IEnrollmentService enrollmentService, IMapper mapper)
     {
         _enrollmentService = enrollmentService;
+        _mapper = mapper;
     }
 
     /// <summary>
@@ -47,7 +50,7 @@ public sealed class EnrollmentController : Controller
         try
         {
             var detail = await _enrollmentService.GetDetailsAsync(id, cancellationToken);
-            return View(ToViewModel(detail));
+            return View(_mapper.Map<EnrollmentDetailViewModel>(detail));
         }
         catch (NotFoundException)
         {
@@ -65,31 +68,11 @@ public sealed class EnrollmentController : Controller
         try
         {
             var detail = await _enrollmentService.GetDetailsAsync(id, cancellationToken);
-            return View(ToViewModel(detail));
+            return View(_mapper.Map<EnrollmentDetailViewModel>(detail));
         }
         catch (NotFoundException)
         {
             return NotFound();
         }
-    }
-
-    private static EnrollmentDetailViewModel ToViewModel(EnrollmentDetailResponse detail)
-    {
-        return new()
-        {
-            Id = detail.Id,
-            StudentId = detail.StudentId,
-            StudentName = detail.StudentName,
-            CourseId = detail.CourseId,
-            CourseName = detail.CourseName,
-            TuitionFee = detail.TuitionFee,
-            DiscountAmount = detail.DiscountAmount,
-            FinalAmount = detail.FinalAmount,
-            Status = detail.Status,
-            PaymentType = detail.PaymentType,
-            IsSettled = detail.IsSettled,
-            PaymentId = detail.PaymentId,
-            Installments = detail.Installments
-        };
     }
 }

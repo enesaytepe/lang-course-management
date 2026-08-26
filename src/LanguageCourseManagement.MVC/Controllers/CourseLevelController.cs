@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.DTOs.CourseLevels;
 using LanguageCourseManagement.Application.Exceptions;
@@ -13,11 +14,13 @@ public sealed class CourseLevelController : Controller
 {
     private readonly ICourseLevelService _courseLevelService;
     private readonly IOfferedLanguageService _languageService;
+    private readonly IMapper _mapper;
 
-    public CourseLevelController(ICourseLevelService courseLevelService, IOfferedLanguageService languageService)
+    public CourseLevelController(ICourseLevelService courseLevelService, IOfferedLanguageService languageService, IMapper mapper)
     {
         _courseLevelService = courseLevelService;
         _languageService = languageService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -38,6 +41,30 @@ public sealed class CourseLevelController : Controller
         return View(model);
     }
 
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CourseLevelFormViewModel model, CancellationToken cancellationToken)
+    {
+        AddWhitespaceValidationError(model);
+        if (!ModelState.IsValid)
+        {
+            await PopulateLanguagesAsync(model, false, cancellationToken);
+            return View(model);
+        }
+        try
+        {
+            var level = await _courseLevelService.CreateAsync(_mapper.Map<CreateCourseLevelRequest>(model), cancellationToken);
+            return RedirectToAction(nameof(Details), new { id = level.Id });
+        }
+        catch (BusinessException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            await PopulateLanguagesAsync(model, false, cancellationToken);
+            return View(model);
+        }
+    }
+
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -45,7 +72,33 @@ public sealed class CourseLevelController : Controller
         try
         {
             var level = await _courseLevelService.GetByIdAsync(id, cancellationToken);
-            var model = ToFormModel(level);
+            var model = _mapper.Map<CourseLevelFormViewModel>(level);
+            await PopulateLanguagesAsync(model, true, cancellationToken);
+            return View(model);
+        }
+        catch (NotFoundException) { return NotFound(); }
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(Guid id, CourseLevelFormViewModel model, CancellationToken cancellationToken)
+    {
+        model.Id = id;
+        AddWhitespaceValidationError(model);
+        if (!ModelState.IsValid)
+        {
+            await PopulateLanguagesAsync(model, true, cancellationToken);
+            return View(model);
+        }
+        try
+        {
+            var level = await _courseLevelService.UpdateAsync(id, _mapper.Map<UpdateCourseLevelRequest>(model), cancellationToken);
+            return RedirectToAction(nameof(Details), new { id = level.Id });
+        }
+        catch (BusinessException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
             await PopulateLanguagesAsync(model, true, cancellationToken);
             return View(model);
         }
@@ -85,16 +138,10 @@ public sealed class CourseLevelController : Controller
         model.Languages = options.OrderBy(language => language.Name).ToList();
     }
 
-    private static CourseLevelFormViewModel ToFormModel(CourseLevelResponse level)
+    private void AddWhitespaceValidationError(CourseLevelFormViewModel model)
     {
-        return new()
-        {
-            Id = level.Id,
-            OfferedLanguageId = level.OfferedLanguageId,
-            Name = level.Name,
-            Description = level.Description,
-            Order = level.Order,
-            IsActive = level.IsActive
-        };
+        if (string.IsNullOrWhiteSpace(model.Name))
+            ModelState.AddModelError(nameof(model.Name), "Seviye adı zorunludur.");
     }
+
 }

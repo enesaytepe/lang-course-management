@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.DTOs.Students;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.StudentService;
@@ -10,10 +11,12 @@ namespace LanguageCourseManagement.MVC.Controllers;
 public sealed class StudentController : Controller
 {
     private readonly IStudentService _studentService;
+    private readonly IMapper _mapper;
 
-    public StudentController(IStudentService studentService)
+    public StudentController(IStudentService studentService, IMapper mapper)
     {
         _studentService = studentService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -30,6 +33,28 @@ public sealed class StudentController : Controller
         return View(new StudentFormViewModel());
     }
 
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(StudentFormViewModel model, CancellationToken cancellationToken)
+    {
+        AddWhitespaceValidationErrors(model);
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        try
+        {
+            var student = await _studentService.CreateAsync(_mapper.Map<CreateStudentRequest>(model), cancellationToken);
+            return RedirectToAction(nameof(Details), new { id = student.Id });
+        }
+        catch (BusinessException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            return View(model);
+        }
+    }
+
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -37,7 +62,40 @@ public sealed class StudentController : Controller
         try
         {
             var student = await _studentService.GetByIdAsync(id, cancellationToken);
-            return View(ToFormModel(student));
+            return View(_mapper.Map<StudentFormViewModel>(student));
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        Guid id,
+        StudentFormViewModel model,
+        CancellationToken cancellationToken)
+    {
+        AddWhitespaceValidationErrors(model);
+
+        if (!ModelState.IsValid)
+        {
+            model.Id = id;
+            return View(model);
+        }
+
+        try
+        {
+            var student = await _studentService.UpdateAsync(id, _mapper.Map<UpdateStudentRequest>(model), cancellationToken);
+            return RedirectToAction(nameof(Details), new { id = student.Id });
+        }
+        catch (BusinessException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            model.Id = id;
+            return View(model);
         }
         catch (NotFoundException)
         {
@@ -52,7 +110,7 @@ public sealed class StudentController : Controller
         try
         {
             var student = await _studentService.GetByIdAsync(id, cancellationToken);
-            return View(ToDetailsViewModel(student));
+            return View(_mapper.Map<StudentDetailsViewModel>(student));
         }
         catch (NotFoundException)
         {
@@ -60,33 +118,36 @@ public sealed class StudentController : Controller
         }
     }
 
-    private static StudentFormViewModel ToFormModel(StudentResponse student)
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        return new()
+        try
         {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            HomePhone = student.HomePhone,
-            MobilePhone = student.MobilePhone,
-            Email = student.Email,
-            IsActive = student.IsActive
-        };
+            await _studentService.DeleteAsync(id, cancellationToken);
+            return RedirectToAction(nameof(Index));
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+        catch (BusinessException exception)
+        {
+            TempData["ErrorMessage"] = exception.Message;
+            return RedirectToAction(nameof(Index));
+        }
     }
 
-    private static StudentDetailsViewModel ToDetailsViewModel(StudentResponse student)
+    private void AddWhitespaceValidationErrors(StudentFormViewModel model)
     {
-        return new()
-        {
-            Id = student.Id,
-            FirstName = student.FirstName,
-            LastName = student.LastName,
-            HomePhone = student.HomePhone,
-            MobilePhone = student.MobilePhone,
-            Email = student.Email,
-            RegistrationDate = student.RegistrationDate,
-            IsActive = student.IsActive
-        };
-    }
+        if (string.IsNullOrWhiteSpace(model.FirstName))
+            ModelState.AddModelError(nameof(model.FirstName), "Ad zorunludur.");
 
+        if (string.IsNullOrWhiteSpace(model.LastName))
+            ModelState.AddModelError(nameof(model.LastName), "Soyad zorunludur.");
+
+        if (string.IsNullOrWhiteSpace(model.MobilePhone))
+            ModelState.AddModelError(nameof(model.MobilePhone), "Cep telefonu zorunludur.");
+    }
 }

@@ -23,6 +23,7 @@ try
     });
 
     builder.Services.AddApplication();
+    builder.Services.AddAutoMapper(_ => { }, typeof(LanguageCourseManagement.MVC.Mapping.ViewModelProfile).Assembly);
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddAuthorization(options =>
     {

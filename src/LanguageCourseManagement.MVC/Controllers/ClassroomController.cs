@@ -1,3 +1,4 @@
+using AutoMapper;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.DTOs.Classrooms;
 using LanguageCourseManagement.Application.Exceptions;
@@ -13,13 +14,16 @@ public sealed class ClassroomController : Controller
 {
     private readonly IClassroomService _classroomService;
     private readonly IBranchService _branchService;
+    private readonly IMapper _mapper;
 
     public ClassroomController(
         IClassroomService classroomService,
-        IBranchService branchService)
+        IBranchService branchService,
+        IMapper mapper)
     {
         _classroomService = classroomService;
         _branchService = branchService;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -36,6 +40,37 @@ public sealed class ClassroomController : Controller
         return View(await CreateFormModelAsync(cancellationToken));
     }
 
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        ClassroomFormViewModel model,
+        CancellationToken cancellationToken)
+    {
+        AddWhitespaceValidationError(model);
+
+        if (!ModelState.IsValid)
+        {
+            await PopulateBranchesAsync(model, includeInactive: false, cancellationToken);
+            return View(model);
+        }
+
+        try
+        {
+            var classroom = await _classroomService.CreateAsync(
+                _mapper.Map<CreateClassroomRequest>(model),
+                cancellationToken);
+
+            return RedirectToAction(nameof(Details), new { id = classroom.Id });
+        }
+        catch (BusinessException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            await PopulateBranchesAsync(model, includeInactive: false, cancellationToken);
+            return View(model);
+        }
+    }
+
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(
@@ -45,7 +80,46 @@ public sealed class ClassroomController : Controller
         try
         {
             var classroom = await _classroomService.GetByIdAsync(id, cancellationToken);
-            var model = ToFormModel(classroom);
+            var model = _mapper.Map<ClassroomFormViewModel>(classroom);
+            await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
+            return View(model);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        Guid id,
+        ClassroomFormViewModel model,
+        CancellationToken cancellationToken)
+    {
+        AddWhitespaceValidationError(model);
+
+        if (!ModelState.IsValid)
+        {
+            model.Id = id;
+            await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
+            return View(model);
+        }
+
+        try
+        {
+            var classroom = await _classroomService.UpdateAsync(
+                id,
+                _mapper.Map<UpdateClassroomRequest>(model),
+                cancellationToken);
+
+            return RedirectToAction(nameof(Details), new { id = classroom.Id });
+        }
+        catch (BusinessException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            model.Id = id;
             await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
             return View(model);
         }
@@ -114,18 +188,9 @@ public sealed class ClassroomController : Controller
             .ToList();
     }
 
-    private static ClassroomFormViewModel ToFormModel(ClassroomResponse classroom)
+    private void AddWhitespaceValidationError(ClassroomFormViewModel model)
     {
-        return new()
-        {
-            Id = classroom.Id,
-            BranchId = classroom.BranchId,
-            Name = classroom.Name,
-            Description = classroom.Description,
-            Capacity = classroom.Capacity,
-            IsActive = classroom.IsActive
-        };
+        if (string.IsNullOrWhiteSpace(model.Name))
+            ModelState.AddModelError(nameof(model.Name), "Derslik adı zorunludur.");
     }
-
-
 }
