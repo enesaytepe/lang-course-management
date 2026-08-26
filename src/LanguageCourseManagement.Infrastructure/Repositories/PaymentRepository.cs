@@ -35,29 +35,4 @@ public sealed class PaymentRepository
             .FirstOrDefaultAsync(p => p.IdempotencyKey == key, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Payment>> GetListWithIncludesAsync(
-        CancellationToken cancellationToken = default)
-    {
-        return await Context.Payments
-            .AsNoTracking()
-            .Include(p => p.Enrollment)
-                .ThenInclude(e => e.Student)
-            .OrderByDescending(p => p.SettledAt)
-            .ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<Payment?> GetDetailsWithIncludesAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
-    {
-        return Context.Payments
-            .AsNoTracking()
-            .Include(p => p.Enrollment)
-                .ThenInclude(e => e.Student)
-            .Include(p => p.Enrollment)
-                .ThenInclude(e => e.Course)
-            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
-    }
 }

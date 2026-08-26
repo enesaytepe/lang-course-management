@@ -33,13 +33,4 @@ public interface IEnrollmentRepository : IRepository<Enrollment>
     /// </summary>
     Task<Student?> GetActiveStudentAsync(Guid studentId, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Kayıtları ilişkili verilerle birlikte listeler (nesne takibi kapalı).
-    /// </summary>
-    Task<IReadOnlyList<Enrollment>> GetListWithIncludesAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Kaydı ilişkili verilerle birlikte getirir (nesne takibi kapalı).
-    /// </summary>
-    Task<Enrollment?> GetDetailsWithIncludesAsync(Guid id, CancellationToken cancellationToken = default);
 }

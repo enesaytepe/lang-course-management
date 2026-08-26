@@ -19,13 +19,4 @@ public interface IPaymentRepository : IRepository<Payment>
     /// </summary>
     Task<Payment?> FindByIdempotencyKeyAsync(string key, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Tahsilatları ilişkili verilerle birlikte listeler (nesne takibi kapalı).
-    /// </summary>
-    Task<IReadOnlyList<Payment>> GetListWithIncludesAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Tahsilatı ilişkili verilerle birlikte getirir (nesne takibi kapalı).
-    /// </summary>
-    Task<Payment?> GetDetailsWithIncludesAsync(Guid id, CancellationToken cancellationToken = default);
 }

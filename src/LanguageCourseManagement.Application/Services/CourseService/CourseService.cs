@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
@@ -52,21 +53,15 @@ public sealed class CourseService : ICourseService
 
     public async Task<CourseResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var course = await _courseRepository.GetAsync(
-            item => item.Id == id,
-            include: query => query
-                .Include(item => item.Branch)
-                .Include(item => item.OfferedLanguage)
-                .Include(item => item.CourseLevel)
-                .Include(item => item.Teacher)
-                .Include(item => item.Classroom),
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var course = await _courseRepository.Query()
+            .Where(item => item.Id == id)
+            .ProjectTo<CourseResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (course is null)
             throw new NotFoundException("Ders bulunamadı.");
 
-        return _mapper.Map<CourseResponse>(course);
+        return course;
     }
 
     public async Task<GetListResponse<CourseListResponse>> GetListAsync(
@@ -91,19 +86,11 @@ public sealed class CourseService : ICourseService
              (course.Teacher != null && (course.Teacher.FirstName.Contains(normalizedSearch) || course.Teacher.LastName.Contains(normalizedSearch))) ||
              (course.Classroom != null && course.Classroom.Name.Contains(normalizedSearch)));
 
-        IPaginate<Course> courses = await _courseRepository.GetListAsync(
-            predicate: predicate,
-            orderBy: query => query.OrderByDescending(course => course.StartDate).ThenBy(course => course.Name),
-            include: query => query
-                .Include(course => course.Branch)
-                .Include(course => course.OfferedLanguage)
-                .Include(course => course.CourseLevel)
-                .Include(course => course.Teacher)
-                .Include(course => course.Classroom),
-            index: pageRequest.PageIndex,
-            size: pageRequest.PageSize,
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var courses = await _courseRepository.Query()
+            .Where(predicate)
+            .OrderByDescending(course => course.StartDate).ThenBy(course => course.Name)
+            .ProjectTo<CourseListResponse>(_mapper.ConfigurationProvider)
+            .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, cancellationToken: cancellationToken);
 
         return new GetListResponse<CourseListResponse>
         {
@@ -113,7 +100,7 @@ public sealed class CourseService : ICourseService
             Pages = courses.Pages,
             HasPrevious = courses.HasPrevious,
             HasNext = courses.HasNext,
-            Items = courses.Items.Select(_mapper.Map<CourseListResponse>).ToList()
+            Items = courses.Items.ToList()
         };
     }
 

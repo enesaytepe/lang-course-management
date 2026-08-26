@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
@@ -34,10 +35,13 @@ public sealed class CourseLevelService : ICourseLevelService
 
     public async Task<CourseLevelResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var level = await _courseLevelRepository.GetAsync(item => item.Id == id, include: query => query.Include(item => item.OfferedLanguage), enableTracking: false, cancellationToken: cancellationToken);
+        var level = await _courseLevelRepository.Query()
+            .Where(item => item.Id == id)
+            .ProjectTo<CourseLevelResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken);
         if (level is null)
             throw new NotFoundException("Kurs seviyesi bulunamadı.");
-        return _mapper.Map<CourseLevelResponse>(level);
+        return level;
     }
 
     public async Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, CancellationToken cancellationToken = default)
@@ -50,12 +54,16 @@ public sealed class CourseLevelService : ICourseLevelService
              (level.Description != null && level.Description.Contains(normalizedSearch)) ||
              (level.OfferedLanguage != null && level.OfferedLanguage.Name.Contains(normalizedSearch)));
 
-        IPaginate<CourseLevel> levels = await _courseLevelRepository.GetListAsync(predicate: predicate, orderBy: query => query.OrderBy(level => level.OfferedLanguage.Name).ThenBy(level => level.Order).ThenBy(level => level.Name), include: query => query.Include(level => level.OfferedLanguage), index: pageRequest.PageIndex, size: pageRequest.PageSize, enableTracking: false, cancellationToken: cancellationToken);
+        var levels = await _courseLevelRepository.Query()
+            .Where(predicate)
+            .OrderBy(level => level.OfferedLanguage.Name).ThenBy(level => level.Order).ThenBy(level => level.Name)
+            .ProjectTo<CourseLevelListResponse>(_mapper.ConfigurationProvider)
+            .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, cancellationToken: cancellationToken);
         return new GetListResponse<CourseLevelListResponse>
         {
             Index = levels.Index, Size = levels.Size, Count = levels.Count, Pages = levels.Pages,
             HasPrevious = levels.HasPrevious, HasNext = levels.HasNext,
-            Items = levels.Items.Select(_mapper.Map<CourseLevelListResponse>).ToList()
+            Items = levels.Items.ToList()
         };
     }
 
@@ -98,10 +106,13 @@ public sealed class CourseLevelService : ICourseLevelService
 
     public async Task<CourseLevelResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var level = await _courseLevelRepository.GetAsync(item => item.Id == id, include: query => query.Include(item => item.OfferedLanguage), cancellationToken: cancellationToken);
+        var level = await _courseLevelRepository.GetAsync(item => item.Id == id, cancellationToken: cancellationToken);
         if (level is null)
             throw new NotFoundException("Kurs seviyesi bulunamadı.");
-        var response = _mapper.Map<CourseLevelResponse>(level);
+        var response = await _courseLevelRepository.Query()
+            .Where(item => item.Id == id)
+            .ProjectTo<CourseLevelResponse>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException("Kurs seviyesi bulunamadı.");
         await _courseLevelRepository.DeleteAsync(level, cancellationToken);
         _logger.LogInformation("[CourseLevelService] Kurs seviyesi silindi - {CourseLevelId}", level.Id);
         return response;
