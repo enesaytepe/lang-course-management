@@ -27,6 +27,17 @@ public sealed class EnrollmentRepository
     }
 
     /// <inheritdoc />
+    public Task<int> CountActiveByCourseIdForUpdateAsync(
+        Guid courseId,
+        CancellationToken cancellationToken = default)
+    {
+        return Context.Enrollments
+            .FromSqlInterpolated<Enrollment>($"SELECT * FROM [Enrollments] WITH (UPDLOCK, HOLDLOCK) WHERE [CourseId] = {courseId} AND [Status] <> {(int)EnrollmentStatus.Cancelled}")
+            .IgnoreQueryFilters()
+            .CountAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<Enrollment?> FindByStudentAndCourseAsync(
         Guid studentId,
         Guid courseId,

@@ -1,3 +1,4 @@
+using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure.Identity;
 using LanguageCourseManagement.Infrastructure.Repositories;
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<ITransactionManager, EfTransactionManager>();
         services.AddScoped<IOfferedLanguageRepository, OfferedLanguageRepository>();
         services.AddScoped<ICourseLevelRepository, CourseLevelRepository>();
         services.AddScoped<IdentitySeedService>();

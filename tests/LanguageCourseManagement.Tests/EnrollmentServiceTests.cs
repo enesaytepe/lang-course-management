@@ -5,6 +5,7 @@ using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
+using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -20,6 +21,7 @@ public sealed class EnrollmentServiceTests
     private readonly Mock<IValidator<UpdateEnrollmentRequest>> updateValidator = new();
     private readonly Mock<IMapper> mapper = new();
     private readonly Mock<ILogger<EnrollmentService>> logger = new();
+    private readonly Mock<ITransactionManager> transactionManager = new();
 
     [Fact]
     public async Task RegisterAndSettleAsync_rejects_duplicate_enrollment_and_does_not_stage_payment()
@@ -29,6 +31,9 @@ public sealed class EnrollmentServiceTests
         enrollmentRepository.Setup(x => x.GetCourseForSettlementAsync(request.CourseId, It.IsAny<CancellationToken>())).ReturnsAsync(Course(capacity: 2));
         enrollmentRepository.Setup(x => x.GetActiveStudentAsync(request.StudentId, It.IsAny<CancellationToken>())).ReturnsAsync(Student(request.StudentId));
         enrollmentRepository.Setup(x => x.FindByStudentAndCourseAsync(request.StudentId, request.CourseId, It.IsAny<CancellationToken>())).ReturnsAsync(existing);
+
+        transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        transactionManager.Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await Assert.ThrowsAsync<BusinessException>(() => CreateService().RegisterAndSettleAsync(request, Guid.NewGuid()));
 
@@ -43,7 +48,10 @@ public sealed class EnrollmentServiceTests
         var course = Course(capacity: 1);
         enrollmentRepository.Setup(x => x.GetCourseForSettlementAsync(request.CourseId, It.IsAny<CancellationToken>())).ReturnsAsync(course);
         enrollmentRepository.Setup(x => x.GetActiveStudentAsync(request.StudentId, It.IsAny<CancellationToken>())).ReturnsAsync(Student(request.StudentId));
-        enrollmentRepository.Setup(x => x.CountActiveByCourseIdAsync(course.Id, It.IsAny<CancellationToken>())).ReturnsAsync(course.Capacity);
+        enrollmentRepository.Setup(x => x.CountActiveByCourseIdForUpdateAsync(course.Id, It.IsAny<CancellationToken>())).ReturnsAsync(course.Capacity);
+
+        transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        transactionManager.Setup(x => x.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         await Assert.ThrowsAsync<BusinessException>(() => CreateService().RegisterAndSettleAsync(request, Guid.NewGuid()));
 
@@ -57,7 +65,7 @@ public sealed class EnrollmentServiceTests
         var course = Course(capacity: 2);
         enrollmentRepository.Setup(x => x.GetCourseForSettlementAsync(request.CourseId, It.IsAny<CancellationToken>())).ReturnsAsync(course);
         enrollmentRepository.Setup(x => x.GetActiveStudentAsync(request.StudentId, It.IsAny<CancellationToken>())).ReturnsAsync(Student(request.StudentId));
-        enrollmentRepository.Setup(x => x.CountActiveByCourseIdAsync(course.Id, It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        enrollmentRepository.Setup(x => x.CountActiveByCourseIdForUpdateAsync(course.Id, It.IsAny<CancellationToken>())).ReturnsAsync(0);
         mapper.Setup(x => x.Map<EnrollmentDetailResponse>(It.IsAny<Enrollment>()))
             .Returns((Enrollment e) => new EnrollmentDetailResponse
             {
@@ -71,6 +79,9 @@ public sealed class EnrollmentServiceTests
                 IsSettled = e.Payments.Any(),
                 PaymentId = e.Payments.FirstOrDefault()?.Id
             });
+
+        transactionManager.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        transactionManager.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var result = await CreateService().RegisterAndSettleAsync(request, Guid.NewGuid());
 
@@ -128,6 +139,7 @@ public sealed class EnrollmentServiceTests
         return new EnrollmentService(
             enrollmentRepository.Object,
             paymentRepository.Object,
+            transactionManager.Object,
             createValidator.Object,
             updateValidator.Object,
             mapper.Object,
