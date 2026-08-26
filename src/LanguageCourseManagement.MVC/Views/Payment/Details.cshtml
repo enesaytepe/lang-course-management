@@ -19,7 +19,7 @@
         <div>
             <dt>Kayıt numarası</dt>
             <dd>
-                <a href="/Enrollment/Details/@Model.EnrollmentId">@Model.EnrollmentId</a>
+                <a asp-controller="Enrollment" asp-action="Details" asp-route-id="@Model.EnrollmentId">@Model.EnrollmentId</a>
             </dd>
         </div>
         <div>

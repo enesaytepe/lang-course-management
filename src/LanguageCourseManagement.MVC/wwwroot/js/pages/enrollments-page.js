@@ -105,6 +105,46 @@
             };
         },
 
+        showFormErrors: function ($form, xhr) {
+            var response = xhr.responseJSON || {};
+            var messages = [];
+            var errors = response.errors || response.Errors;
+
+            $form.find("[data-valmsg-for]").text("");
+            $form.find("[data-validation-summary]").empty();
+
+            if (errors && typeof errors === "object") {
+                $.each(errors, function (key, value) {
+                    var fieldMessages = $.isArray(value) ? value : [value];
+                    var normalized = key.replace(/^\$?\./, "").toLowerCase();
+                    var $field = $form.find("[data-valmsg-for]").filter(function () {
+                        return String($(this).data("valmsg-for")).toLowerCase() === normalized;
+                    }).first();
+                    if ($field.length) {
+                        $field.text(fieldMessages.join(" "));
+                    } else {
+                        messages = messages.concat(fieldMessages);
+                    }
+                });
+            }
+
+            var detail = response.detail || response.Detail;
+            if (detail) {
+                messages.push(detail);
+            }
+            messages = messages.concat(app.Common.getErrorMessages(xhr));
+            messages = $.grep(messages, function (message, index) {
+                return message && $.inArray(message, messages) === index;
+            });
+            if (messages.length) {
+                var $summary = $form.find("[data-validation-summary]");
+                $summary.removeClass("validation-summary-valid").addClass("validation-summary-errors")
+                    .append($("<ul>").append($.map(messages, function (message) {
+                        return $("<li>").text(message);
+                    })));
+            }
+        },
+
         create: function ($form) {
             var self = this;
             var $submit = $form.find("[type='submit']");
@@ -131,7 +171,7 @@
                     window.location.assign("/Enrollment/Details/" + encodeURIComponent(app.Common.getValue(result, "Id")));
                 })
                 .fail(function (xhr) {
-                    app.Common.showApiError(xhr);
+                    self.showFormErrors($form, xhr);
                 })
                 .always(function () {
                     $submit.prop("disabled", false);
@@ -140,6 +180,7 @@
         },
 
         update: function ($form) {
+            var self = this;
             var id = $form.data("enrollment-id");
             var $submit = $form.find("[type='submit']");
 
@@ -161,7 +202,9 @@
                     app.Common.showSuccess("Kayıt durumu güncellendi");
                     window.location.assign("/Enrollment/Details/" + encodeURIComponent(id));
                 })
-                .fail(app.Common.showApiError)
+                .fail(function (xhr) {
+                    self.showFormErrors($form, xhr);
+                })
                 .always(function () {
                     $submit.prop("disabled", false);
                 });
