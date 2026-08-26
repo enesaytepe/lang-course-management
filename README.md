@@ -13,7 +13,7 @@
 - `SystemAdmin` ve `RegistrationOfficer` kullanıcı rolleri
 - MVC arayüzü ve `/api` JSON API desteği
 
-> İlk sürümde ödeme işlemleri yalnızca nakit ve kurs ücretinin tamamının tek seferde tahsil edilmesi şeklinde desteklenmektedir.
+> Ödeme işlemleri nakit, kredi kartı ve banka havalesi ile yapılabilir; tek seferde veya taksitli olarak desteklenmektedir.
 
 ## Teknolojiler
 
