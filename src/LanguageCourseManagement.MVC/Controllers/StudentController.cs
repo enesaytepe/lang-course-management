@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers;
 
+/// <summary>
+/// Öğrenci yönetimi endpoint'leri.
+/// </summary>
 public sealed class StudentController : Controller
 {
     private readonly IStudentService _studentService;
@@ -19,6 +22,9 @@ public sealed class StudentController : Controller
         _mapper = mapper;
     }
 
+    /// <summary>
+    /// Öğrenci listesini görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public IActionResult Index()
@@ -26,6 +32,9 @@ public sealed class StudentController : Controller
         return View(new StudentFormViewModel());
     }
 
+    /// <summary>
+    /// Yeni öğrenci oluşturma ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public IActionResult Create()
@@ -33,6 +42,9 @@ public sealed class StudentController : Controller
         return View(new StudentFormViewModel());
     }
 
+    /// <summary>
+    /// Yeni öğrenci oluşturur.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     [ValidateAntiForgeryToken]
@@ -55,6 +67,9 @@ public sealed class StudentController : Controller
         }
     }
 
+    /// <summary>
+    /// Öğrenci düzenleme ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -70,6 +85,9 @@ public sealed class StudentController : Controller
         }
     }
 
+    /// <summary>
+    /// Öğrenci bilgilerini günceller.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
@@ -103,6 +121,9 @@ public sealed class StudentController : Controller
         }
     }
 
+    /// <summary>
+    /// Öğrenci detaylarını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
@@ -118,6 +139,9 @@ public sealed class StudentController : Controller
         }
     }
 
+    /// <summary>
+    /// Öğrenciyi siler.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]

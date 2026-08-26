@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace LanguageCourseManagement.MVC.Controllers;
 
+/// <summary>
+/// Öğretmen yönetimi endpoint'leri.
+/// </summary>
 public sealed class TeacherController : Controller
 {
     private readonly ITeacherService _teacherService;
@@ -27,6 +30,9 @@ public sealed class TeacherController : Controller
         _branchService = branchService;
     }
 
+    /// <summary>
+    /// Öğretmen listesini görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public IActionResult Index()
@@ -34,6 +40,9 @@ public sealed class TeacherController : Controller
         return View(new TeacherFormViewModel());
     }
 
+    /// <summary>
+    /// Yeni öğretmen oluşturma ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Create(CancellationToken cancellationToken)
@@ -43,6 +52,9 @@ public sealed class TeacherController : Controller
         return View(model);
     }
 
+    /// <summary>
+    /// Öğretmen düzenleme ekranını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
@@ -60,6 +72,9 @@ public sealed class TeacherController : Controller
         }
     }
 
+    /// <summary>
+    /// Öğretmen detaylarını görüntüler.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
