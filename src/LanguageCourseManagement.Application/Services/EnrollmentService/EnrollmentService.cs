@@ -137,4 +137,107 @@ public sealed class EnrollmentService : IEnrollmentService
     {
         return UpdateStatusAsync(id, new UpdateEnrollmentRequest { Status = EnrollmentStatus.Cancelled }, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<EnrollmentEligibilityResponse> CheckEligibilityAsync(
+        Guid studentId,
+        Guid courseId,
+        CancellationToken cancellationToken = default)
+    {
+        // Öğrenci aktif mi kontrol et
+        var student = await _enrollmentRepository.GetActiveStudentAsync(studentId, cancellationToken);
+        if (student is null)
+        {
+            return new EnrollmentEligibilityResponse
+            {
+                IsEligible = false,
+                WarningMessage = "Aktif öğrenci bulunamadı."
+            };
+        }
+
+        // Kurs mevcut mu ve aktif mi kontrol et
+        var courseInfo = await _enrollmentRepository.GetCourseEligibilityInfoAsync(courseId, cancellationToken);
+        if (courseInfo is null)
+        {
+            return new EnrollmentEligibilityResponse
+            {
+                IsEligible = false,
+                WarningMessage = "Ders bulunamadı."
+            };
+        }
+
+        if (!courseInfo.IsActive || courseInfo.Status != CourseStatus.Open)
+        {
+            return new EnrollmentEligibilityResponse
+            {
+                IsEligible = false,
+                WarningMessage = "Seçilen ders kullanıma uygun değil."
+            };
+        }
+
+        // Zaten bu derse kayıtlı mı kontrol et (iptal edilmemiş)
+        var existingEnrollment = await _enrollmentRepository.FindByStudentAndCourseAsync(studentId, courseId, cancellationToken);
+        if (existingEnrollment is not null && existingEnrollment.Status != EnrollmentStatus.Cancelled)
+        {
+            return new EnrollmentEligibilityResponse
+            {
+                IsEligible = false,
+                WarningMessage = "Öğrenci bu derse zaten kayıtlı.",
+                ExistingEnrollmentId = existingEnrollment.Id
+            };
+        }
+
+        // Kontenjan kontrolü
+        var activeCount = await _enrollmentRepository.CountActiveByCourseIdAsync(courseId, cancellationToken);
+
+        if (activeCount >= courseInfo.Capacity)
+        {
+            return new EnrollmentEligibilityResponse
+            {
+                IsEligible = false,
+                WarningMessage = $"Ders kontenjanı dolu ({activeCount}/{courseInfo.Capacity}).",
+                CurrentEnrollmentCount = activeCount,
+                CourseCapacity = courseInfo.Capacity
+            };
+        }
+
+        // Ders programı çakışması kontrolü
+        var studentSchedule = await _enrollmentRepository.GetStudentActiveScheduleAsync(studentId, courseId, cancellationToken);
+
+        if (studentSchedule.Count > 0)
+        {
+            var targetCourseSchedule = await _enrollmentRepository.Query()
+                .Where(e => e.CourseId == courseId)
+                .SelectMany(e => e.Course.Schedules!)
+                .Select(s => new { s.DayOfWeek, s.StartTime, s.EndTime })
+                .ToListAsync(cancellationToken);
+
+            if (targetCourseSchedule.Count > 0)
+            {
+                var conflictExists = studentSchedule.Any(s =>
+                    targetCourseSchedule.Any(t =>
+                        t.DayOfWeek == s.DayOfWeek &&
+                        t.StartTime < s.EndTime &&
+                        t.EndTime > s.StartTime));
+
+                if (conflictExists)
+                {
+                    return new EnrollmentEligibilityResponse
+                    {
+                        IsEligible = false,
+                        WarningMessage = "Öğrencinin başka bir dersi ile ders programı çakışması var.",
+                        CurrentEnrollmentCount = activeCount,
+                        CourseCapacity = courseInfo.Capacity
+                    };
+                }
+            }
+        }
+
+        return new EnrollmentEligibilityResponse
+        {
+            IsEligible = true,
+            CurrentEnrollmentCount = activeCount,
+            CourseCapacity = courseInfo.Capacity
+        };
+    }
 }

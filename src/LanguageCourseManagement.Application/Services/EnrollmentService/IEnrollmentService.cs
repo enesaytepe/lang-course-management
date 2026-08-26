@@ -12,4 +12,9 @@ public interface IEnrollmentService
     Task<EnrollmentDetailResponse> GetDetailsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<EnrollmentDetailResponse> UpdateStatusAsync(Guid id, UpdateEnrollmentRequest request, CancellationToken cancellationToken = default);
     Task<EnrollmentDetailResponse> CancelAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Öğrencinin belirli bir derse kayıt için uygun olup olmadığını kontrol eder.
+    /// </summary>
+    Task<EnrollmentEligibilityResponse> CheckEligibilityAsync(Guid studentId, Guid courseId, CancellationToken cancellationToken = default);
 }

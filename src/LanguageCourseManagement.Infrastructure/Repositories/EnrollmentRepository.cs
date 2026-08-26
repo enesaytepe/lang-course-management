@@ -71,4 +71,45 @@ public sealed class EnrollmentRepository
             .FirstOrDefaultAsync(s => s.Id == studentId && s.IsActive, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task<CourseEligibilityInfo?> GetCourseEligibilityInfoAsync(
+        Guid courseId,
+        CancellationToken cancellationToken = default)
+    {
+        return Context.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == courseId)
+            .Select(c => new CourseEligibilityInfo
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Capacity = c.Capacity,
+                IsActive = c.IsActive,
+                Status = c.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<CourseScheduleInfo>> GetStudentActiveScheduleAsync(
+        Guid studentId,
+        Guid excludeCourseId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Enrollments
+            .AsNoTracking()
+            .Where(e => e.StudentId == studentId
+                && e.Status == EnrollmentStatus.Active
+                && e.CourseId != excludeCourseId)
+            .SelectMany(e => e.Course.Schedules!)
+            .Select(s => new CourseScheduleInfo
+            {
+                CourseId = s.CourseId,
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime
+            })
+            .ToListAsync(cancellationToken);
+    }
+
 }

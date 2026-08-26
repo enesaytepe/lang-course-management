@@ -10,6 +10,7 @@
         $form: null,
         dataTable: null,
         canEdit: false,
+        _searchTimers: {},
 
         canInitialize: function () {
             return $("#enrollments-page").length > 0
@@ -17,7 +18,7 @@
         },
 
         init: function () {
-            this.$page = $("#enrollments-page");
+            this.$page = $("#enrollment-create-page");
             this.$table = $("#enrollmentsTable");
             this.$antiForgeryForm = $("#enrollmentAntiforgeryForm");
             this.$form = $("[data-enrollment-form]");
@@ -32,7 +33,11 @@
             }
 
             this.bindEvents();
-            this.loadOptions();
+
+            if (this.$page.length) {
+                this.loadStudentOptions("");
+                this.loadCourseOptions("");
+            }
         },
 
         bindEvents: function () {
@@ -59,37 +64,159 @@
                         self.cancel($(this).data("enrollment-cancel"));
                     });
             }
+
+            // Dropdown arama olayları
+            if (this.$page.length) {
+                self._bindSearchEvents();
+                self._bindEligibilityCheck();
+            }
         },
 
-        loadOptions: function () {
-            var $student = $("#StudentId");
-            var $course = $("#CourseId");
+        _bindSearchEvents: function () {
+            var self = this;
 
-            if (!$student.length || !$course.length) {
+            $("#StudentSearch")
+                .off("input.enrollmentsSearch")
+                .on("input.enrollmentsSearch", function () {
+                    var query = $(this).val();
+                    self._debouncedSearch("student", function () {
+                        self.loadStudentOptions(query);
+                    });
+                });
+
+            $("#CourseSearch")
+                .off("input.enrollmentsSearch")
+                .on("input.enrollmentsSearch", function () {
+                    var query = $(this).val();
+                    self._debouncedSearch("course", function () {
+                        self.loadCourseOptions(query);
+                    });
+                });
+
+            $("#StudentSearchClear")
+                .off("click.enrollmentsSearch")
+                .on("click.enrollmentsSearch", function () {
+                    $("#StudentSearch").val("");
+                    self.loadStudentOptions("");
+                });
+
+            $("#CourseSearchClear")
+                .off("click.enrollmentsSearch")
+                .on("click.enrollmentsSearch", function () {
+                    $("#CourseSearch").val("");
+                    self.loadCourseOptions("");
+                });
+        },
+
+        _debouncedSearch: function (key, fn) {
+            var self = this;
+            if (self._searchTimers[key]) {
+                clearTimeout(self._searchTimers[key]);
+            }
+            self._searchTimers[key] = setTimeout(fn, 300);
+        },
+
+        _bindEligibilityCheck: function () {
+            var self = this;
+
+            $("#StudentId, #CourseId")
+                .off("change.enrollmentsEligibility")
+                .on("change.enrollmentsEligibility", function () {
+                    self._checkEligibility();
+                });
+        },
+
+        _checkEligibility: function () {
+            var studentId = $("#StudentId").val();
+            var courseId = $("#CourseId").val();
+            var $info = $("#eligibilityInfo");
+            var $alert = $("#eligibilityAlert");
+
+            if (!studentId || !courseId) {
+                $info.hide();
                 return;
             }
 
-            $.when(
-                $.getJSON("/api/students?pageIndex=0&pageSize=100"),
-                $.getJSON("/api/courses?pageIndex=0&pageSize=100&isActive=true")
-            )
-                .done(function (students, courses) {
-                    var studentItems = app.Common.getValue(students[0], "Items") || [];
-                    var courseItems = app.Common.getValue(courses[0], "Items") || [];
+            $.getJSON("/api/enrollments/eligibility?studentId=" + encodeURIComponent(studentId) + "&courseId=" + encodeURIComponent(courseId))
+                .done(function (data) {
+                    if (app.Common.getValue(data, "IsEligible") === false) {
+                        var msg = app.Common.getValue(data, "WarningMessage") || "Kayıt uygun değil.";
+                        $alert.removeClass("alert-success alert-warning alert-danger")
+                            .addClass("alert-danger")
+                            .text(msg);
+                        $info.show();
+                    } else {
+                        var count = app.Common.getValue(data, "CurrentEnrollmentCount") || 0;
+                        var capacity = app.Common.getValue(data, "CourseCapacity") || 0;
+                        $alert.removeClass("alert-success alert-warning alert-danger")
+                            .addClass("alert-success")
+                            .text("Kayıt uygun. Kontenjan: " + count + "/" + capacity);
+                        $info.show();
+                    }
+                })
+                .fail(function () {
+                    $info.hide();
+                });
+        },
 
-                    $.each(studentItems, function (_, item) {
+        loadStudentOptions: function (search) {
+            var $student = $("#StudentId");
+            var $count = $("#StudentCount");
+            var pageSize = 20;
+            var url = "/api/students?pageIndex=0&pageSize=" + pageSize + "&isActive=true";
+            if (search) {
+                url += "&search=" + encodeURIComponent(search);
+            }
+
+            $.getJSON(url)
+                .done(function (response) {
+                    var items = app.Common.getValue(response, "Items") || [];
+                    var total = app.Common.getValue(response, "Count") || 0;
+
+                    $student.find("option:gt(0)").remove();
+                    $.each(items, function (_, item) {
                         $student.append($("<option>", {
                             value: app.Common.getValue(item, "Id"),
                             text: (app.Common.getValue(item, "FirstName") || "") + " " + (app.Common.getValue(item, "LastName") || "")
                         }));
                     });
 
-                    $.each(courseItems, function (_, item) {
+                    if (search) {
+                        $count.text(items.length + " sonuç gösteriliyor (toplam " + total + ")");
+                    } else {
+                        $count.text("İlk " + pageSize + " öğrenci gösteriliyor (toplam " + total + ")");
+                    }
+                })
+                .fail(app.Common.showApiError);
+        },
+
+        loadCourseOptions: function (search) {
+            var $course = $("#CourseId");
+            var $count = $("#CourseCount");
+            var pageSize = 20;
+            var url = "/api/courses?pageIndex=0&pageSize=" + pageSize + "&isActive=true";
+            if (search) {
+                url += "&search=" + encodeURIComponent(search);
+            }
+
+            $.getJSON(url)
+                .done(function (response) {
+                    var items = app.Common.getValue(response, "Items") || [];
+                    var total = app.Common.getValue(response, "Count") || 0;
+
+                    $course.find("option:gt(0)").remove();
+                    $.each(items, function (_, item) {
                         $course.append($("<option>", {
                             value: app.Common.getValue(item, "Id"),
                             text: app.Common.getValue(item, "Name") || "-"
                         }));
                     });
+
+                    if (search) {
+                        $count.text(items.length + " sonuç gösteriliyor (toplam " + total + ")");
+                    } else {
+                        $count.text("İlk " + pageSize + " ders gösteriliyor (toplam " + total + ")");
+                    }
                 })
                 .fail(app.Common.showApiError);
         },
@@ -175,7 +302,6 @@
                 })
                 .always(function () {
                     $submit.prop("disabled", false);
-                    self.loadOptions();
                 });
         },
 

@@ -139,4 +139,18 @@ public sealed class EnrollmentApiController : ControllerBase
         var result = await _installmentService.CreateInstallmentPlanAsync(id, installmentCount, cancellationToken);
         return CreatedAtAction(nameof(GetInstallments), new { id }, result);
     }
+
+    /// <summary>
+    /// Öğrencinin belirli bir derse kayıt için uygun olup olmadığını kontrol eder.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
+    [HttpGet("eligibility")]
+    [ProducesResponseType<EnrollmentEligibilityResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<EnrollmentEligibilityResponse>> CheckEligibility(
+        [FromQuery] Guid studentId,
+        [FromQuery] Guid courseId,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await _enrollmentService.CheckEligibilityAsync(studentId, courseId, cancellationToken));
+    }
 }

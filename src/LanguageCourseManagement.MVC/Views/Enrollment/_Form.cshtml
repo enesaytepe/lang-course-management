@@ -8,18 +8,32 @@
 
     <div class="mb-3">
         <label class="form-label" for="StudentId">Öğrenci</label>
-        <select class="form-select" asp-for="StudentId" id="StudentId" required>
+        <div class="input-group">
+            <input type="text" class="form-control" id="StudentSearch" placeholder="Öğrenci ara..." autocomplete="off" />
+            <button type="button" class="btn btn-outline-secondary" id="StudentSearchClear" title="Aramayı temizle">&times;</button>
+        </div>
+        <select class="form-select mt-1" asp-for="StudentId" id="StudentId" required size="1">
             <option value="">Öğrenci seçin</option>
         </select>
+        <small class="text-muted" id="StudentCount"></small>
         <span class="text-danger" data-valmsg-for="StudentId"></span>
     </div>
 
     <div class="mb-3">
         <label class="form-label" for="CourseId">Ders</label>
-        <select class="form-select" asp-for="CourseId" id="CourseId" required>
+        <div class="input-group">
+            <input type="text" class="form-control" id="CourseSearch" placeholder="Ders ara..." autocomplete="off" />
+            <button type="button" class="btn btn-outline-secondary" id="CourseSearchClear" title="Aramayı temizle">&times;</button>
+        </div>
+        <select class="form-select mt-1" asp-for="CourseId" id="CourseId" required size="1">
             <option value="">Ders seçin</option>
         </select>
+        <small class="text-muted" id="CourseCount"></small>
         <span class="text-danger" data-valmsg-for="CourseId"></span>
+    </div>
+
+    <div id="eligibilityInfo" class="mb-3" style="display:none;">
+        <div class="alert" role="alert" id="eligibilityAlert"></div>
     </div>
 
     <div class="mb-3">
