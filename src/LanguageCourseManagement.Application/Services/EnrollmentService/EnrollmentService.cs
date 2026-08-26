@@ -11,7 +11,6 @@ using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace LanguageCourseManagement.Application.Services.EnrollmentService;
@@ -25,7 +24,6 @@ public sealed class EnrollmentService : IEnrollmentService
     private readonly IValidator<EnrollmentCreateRequest> _createValidator;
     private readonly IValidator<UpdateEnrollmentRequest> _updateValidator;
     private readonly IMapper _mapper;
-    private readonly ILogger<EnrollmentService> _logger;
 
     public EnrollmentService(
         IEnrollmentRepository enrollmentRepository,
@@ -33,8 +31,7 @@ public sealed class EnrollmentService : IEnrollmentService
         ITransactionManager transactionManager,
         IValidator<EnrollmentCreateRequest> createValidator,
         IValidator<UpdateEnrollmentRequest> updateValidator,
-        IMapper mapper,
-        ILogger<EnrollmentService> logger)
+        IMapper mapper)
     {
         _enrollmentRepository = enrollmentRepository;
         _paymentRepository = paymentRepository;
@@ -42,7 +39,6 @@ public sealed class EnrollmentService : IEnrollmentService
         _createValidator = createValidator;
         _updateValidator = updateValidator;
         _mapper = mapper;
-        _logger = logger;
     }
 
     /// <inheritdoc />

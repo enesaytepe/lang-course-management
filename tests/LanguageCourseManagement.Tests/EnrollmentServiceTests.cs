@@ -7,7 +7,6 @@ using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Domain.Repositories;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -20,7 +19,6 @@ public sealed class EnrollmentServiceTests
     private readonly Mock<IValidator<EnrollmentCreateRequest>> createValidator = new();
     private readonly Mock<IValidator<UpdateEnrollmentRequest>> updateValidator = new();
     private readonly Mock<IMapper> mapper = new();
-    private readonly Mock<ILogger<EnrollmentService>> logger = new();
     private readonly Mock<ITransactionManager> transactionManager = new();
 
     [Fact]
@@ -142,8 +140,7 @@ public sealed class EnrollmentServiceTests
             transactionManager.Object,
             createValidator.Object,
             updateValidator.Object,
-            mapper.Object,
-            logger.Object);
+            mapper.Object);
     }
 
     private static EnrollmentCreateRequest Request() => new() { StudentId = Guid.NewGuid(), CourseId = Guid.NewGuid(), DiscountAmount = 10m, IdempotencyKey = "enrollment-001", PaymentType = PaymentType.Cash };
