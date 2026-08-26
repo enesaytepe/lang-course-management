@@ -1,4 +1,5 @@
 ﻿using LanguageCourseManagement.Domain.Entities;
+using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -111,14 +112,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         foreach (var entry in ChangeTracker.Entries<Payment>())
         {
-            // Every persisted payment is settled by the database contract. Reject all
-            // existing-entry mutations instead of trusting OriginalValue, which can be
-            // forged when a detached payment is attached to this context. Added
-            // settlements remain allowed for the atomic enrollment command.
             if (entry.State is not (EntityState.Modified or EntityState.Deleted))
                 continue;
 
-            throw new InvalidOperationException("Settled payment history is immutable.");
+            var originalStatus = (PaymentStatus)entry.OriginalValues["Status"]!;
+
+            if (originalStatus is PaymentStatus.Settled or PaymentStatus.Cancelled)
+                throw new InvalidOperationException(
+                    $"Payment in '{originalStatus}' status is immutable and cannot be modified or deleted.");
         }
     }
 }
