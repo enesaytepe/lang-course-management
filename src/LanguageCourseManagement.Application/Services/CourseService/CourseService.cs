@@ -6,6 +6,7 @@ using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Courses;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Domain.Entities;
+using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public sealed class CourseService : ICourseService
     private readonly ICourseLevelRepository _courseLevelRepository;
     private readonly ITeacherRepository _teacherRepository;
     private readonly IClassroomRepository _classroomRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<CourseService> _logger;
     private readonly IValidator<CreateCourseRequest> _createValidator;
@@ -34,6 +36,7 @@ public sealed class CourseService : ICourseService
         ICourseLevelRepository courseLevelRepository,
         ITeacherRepository teacherRepository,
         IClassroomRepository classroomRepository,
+        IEnrollmentRepository enrollmentRepository,
         IMapper mapper,
         ILogger<CourseService> logger,
         IValidator<CreateCourseRequest> createValidator,
@@ -45,6 +48,7 @@ public sealed class CourseService : ICourseService
         _courseLevelRepository = courseLevelRepository;
         _teacherRepository = teacherRepository;
         _classroomRepository = classroomRepository;
+        _enrollmentRepository = enrollmentRepository;
         _mapper = mapper;
         _logger = logger;
         _createValidator = createValidator;
@@ -112,6 +116,7 @@ public sealed class CourseService : ICourseService
 
         request.Name = request.Name.Trim();
 
+        await EnsureCourseNameUniqueAsync(request.Name, request.CourseLevelId, excludeCourseId: null, cancellationToken);
         await EnsureBranchExistsAsync(request.BranchId, requireActive: true, cancellationToken);
         await EnsureLanguageExistsAsync(request.OfferedLanguageId, requireActive: true, cancellationToken);
         await EnsureLevelExistsAsync(request.CourseLevelId, request.OfferedLanguageId, requireActive: true, cancellationToken);
@@ -136,6 +141,8 @@ public sealed class CourseService : ICourseService
         await ValidateAsync(_updateValidator, request, cancellationToken);
 
         request.Name = request.Name.Trim();
+
+        await EnsureCourseNameUniqueAsync(request.Name, request.CourseLevelId, excludeCourseId: id, cancellationToken);
 
         var course = await _courseRepository.GetAsync(
             item => item.Id == id,
@@ -179,16 +186,21 @@ public sealed class CourseService : ICourseService
     {
         var course = await _courseRepository.GetAsync(
             item => item.Id == id,
-            include: query => query
-                .Include(item => item.Schedules!)
-                .Include(item => item.Enrollments!),
             cancellationToken: cancellationToken);
 
         if (course is null)
             throw new NotFoundException("Ders bulunamadı.");
 
-        if ((course.Schedules?.Count ?? 0) > 0 || (course.Enrollments?.Count ?? 0) > 0)
-            throw new BusinessException("Derse ait ders programı veya öğrenci kaydı bulunduğundan ders silinemez.");
+        var hasSchedule = await _courseRepository.AnyAsync(
+            c => c.Id == id && c.Schedules != null && c.Schedules.Any(),
+            cancellationToken: cancellationToken);
+
+        var hasActiveEnrollment = await _enrollmentRepository.AnyAsync(
+            e => e.CourseId == id && e.Status == EnrollmentStatus.Active,
+            cancellationToken: cancellationToken);
+
+        if (hasSchedule || hasActiveEnrollment)
+            throw new BusinessException("Derse ait ders programı veya aktif öğrenci kaydı bulunduğundan ders silinemez.");
 
         var response = _mapper.Map<CourseResponse>(course);
         await _courseRepository.DeleteAsync(course, cancellationToken);
@@ -420,6 +432,16 @@ public sealed class CourseService : ICourseService
 
         if (requireActive && !classroom.IsActive)
             throw new BusinessException("Derse yalnızca aktif bir derslik atanabilir.");
+    }
+
+    private async Task EnsureCourseNameUniqueAsync(string name, Guid courseLevelId, Guid? excludeCourseId, CancellationToken cancellationToken)
+    {
+        var nameExists = await _courseRepository.AnyAsync(
+            c => c.Name == name && c.CourseLevelId == courseLevelId && (!excludeCourseId.HasValue || c.Id != excludeCourseId.Value),
+            cancellationToken: cancellationToken);
+
+        if (nameExists)
+            throw new BusinessException("Bu seviyede aynı isimde kurs zaten mevcut.");
     }
 
     private static async Task ValidateAsync<TRequest>(IValidator<TRequest> validator, TRequest request, CancellationToken cancellationToken)
