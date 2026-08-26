@@ -28,47 +28,10 @@ public sealed class LanguageController : Controller
         return View(new LanguageFormViewModel());
     }
 
-    [HttpPost, Authorize(Roles = "SystemAdmin"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(LanguageFormViewModel model, CancellationToken cancellationToken)
-    {
-        AddWhitespaceValidationError(model);
-        if (!ModelState.IsValid) return View(model);
-
-        try
-        {
-            var language = await _languageService.CreateAsync(ToCreateRequest(model), cancellationToken);
-            return RedirectToAction(nameof(Details), new { id = language.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            return View(model);
-        }
-    }
-
     [HttpGet, Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
     {
         try { return View(ToFormModel(await _languageService.GetByIdAsync(id, cancellationToken))); }
-        catch (NotFoundException) { return NotFound(); }
-    }
-
-    [HttpPost, Authorize(Roles = "SystemAdmin"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, LanguageFormViewModel model, CancellationToken cancellationToken)
-    {
-        model.Id = id;
-        AddWhitespaceValidationError(model);
-        if (!ModelState.IsValid) return View(model);
-        try
-        {
-            var language = await _languageService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken);
-            return RedirectToAction(nameof(Details), new { id = language.Id });
-        }
-        catch (BusinessException exception)
-        {
-            ModelState.AddModelError(string.Empty, exception.Message);
-            return View(model);
-        }
         catch (NotFoundException) { return NotFound(); }
     }
 
@@ -79,32 +42,6 @@ public sealed class LanguageController : Controller
         catch (NotFoundException) { return NotFound(); }
     }
 
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _languageService.DeleteAsync(id, cancellationToken);
-            return RedirectToAction(nameof(Index));
-        }
-        catch (NotFoundException)
-        {
-            return NotFound();
-        }
-        catch (BusinessException exception)
-        {
-            TempData["ErrorMessage"] = exception.Message;
-            return RedirectToAction(nameof(Index));
-        }
-    }
-
-    private void AddWhitespaceValidationError(LanguageFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name)) ModelState.AddModelError(nameof(model.Name), "Dil adı zorunludur.");
-    }
-
     private static LanguageFormViewModel ToFormModel(OfferedLanguageResponse language)
     {
         return new()
@@ -113,25 +50,6 @@ public sealed class LanguageController : Controller
             Name = language.Name,
             Code = language.Code,
             IsActive = language.IsActive
-        };
-    }
-
-    private static CreateOfferedLanguageRequest ToCreateRequest(LanguageFormViewModel model)
-    {
-        return new()
-        {
-            Name = model.Name,
-            Code = model.Code
-        };
-    }
-
-    private static UpdateOfferedLanguageRequest ToUpdateRequest(LanguageFormViewModel model)
-    {
-        return new()
-        {
-            Name = model.Name,
-            Code = model.Code,
-            IsActive = model.IsActive
         };
     }
 }

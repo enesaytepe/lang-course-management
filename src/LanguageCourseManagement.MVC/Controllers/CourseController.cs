@@ -35,29 +35,10 @@ public sealed class CourseController : Controller
         return View(await CreateFormModelAsync(cancellationToken));
     }
 
-    [HttpPost][Authorize(Roles = "SystemAdmin")][ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CourseFormViewModel model, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name)) ModelState.AddModelError(nameof(model.Name), "Ders adı zorunludur.");
-        if (!ModelState.IsValid) { await PopulateOptionsAsync(model, false, cancellationToken); return View(model); }
-        try { var result = await _courseService.CreateAsync(ToCreateRequest(model), cancellationToken); return RedirectToAction(nameof(Details), new { id = result.Id }); }
-        catch (BusinessException ex) { ModelState.AddModelError(string.Empty, ex.Message); await PopulateOptionsAsync(model, false, cancellationToken); return View(model); }
-    }
-
     [HttpGet][Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
     {
         try { var response = await _courseService.GetByIdAsync(id, cancellationToken); var model = ToFormModel(response, await _courseService.GetSchedulesAsync(id, cancellationToken)); await PopulateOptionsAsync(model, true, cancellationToken); return View(model); }
-        catch (NotFoundException) { return NotFound(); }
-    }
-
-    [HttpPost][Authorize(Roles = "SystemAdmin")][ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, CourseFormViewModel model, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name)) ModelState.AddModelError(nameof(model.Name), "Ders adı zorunludur.");
-        if (!ModelState.IsValid) { model.Id = id; await PopulateOptionsAsync(model, true, cancellationToken); return View(model); }
-        try { var result = await _courseService.UpdateAsync(id, ToUpdateRequest(model), cancellationToken); return RedirectToAction(nameof(Details), new { id = result.Id }); }
-        catch (BusinessException ex) { ModelState.AddModelError(string.Empty, ex.Message); model.Id = id; await PopulateOptionsAsync(model, true, cancellationToken); return View(model); }
         catch (NotFoundException) { return NotFound(); }
     }
 
@@ -107,13 +88,4 @@ public sealed class CourseController : Controller
         };
     }
 
-    private static CreateCourseRequest ToCreateRequest(CourseFormViewModel model)
-    {
-        return new() { Name = model.Name, BranchId = model.BranchId.GetValueOrDefault(), OfferedLanguageId = model.OfferedLanguageId.GetValueOrDefault(), CourseLevelId = model.CourseLevelId.GetValueOrDefault(), TeacherId = model.TeacherId.GetValueOrDefault(), ClassroomId = model.ClassroomId.GetValueOrDefault(), StartDate = model.StartDate.GetValueOrDefault(), EndDate = model.EndDate.GetValueOrDefault(), Capacity = model.Capacity, TuitionFee = model.TuitionFee, Status = model.Status, Schedules = model.Schedules };
-    }
-
-    private static UpdateCourseRequest ToUpdateRequest(CourseFormViewModel model)
-    {
-        return new() { Name = model.Name, BranchId = model.BranchId.GetValueOrDefault(), OfferedLanguageId = model.OfferedLanguageId.GetValueOrDefault(), CourseLevelId = model.CourseLevelId.GetValueOrDefault(), TeacherId = model.TeacherId.GetValueOrDefault(), ClassroomId = model.ClassroomId.GetValueOrDefault(), StartDate = model.StartDate.GetValueOrDefault(), EndDate = model.EndDate.GetValueOrDefault(), Capacity = model.Capacity, TuitionFee = model.TuitionFee, Status = model.Status, IsActive = model.IsActive, Schedules = model.Schedules };
-    }
 }
