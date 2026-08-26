@@ -10,6 +10,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\LanguageCourseManagement.Application\LanguageCourseManagement.Application.csproj" />
     <ProjectReference Include="..\..\src\LanguageCourseManagement.Domain\LanguageCourseManagement.Domain.csproj" />
+    <ProjectReference Include="..\..\src\LanguageCourseManagement.Infrastructure\LanguageCourseManagement.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.3" />

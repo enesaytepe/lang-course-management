@@ -14,6 +14,11 @@ public interface IEnrollmentRepository : IRepository<Enrollment>
     Task<int> CountActiveByCourseIdAsync(Guid courseId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Bir dersteki aktif öğrenci kayıt sayısını UPDLOCK ile kilitli olarak döndürür — kontenjan kontrolü için transaction-safe.
+    /// </summary>
+    Task<int> CountActiveByCourseIdForUpdateAsync(Guid courseId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Belirtilen öğrenci ve derse ait kaydı arar; idempotensi ve çift-kayıt kontrolünde kullanılır.
     /// </summary>
     Task<Enrollment?> FindByStudentAndCourseAsync(Guid studentId, Guid courseId, CancellationToken cancellationToken = default);
