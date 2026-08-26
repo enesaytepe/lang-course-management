@@ -2,6 +2,6 @@
 @{ ViewData["Title"] = "Dersler"; var admin = User.IsInRole("SystemAdmin"); }
 <section class="content-card" id="courses-page" data-can-edit="@(admin.ToString().ToLowerInvariant())">
  <div class="section-heading"><div><h1>Dersler</h1><p>Açılmış ders ve haftalık program yönetimi</p></div>@if(admin){<a class="btn btn-primary" asp-action="Create">Yeni ders</a>}</div>
- <div class="table-responsive"><table class="table" id="coursesTable"><thead><tr><th>Şube</th><th>Ders</th><th>Dil / Seviye</th><th>Öğretmen</th><th>Derslik</th><th>Tarih</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody></tbody></table></div>
+ <div class="table-responsive"><table class="table" id="coursesTable" data-datatable><thead><tr><th>Şube</th><th>Ders</th><th>Dil / Seviye</th><th>Öğretmen</th><th>Derslik</th><th>Tarih</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody></tbody></table></div>
 </section>
 @section Scripts { <script src="~/js/pages/courses-page.js" asp-append-version="true"></script> }

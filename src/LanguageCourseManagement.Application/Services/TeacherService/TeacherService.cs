@@ -231,12 +231,14 @@ public sealed class TeacherService : ITeacherService
         if (languageIds is null || languageIds.Count == 0)
             return [];
         var distinctIds = languageIds.Distinct().ToList();
-        foreach (var id in distinctIds)
-        {
-            var language = await _offeredLanguageRepository.GetAsync(l => l.Id == id && l.IsActive, enableTracking: false, cancellationToken: cancellationToken);
-            if (language is null)
-                throw new BusinessException("Seçilen dillerden biri veya daha fazlası bulunamadı ya da pasif durumda.");
-        }
+        var result = await _offeredLanguageRepository.GetListAsync(
+            predicate: l => distinctIds.Contains(l.Id) && l.IsActive,
+            index: 0,
+            size: distinctIds.Count,
+            enableTracking: false,
+            cancellationToken: cancellationToken);
+        if (result.Count != distinctIds.Count)
+            throw new BusinessException("Seçilen dillerden biri veya daha fazlası bulunamadı ya da pasif durumda.");
         return distinctIds;
     }
 
@@ -245,12 +247,14 @@ public sealed class TeacherService : ITeacherService
         if (branchIds is null || branchIds.Count == 0)
             return [];
         var distinctIds = branchIds.Distinct().ToList();
-        foreach (var id in distinctIds)
-        {
-            var branch = await _branchRepository.GetAsync(b => b.Id == id && b.IsActive, enableTracking: false, cancellationToken: cancellationToken);
-            if (branch is null)
-                throw new BusinessException("Seçilen şubelerden biri veya daha fazlası bulunamadı ya da pasif durumda.");
-        }
+        var result = await _branchRepository.GetListAsync(
+            predicate: b => distinctIds.Contains(b.Id) && b.IsActive,
+            index: 0,
+            size: distinctIds.Count,
+            enableTracking: false,
+            cancellationToken: cancellationToken);
+        if (result.Count != distinctIds.Count)
+            throw new BusinessException("Seçilen şubelerden biri veya daha fazlası bulunamadı ya da pasif durumda.");
         return distinctIds;
     }
 
