@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers.Api;
 
+/// <summary>
+/// Kurs seviyesi yönetimi API endpoint'leri.
+/// </summary>
 [ApiController]
 [Route("api/course-levels")]
 [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
@@ -16,6 +19,10 @@ public sealed class CourseLevelApiController : ControllerBase
 
     public CourseLevelApiController(ICourseLevelService courseLevelService) => _courseLevelService = courseLevelService;
 
+    /// <summary>
+    /// Kurs seviyelerini sayfalı olarak listeler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet]
     [ProducesResponseType<GetListResponse<CourseLevelListResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<GetListResponse<CourseLevelListResponse>>> GetList(
@@ -28,9 +35,14 @@ public sealed class CourseLevelApiController : ControllerBase
         pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
+
         return Ok(await _courseLevelService.GetListAsync(pageRequest, search, offeredLanguageId, isActive, cancellationToken));
     }
 
+    /// <summary>
+    /// ID'ye göre kurs seviyesi getirir.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet("{id:guid}")]
     [ProducesResponseType<CourseLevelResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CourseLevelResponse>> GetById(Guid id, CancellationToken cancellationToken)
@@ -38,26 +50,41 @@ public sealed class CourseLevelApiController : ControllerBase
         return Ok(await _courseLevelService.GetByIdAsync(id, cancellationToken));
     }
 
+    /// <summary>
+    /// Yeni kurs seviyesi oluşturur.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
+    [ProducesResponseType<CourseLevelResponse>(StatusCodes.Status201Created)]
     public async Task<ActionResult<CourseLevelResponse>> Create(CreateCourseLevelRequest request, CancellationToken cancellationToken)
     {
         var result = await _courseLevelService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    /// <summary>
+    /// Mevcut kurs seviyesinin bilgilerini günceller.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
+    [ProducesResponseType<CourseLevelResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CourseLevelResponse>> Update(Guid id, UpdateCourseLevelRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _courseLevelService.UpdateAsync(id, request, cancellationToken));
     }
 
+    /// <summary>
+    /// Kurs seviyesini soft delete ile siler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
+    [ProducesResponseType<CourseLevelResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CourseLevelResponse>> Delete(Guid id, CancellationToken cancellationToken)
     {
         return Ok(await _courseLevelService.DeleteAsync(id, cancellationToken));

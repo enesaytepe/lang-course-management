@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers.Api;
 
+/// <summary>
+/// Öğrenci yönetimi API endpoint'leri.
+/// </summary>
 [ApiController]
 [Route("api/students")]
 [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
@@ -16,6 +19,10 @@ public sealed class StudentApiController : ControllerBase
 
     public StudentApiController(IStudentService studentService) => _studentService = studentService;
 
+    /// <summary>
+    /// Öğrencileri sayfalı olarak listeler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet]
     [ProducesResponseType<GetListResponse<StudentListResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<GetListResponse<StudentListResponse>>> GetList(
@@ -31,6 +38,10 @@ public sealed class StudentApiController : ControllerBase
         return Ok(await _studentService.GetListAsync(pageRequest, search, isActive, cancellationToken));
     }
 
+    /// <summary>
+    /// ID'ye göre öğrenci getirir.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
     [HttpGet("{id:guid}")]
     [ProducesResponseType<StudentResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<StudentResponse>> GetById(Guid id, CancellationToken cancellationToken)
@@ -38,30 +49,37 @@ public sealed class StudentApiController : ControllerBase
         return Ok(await _studentService.GetByIdAsync(id, cancellationToken));
     }
 
+    /// <summary>
+    /// Yeni öğrenci oluşturur.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpPost]
     [Authorize(Roles = "SystemAdmin,RegistrationOfficer")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<StudentResponse>(StatusCodes.Status201Created)]
-    public async Task<ActionResult<StudentResponse>> Create(
-        CreateStudentRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<StudentResponse>> Create(CreateStudentRequest request, CancellationToken cancellationToken)
     {
         var result = await _studentService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    /// <summary>
+    /// Mevcut öğrencinin bilgilerini günceller.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<StudentResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<StudentResponse>> Update(
-        Guid id,
-        UpdateStudentRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<StudentResponse>> Update(Guid id, UpdateStudentRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _studentService.UpdateAsync(id, request, cancellationToken));
     }
 
+    /// <summary>
+    /// Öğrenciyi soft delete ile siler.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> rolü ve antiforgery doğrulaması gerektirir.</remarks>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
