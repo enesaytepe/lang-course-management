@@ -2,6 +2,7 @@ using FluentValidation;
 using LanguageCourseManagement.Application.Mapping;
 using LanguageCourseManagement.Application.Services.BranchService;
 using LanguageCourseManagement.Application.Services.ClassroomService;
+using LanguageCourseManagement.Application.Services.DashboardService;
 using LanguageCourseManagement.Application.Services.FacilityService;
 using LanguageCourseManagement.Application.Services.EnrollmentService;
 using LanguageCourseManagement.Application.Services.CourseLevelService;
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(CreateBranchRequestValidator).Assembly);
         services.AddScoped<IBranchService, BranchService>();
         services.AddScoped<IClassroomService, ClassroomService>();
+        services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IFacilityService, FacilityService>();
         services.AddScoped<IEnrollmentService, EnrollmentService>();
         services.AddScoped<ICourseLevelService, CourseLevelService>();

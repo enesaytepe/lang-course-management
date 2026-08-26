@@ -1,4 +1,5 @@
 using LanguageCourseManagement.Application.Persistence;
+using LanguageCourseManagement.Application.Repositories;
 using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure.Identity;
 using LanguageCourseManagement.Infrastructure.Repositories;
@@ -27,6 +28,7 @@ public static class DependencyInjection
 
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IClassroomRepository, ClassroomRepository>();
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IFacilityRepository, FacilityRepository>();
         services.AddScoped<ITeacherRepository, TeacherRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
