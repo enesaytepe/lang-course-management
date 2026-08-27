@@ -1,3 +1,4 @@
+using LanguageCourseManagement.Domain.DTOs;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Interfaces;
 
@@ -13,4 +14,16 @@ public interface ITeacherRepository : IRepository<Teacher>
     /// Bulunamazsa null döndürür.
     /// </summary>
     Task<Teacher?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verilen şube, dil ve ders programına uygun öğretmenleri veritabanında filtreler.
+    /// </summary>
+    Task<IReadOnlyList<Teacher>> GetEligibleTeachersAsync(
+        Guid branchId,
+        Guid offeredLanguageId,
+        IReadOnlyList<ScheduleSlot> schedules,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? excludeCourseId = null,
+        CancellationToken cancellationToken = default);
 }
