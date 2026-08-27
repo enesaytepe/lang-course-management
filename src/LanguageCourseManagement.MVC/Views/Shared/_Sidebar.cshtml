@@ -4,14 +4,14 @@
     var navigation = new List<(string Controller, string Action, string Label, bool AdminOnly)>
     {
         ("Dashboard", "Index", "Yönetim Panosu", false),
-        ("Branch", "Index", "Şubeler", false),
-        ("Classroom", "Index", "Derslikler", false),
-        ("Facility", "Index", "Tesisler", false),
-        ("Language", "Index", "Diller", false),
-        ("CourseLevel", "Index", "Kurs Seviyeleri", false),
-        ("Teacher", "Index", "Öğretmenler", false),
+        ("Branch", "Index", "Şubeler", true),
+        ("Classroom", "Index", "Derslikler", true),
+        ("Facility", "Index", "Tesisler", true),
+        ("Language", "Index", "Diller", true),
+        ("CourseLevel", "Index", "Kurs Seviyeleri", true),
+        ("Teacher", "Index", "Öğretmenler", true),
         ("Student", "Index", "Öğrenciler", false),
-        ("Course", "Index", "Dersler", false),
+        ("Course", "Index", "Dersler", true),
         ("Enrollment", "Index", "Kayıtlar", false),
         ("Payment", "Index", "Tahsilatlar", false),
         ("User", "Index", "Kullanıcılar", true)
