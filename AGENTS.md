@@ -90,10 +90,16 @@
 
 ## EF Core Query Standartları
 
-- `Include` / `ThenInclude` kullanımı yasaktır; bunun yerine `ProjectTo` veya manuel `Select` ile DTO dönüşümü yapılır.
+- **Query path'lerde** `Include` / `ThenInclude` kullanımı yasaktır; bunun yerine `ProjectTo` veya manuel `Select` ile DTO dönüşümü yapılır.
+- **Business logic/mutation sorgularında** `Include` izin verilir:
+  - Çakışma kontrolü (conflict detection)
+  - İş kuralı doğrulama (business rule validation)
+  - Değişiklik işlemleri (mutation operations)
+  - Domain entity'nin tam yüklenmesinin gerektiği durumlar
 - `IQueryable` üzerinde `ToList()` öncesi filtreleme ve sıralama uygulanmalıdır.
 - `AsNoTracking()` read-only sorgularda tercih edilir.
 - N+1 sorgu sorunlarına karşı eager loading yerine projection kullanılır.
+- `IgnoreQueryFilters()` hanya soft-delete filtresinin bypass edilmesi gerektiğinde kullanılır.
 
 ## Güvenlik
 
