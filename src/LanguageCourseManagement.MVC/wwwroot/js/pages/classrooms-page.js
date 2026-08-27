@@ -35,9 +35,17 @@
 
             if (this.$table.length) {
                 this.initializeTable();
+                this.bindBranchChange();
             }
 
             this.bindEvents();
+        },
+
+        bindBranchChange: function () {
+            var self = this;
+            $(document).off("branch.changed.classroomsPage").on("branch.changed.classroomsPage", function () {
+                self.refreshTable();
+            });
         },
 
         bindEvents: function () {
@@ -297,7 +305,8 @@
 
                     var url = "/api/classrooms?pageIndex=" + pageIndex
                         + "&pageSize=" + pageSize
-                        + "&search=" + encodeURIComponent(search);
+                        + "&search=" + encodeURIComponent(search)
+                        + app.BranchSelector.getBranchQueryParam();
 
                     $.getJSON(url)
                         .done(function (response) {

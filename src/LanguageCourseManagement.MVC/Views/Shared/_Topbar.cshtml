@@ -2,7 +2,15 @@
     <div>
         <p class="eyebrow mb-1">YÖNETİM MERKEZİ</p><span class="topbar-title">Şube yönetimi</span>
     </div>
-    <div class="topbar-status"><span class="status-dot" aria-hidden="true"></span><span>@User.Identity?.Name</span>
-        <form asp-controller="Account" asp-action="Logout" method="post" class="ms-3"><button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış</button></form>
+    <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+            <label for="topbarBranchFilter" class="text-nowrap" style="font-size:0.85rem;">Şube:</label>
+            <select id="topbarBranchFilter" class="form-select form-select-sm" style="min-width:160px;">
+                <option value="">Tüm Şubeler</option>
+            </select>
+        </div>
+        <div class="topbar-status"><span class="status-dot" aria-hidden="true"></span><span>@User.Identity?.Name</span>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="ms-3"><button type="submit" class="btn btn-sm btn-outline-secondary">Çıkış</button></form>
+        </div>
     </div>
 </header>

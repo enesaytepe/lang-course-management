@@ -23,6 +23,21 @@
             }
 
             this.bindEvents();
+            this.bindBranchChange();
+        },
+
+        bindBranchChange: function () {
+            var self = this;
+            $(document).off("branch.changed.paymentsPage").on("branch.changed.paymentsPage", function (_, branchId) {
+                if (branchId) {
+                    $("#branchFilter").val(branchId);
+                } else {
+                    $("#branchFilter").val("");
+                }
+                if (self.dataTable) {
+                    self.dataTable.ajax.reload(null, false);
+                }
+            });
         },
 
         bindEvents: function () {

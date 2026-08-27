@@ -23,10 +23,18 @@
 
             if (this.$table.length) {
                 this.initializeTable();
+                this.bindBranchChange();
             }
             if (this.$form.length) {
                 this.bindForm(this.$form);
             }
+        },
+
+        bindBranchChange: function () {
+            var self = this;
+            $(document).off("branch.changed.coursesPage").on("branch.changed.coursesPage", function () {
+                self.refreshTable();
+            });
         },
 
         initializeTable: function () {
@@ -43,7 +51,8 @@
                     var search = request.search && request.search.value ? request.search.value : "";
                     var url = "/api/courses?pageIndex=" + pageIndex
                         + "&pageSize=" + size
-                        + "&search=" + encodeURIComponent(search);
+                        + "&search=" + encodeURIComponent(search)
+                        + app.BranchSelector.getBranchQueryParam();
 
                     $.getJSON(url)
                         .done(function (response) {

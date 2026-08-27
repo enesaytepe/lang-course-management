@@ -30,6 +30,7 @@
 
             if (this.$table.length) {
                 this.initializeTable();
+                this.bindBranchChange();
             }
 
             this.bindEvents();
@@ -38,6 +39,15 @@
                 this.loadStudentOptions("");
                 this.loadCourseOptions("");
             }
+        },
+
+        bindBranchChange: function () {
+            var self = this;
+            $(document).off("branch.changed.enrollmentsPage").on("branch.changed.enrollmentsPage", function () {
+                if (self.dataTable) {
+                    self.dataTable.ajax.reload(null, false);
+                }
+            });
         },
 
         bindEvents: function () {
@@ -467,7 +477,8 @@
                     var search = request.search && request.search.value ? request.search.value : "";
                     var url = "/api/enrollments?pageIndex=" + pageIndex
                         + "&pageSize=" + pageSize
-                        + "&search=" + encodeURIComponent(search);
+                        + "&search=" + encodeURIComponent(search)
+                        + app.BranchSelector.getBranchQueryParam();
 
                     $.getJSON(url)
                         .done(function (response) {
