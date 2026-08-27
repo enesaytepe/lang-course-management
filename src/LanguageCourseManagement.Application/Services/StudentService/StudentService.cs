@@ -128,6 +128,7 @@ public sealed class StudentService : IStudentService
         student.HomePhone = request.HomePhone;
         student.MobilePhone = request.MobilePhone;
         student.Email = request.Email;
+        student.Address = request.Address;
         student.IsActive = request.IsActive;
         await _studentRepository.UpdateAsync(student, cancellationToken);
 

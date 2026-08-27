@@ -31,6 +31,11 @@ public class Student : SoftDeletableEntity
     public string? Email { get; set; }
 
     /// <summary>
+    /// Adres
+    /// </summary>
+    public string? Address { get; set; }
+
+    /// <summary>
     /// Öğrencinin sisteme ilk kayıt tarihi
     /// </summary>
     public DateTime RegistrationDate { get; set; }

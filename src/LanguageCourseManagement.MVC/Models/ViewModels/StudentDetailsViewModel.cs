@@ -11,6 +11,7 @@ public sealed class StudentDetailsViewModel
     public string? HomePhone { get; set; }
     public string MobilePhone { get; set; } = string.Empty;
     public string? Email { get; set; }
+    public string? Address { get; set; }
     public DateTime RegistrationDate { get; set; }
     public bool IsActive { get; set; }
     public IReadOnlyList<EnrollmentListItemResponse> Enrollments { get; set; } = [];

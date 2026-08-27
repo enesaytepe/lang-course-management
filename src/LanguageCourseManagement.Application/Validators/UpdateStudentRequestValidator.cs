@@ -21,6 +21,7 @@ public sealed class UpdateStudentRequestValidator : AbstractValidator<UpdateStud
             .EmailAddress()
             .Unless(request => string.IsNullOrWhiteSpace(request.Email))
             .MaximumLength(200);
+        RuleFor(request => request.Address).MaximumLength(500);
         RuleFor(request => request.IsActive).NotNull();
     }
 }

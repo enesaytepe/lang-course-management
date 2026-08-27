@@ -32,5 +32,9 @@ public sealed class StudentFormViewModel
     [Display(Name = "E-posta")]
     public string? Email { get; set; }
 
+    [StringLength(500)]
+    [Display(Name = "Adres")]
+    public string? Address { get; set; }
+
     public bool IsActive { get; set; } = true;
 }

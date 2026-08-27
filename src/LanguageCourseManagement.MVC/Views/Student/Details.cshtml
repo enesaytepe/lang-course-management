@@ -21,6 +21,7 @@
         <div><dt>Ev telefonu</dt><dd>@(Model.HomePhone ?? "-")</dd></div>
         <div><dt>Cep telefonu</dt><dd>@Model.MobilePhone</dd></div>
         <div><dt>E-posta</dt><dd>@(Model.Email ?? "-")</dd></div>
+        <div><dt>Adres</dt><dd>@(Model.Address ?? "-")</dd></div>
         <div><dt>Kayıt tarihi</dt><dd>@Model.RegistrationDate.ToString("dd.MM.yyyy")</dd></div>
         <div><dt>Durum</dt><dd><span class="status-pill @(Model.IsActive ? "status-active" : string.Empty)">@(Model.IsActive ? "Aktif" : "Pasif")</span></dd></div>
     </dl>

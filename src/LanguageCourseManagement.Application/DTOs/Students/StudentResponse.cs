@@ -8,6 +8,7 @@ public sealed class StudentResponse
     public string? HomePhone { get; set; }
     public required string MobilePhone { get; set; }
     public string? Email { get; set; }
+    public string? Address { get; set; }
     public DateTime RegistrationDate { get; set; }
     public bool IsActive { get; set; }
 }
