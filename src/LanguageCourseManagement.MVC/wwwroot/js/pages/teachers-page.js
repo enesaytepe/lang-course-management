@@ -11,6 +11,7 @@
         dataTable: null,
         canEdit: false,
         dayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"],
+        originalAvailabilityIds: [],
 
         canInitialize: function () {
             return $("#teachers-page").length > 0 || $("[data-teacher-form]").length > 0;
@@ -25,11 +26,23 @@
                 this.$form = this.$standaloneForm;
             }
             this.canEdit = app.Common.toBoolean(this.$page.data("can-edit"));
+            this.originalAvailabilityIds = this.captureOriginalAvailabilityIds();
 
             if (this.$table.length) {
                 this.initializeTable();
             }
             this.bindEvents();
+        },
+
+        captureOriginalAvailabilityIds: function () {
+            var ids = [];
+            $("#availabilityTable tbody tr input[name$='.Id']").each(function () {
+                var val = $(this).val();
+                if (val) {
+                    ids.push(val);
+                }
+            });
+            return ids;
         },
 
         bindEvents: function () {
@@ -152,35 +165,69 @@
             $submit.prop("disabled", true);
 
             var data = this.getPayload($form[0], update);
+            var currentAvailabilityIds = $.map(data.availabilities, function (a) { return a.Id; }).filter(Boolean);
+            var removedIds = $.grep(self.originalAvailabilityIds, function (origId) {
+                return $.inArray(origId, currentAvailabilityIds) === -1;
+            });
 
             $.ajax({
                 url: update ? "/api/teachers/" + encodeURIComponent(id) : "/api/teachers",
                 method: update ? "PUT" : "POST",
                 contentType: "application/json; charset=utf-8",
                 headers: {
-                    "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(this.$form)
+                    "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(self.$form)
                 },
                 data: JSON.stringify(data.teacher)
             }).done(function (teacher) {
                 var teacherId = teacher.id || teacher.Id;
-                var requests = $.map(data.availabilities, function (availability) {
-                    if (availability.Id) {
-                        return null;
-                    }
-                    return $.ajax({
-                        url: "/api/teachers/" + encodeURIComponent(teacherId) + "/availabilities",
-                        method: "POST",
-                        contentType: "application/json; charset=utf-8",
+                var requests = [];
+
+                // DELETE removed availabilities
+                $.each(removedIds, function (_, removedId) {
+                    requests.push($.ajax({
+                        url: "/api/teachers/" + encodeURIComponent(teacherId) + "/availabilities/" + encodeURIComponent(removedId),
+                        method: "DELETE",
                         headers: {
                             "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(self.$form)
-                        },
-                        data: JSON.stringify({
-                            DayOfWeek: availability.DayOfWeek,
-                            StartTime: availability.StartTime,
-                            EndTime: availability.EndTime
-                        })
-                    });
+                        }
+                    }));
                 });
+
+                // Process each availability (PUT existing, POST new)
+                $.each(data.availabilities, function (_, availability) {
+                    if (availability.Id) {
+                        // Existing availability: send PUT
+                        requests.push($.ajax({
+                            url: "/api/teachers/" + encodeURIComponent(teacherId) + "/availabilities/" + encodeURIComponent(availability.Id),
+                            method: "PUT",
+                            contentType: "application/json; charset=utf-8",
+                            headers: {
+                                "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(self.$form)
+                            },
+                            data: JSON.stringify({
+                                DayOfWeek: availability.DayOfWeek,
+                                StartTime: availability.StartTime,
+                                EndTime: availability.EndTime
+                            })
+                        }));
+                    } else {
+                        // New availability: send POST
+                        requests.push($.ajax({
+                            url: "/api/teachers/" + encodeURIComponent(teacherId) + "/availabilities",
+                            method: "POST",
+                            contentType: "application/json; charset=utf-8",
+                            headers: {
+                                "X-XSRF-TOKEN": app.Common.getAntiforgeryToken(self.$form)
+                            },
+                            data: JSON.stringify({
+                                DayOfWeek: availability.DayOfWeek,
+                                StartTime: availability.StartTime,
+                                EndTime: availability.EndTime
+                            })
+                        }));
+                    }
+                });
+
                 $.when.apply($, requests).always(function () {
                     window.location.assign("/Teacher/Details/" + encodeURIComponent(teacherId));
                 });
