@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Kullanıcılar";
+}
+
+<section class="content-card" id="users-page">
+    <div class="section-heading">
+        <div>
+            <h1>Kullanıcılar</h1>
+            <p>Kullanıcı yönetimi</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Create">Yeni kullanıcı</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="usersTable" data-datatable>
+            <caption class="visually-hidden">Kullanıcı listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Kullanıcı Adı</th>
+                    <th scope="col">Ad Soyad</th>
+                    <th scope="col">E-posta</th>
+                    <th scope="col">Roller</th>
+                    <th scope="col">Durum</th>
+                    <th scope="col">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+<form id="userDeleteAntiforgeryForm" class="d-none" aria-hidden="true">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts
+{
+    <script src="~/js/pages/users-page.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

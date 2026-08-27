@@ -1,0 +1,74 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.UserFormViewModel
+@{
+    var formAction = ViewData["FormAction"] as string ?? "Create";
+    var isEdit = string.Equals(formAction, "Edit", StringComparison.OrdinalIgnoreCase);
+    var heading = ViewData["FormHeading"] as string ?? "Yeni kullanıcı";
+    var description = ViewData["FormDescription"] as string ?? "Kullanıcı bilgilerini girin.";
+    var cancelAction = ViewData["CancelAction"] as string ?? "Index";
+    var submitText = ViewData["SubmitText"] as string ?? "Kaydet";
+}
+
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <h1>@heading</h1>
+            <p>@description</p>
+        </div>
+    </div>
+
+    <form action="@Url.Action(formAction, new { id = isEdit ? Model.Id : null })"
+          method="post"
+          data-user-form="@(isEdit ? "update" : "create")"
+          data-user-id="@(isEdit ? Model.Id : null)">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" data-validation-summary></div>
+        <div class="row g-4">
+            @if (!isEdit)
+            {
+                <div class="col-md-6">
+                    <label asp-for="UserName" class="form-label">Kullanıcı Adı</label>
+                    <input asp-for="UserName" class="form-control" />
+                    <span asp-validation-for="UserName" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <div class="col-md-6">
+                    <label asp-for="UserName" class="form-label">Kullanıcı Adı</label>
+                    <input asp-for="UserName" class="form-control" disabled />
+                    <input type="hidden" asp-for="UserName" />
+                </div>
+            }
+            <div class="col-md-6">
+                <label asp-for="FullName" class="form-label">Ad Soyad</label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label">E-posta</label>
+                <input asp-for="Email" class="form-control" type="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Role" class="form-label">Rol</label>
+                <select asp-for="Role" asp-items="Model.AvailableRoles" class="form-select">
+                    <option value="">-- Rol Seçin --</option>
+                </select>
+                <span asp-validation-for="Role" class="text-danger"></span>
+            </div>
+            @if (!isEdit)
+            {
+                <div class="col-md-6">
+                    <label asp-for="Password" class="form-label">Şifre</label>
+                    <input asp-for="Password" class="form-control" type="password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+            }
+        </div>
+
+        <div class="form-actions mt-4">
+            <a class="btn btn-outline-secondary" asp-action="@cancelAction">Vazgeç</a>
+            <button type="submit" class="btn btn-primary">@submitText</button>
+        </div>
+    </form>
+</section>

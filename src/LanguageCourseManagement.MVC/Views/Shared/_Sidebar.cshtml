@@ -1,18 +1,20 @@
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
-    var navigation = new[]
+    var isSystemAdmin = User.IsInRole("SystemAdmin");
+    var navigation = new List<(string Controller, string Action, string Label, bool AdminOnly)>
     {
-        ("Dashboard", "Index", "Yönetim Panosu"),
-        ("Branch", "Index", "Şubeler"),
-        ("Classroom", "Index", "Derslikler"),
-        ("Facility", "Index", "Tesisler"),
-        ("Language", "Index", "Diller"),
-        ("CourseLevel", "Index", "Kurs Seviyeleri"),
-        ("Teacher", "Index", "Öğretmenler"),
-        ("Student", "Index", "Öğrenciler"),
-        ("Course", "Index", "Dersler"),
-        ("Enrollment", "Index", "Kayıtlar"),
-        ("Payment", "Index", "Tahsilatlar")
+        ("Dashboard", "Index", "Yönetim Panosu", false),
+        ("Branch", "Index", "Şubeler", false),
+        ("Classroom", "Index", "Derslikler", false),
+        ("Facility", "Index", "Tesisler", false),
+        ("Language", "Index", "Diller", false),
+        ("CourseLevel", "Index", "Kurs Seviyeleri", false),
+        ("Teacher", "Index", "Öğretmenler", false),
+        ("Student", "Index", "Öğrenciler", false),
+        ("Course", "Index", "Dersler", false),
+        ("Enrollment", "Index", "Kayıtlar", false),
+        ("Payment", "Index", "Tahsilatlar", false),
+        ("User", "Index", "Kullanıcılar", true)
     };
 }
 <aside class="sidebar" aria-label="Ana menü">
@@ -22,9 +24,10 @@
         <ul class="nav flex-column gap-1">
             @foreach (var item in navigation)
             {
-                var isActive = controller == item.Item1;
+                if (item.AdminOnly && !isSystemAdmin) continue;
+                var isActive = controller == item.Controller;
                 <li>
-                    <a class="side-link @(isActive ? "active" : string.Empty)" asp-controller="@item.Item1" asp-action="@item.Item2" aria-current="@(isActive ? "page" : null)"><span aria-hidden="true">›</span>@item.Item3</a>
+                    <a class="side-link @(isActive ? "active" : string.Empty)" asp-controller="@item.Controller" asp-action="@item.Action" aria-current="@(isActive ? "page" : null)"><span aria-hidden="true">›</span>@item.Label</a>
                 </li>
             }
         </ul>

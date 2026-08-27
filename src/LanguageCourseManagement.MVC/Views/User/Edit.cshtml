@@ -1,0 +1,14 @@
+@model LanguageCourseManagement.MVC.Models.ViewModels.UserFormViewModel
+@{
+    ViewData["Title"] = "Kullanıcı Düzenle";
+    ViewData["FormAction"] = "Edit";
+    ViewData["FormHeading"] = "Kullanıcı düzenle";
+    ViewData["FormDescription"] = "Kullanıcı bilgilerini güncelleyin.";
+}
+
+<partial name="_Form" model="Model" view-data="ViewData" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/pages/users-page.js" asp-append-version="true"></script>
+}

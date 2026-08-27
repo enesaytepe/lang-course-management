@@ -90,7 +90,7 @@ public sealed class IdentitySeedService
         var user = await _userManager.FindByNameAsync(userName);
         if (user is null)
         {
-            user = new ApplicationUser { UserName = userName };
+            user = new ApplicationUser { UserName = userName, FullName = role == SystemAdminRole ? "Sistem Yöneticisi" : "Kayıt Görevlisi" };
             var createResult = await _userManager.CreateAsync(user, password);
             EnsureSuccess(createResult, $"demo user '{userName}'");
         }
