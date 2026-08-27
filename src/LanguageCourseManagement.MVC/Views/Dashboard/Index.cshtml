@@ -60,5 +60,11 @@
             <strong>@Model.PendingPaymentCount</strong>
             <span>Bekleyen ödeme</span>
         </a>
+        <a class="metric-card metric-card-link" asp-controller="Payment" asp-action="Index">
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            <p>Gecikmiş Taksit</p>
+            <strong>@Model.OverdueInstallmentCount</strong>
+            <span>Vadesi geçen taksit</span>
+        </a>
     </div>
 </section>

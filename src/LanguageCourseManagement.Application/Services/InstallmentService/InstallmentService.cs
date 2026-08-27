@@ -13,15 +13,18 @@ namespace LanguageCourseManagement.Application.Services.InstallmentService;
 public sealed class InstallmentService : IInstallmentService
 {
     private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IInstallmentRepository _installmentRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<InstallmentService> _logger;
 
     public InstallmentService(
         IEnrollmentRepository enrollmentRepository,
+        IInstallmentRepository installmentRepository,
         IMapper mapper,
         ILogger<InstallmentService> logger)
     {
         _enrollmentRepository = enrollmentRepository;
+        _installmentRepository = installmentRepository;
         _mapper = mapper;
         _logger = logger;
     }
@@ -99,5 +102,34 @@ public sealed class InstallmentService : IInstallmentService
             .OrderBy(i => i.InstallmentNumber)
             .Select(_mapper.Map<InstallmentResponse>)
             .ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task MarkOverdueInstallmentsAsync(CancellationToken cancellationToken = default)
+    {
+        var overdueInstallments = await _installmentRepository.Query()
+            .Where(i => i.Status == PaymentStatus.Pending && i.DueDate < DateOnly.FromDateTime(DateTime.Today))
+            .ToListAsync(cancellationToken);
+
+        if (overdueInstallments.Count == 0)
+            return;
+
+        foreach (var installment in overdueInstallments)
+        {
+            installment.Status = PaymentStatus.Overdue;
+        }
+
+        await _installmentRepository.UpdateRangeAsync(overdueInstallments, cancellationToken);
+
+        _logger.LogInformation(
+            "[InstallmentService] {Count} taksit Overdue durumuna geçirildi",
+            overdueInstallments.Count);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetOverdueCountAsync(CancellationToken cancellationToken = default)
+    {
+        return await _installmentRepository.Query()
+            .CountAsync(i => i.Status == PaymentStatus.Overdue, cancellationToken);
     }
 }

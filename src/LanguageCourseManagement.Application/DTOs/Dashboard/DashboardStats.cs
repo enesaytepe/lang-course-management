@@ -55,4 +55,9 @@ public sealed class DashboardStats
     /// Ödemesi yapılmamış kayıt sayısı
     /// </summary>
     public int PendingPaymentCount { get; init; }
+
+    /// <summary>
+    /// Vadesi geçmiş taksit sayısı
+    /// </summary>
+    public int OverdueInstallmentCount { get; init; }
 }

@@ -10,4 +10,5 @@ public sealed class DashboardViewModel
     public int TotalEnrollmentCount { get; init; }
     public decimal TotalSettledAmount { get; init; }
     public int PendingPaymentCount { get; init; }
+    public int OverdueInstallmentCount { get; init; }
 }

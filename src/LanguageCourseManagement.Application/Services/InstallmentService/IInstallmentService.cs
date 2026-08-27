@@ -16,4 +16,14 @@ public interface IInstallmentService
     /// Kaydın taksitlerini listeler.
     /// </summary>
     Task<IReadOnlyList<InstallmentResponse>> GetByEnrollmentIdAsync(Guid enrollmentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Vadesi geçmiş bekleyen taksitleri Overdue durumuna geçirir.
+    /// </summary>
+    Task MarkOverdueInstallmentsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Overdue durumundaki taksit sayısını döndürür.
+    /// </summary>
+    Task<int> GetOverdueCountAsync(CancellationToken cancellationToken = default);
 }

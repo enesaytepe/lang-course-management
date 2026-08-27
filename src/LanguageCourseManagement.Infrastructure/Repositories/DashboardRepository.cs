@@ -46,7 +46,8 @@ public sealed class DashboardRepository : IDashboardRepository
                           SELECT 1 FROM Payments p
                           WHERE p.EnrollmentId = e.Id AND p.IsDeleted = 0
                       )
-                ) AS PendingPaymentCount
+                ) AS PendingPaymentCount,
+                (SELECT COUNT(*) FROM Installments WHERE IsDeleted = 0 AND Status = 3) AS OverdueInstallmentCount
             """;
 
         await using var connection = new SqlConnection(_connectionString);
@@ -73,7 +74,8 @@ public sealed class DashboardRepository : IDashboardRepository
                 ActiveEnrollments = reader.GetInt32(6),
                 TotalSettledAmount = reader.GetDecimal(7),
                 MonthlyRevenue = reader.GetDecimal(8),
-                PendingPaymentCount = reader.GetInt32(9)
+                PendingPaymentCount = reader.GetInt32(9),
+                OverdueInstallmentCount = reader.GetInt32(10)
             };
         }
 

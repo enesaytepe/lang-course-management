@@ -496,6 +496,11 @@ a {
     background: #e7f6ed;
 }
 
+.status-danger {
+    color: #842029;
+    background: #f8d7da;
+}
+
 @media (max-width: 991.98px) {
     .sidebar {
         width: 220px;

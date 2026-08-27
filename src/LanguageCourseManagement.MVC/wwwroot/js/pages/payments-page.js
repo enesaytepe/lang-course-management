@@ -16,9 +16,42 @@
             this.$page = $("#payments-page");
             this.$table = $("#paymentsTable");
 
+            this.loadBranchOptions();
+
             if (this.$table.length) {
                 this.initializeTable();
             }
+
+            this.bindEvents();
+        },
+
+        bindEvents: function () {
+            var self = this;
+
+            $("#branchFilter")
+                .off("change.paymentsFilter")
+                .on("change.paymentsFilter", function () {
+                    self.dataTable.ajax.reload(null, false);
+                });
+        },
+
+        loadBranchOptions: function () {
+            var $branch = $("#branchFilter");
+            var pageSize = 100;
+            var url = "/api/branches?pageIndex=0&pageSize=" + pageSize + "&isActive=true";
+
+            $.getJSON(url)
+                .done(function (response) {
+                    var items = app.Common.getValue(response, "Items") || [];
+                    $branch.find("option:gt(0)").remove();
+                    $.each(items, function (_, item) {
+                        $branch.append($("<option>", {
+                            value: app.Common.getValue(item, "Id"),
+                            text: app.Common.getValue(item, "Name") || "-"
+                        }));
+                    });
+                })
+                .fail(app.Common.showApiError);
         },
 
         getColumns: function () {
@@ -32,6 +65,13 @@
                 },
                 {
                     data: "courseName",
+                    defaultContent: "-",
+                    render: function (data) {
+                        return app.Common.escapeHtml(data || "-");
+                    }
+                },
+                {
+                    data: "branchName",
                     defaultContent: "-",
                     render: function (data) {
                         return app.Common.escapeHtml(data || "-");
@@ -62,8 +102,13 @@
                 {
                     data: "status",
                     render: function (data) {
-                        var text = data === "Settled" ? "Tamamlandı" : data || "-";
-                        return '<span class="status-pill status-active">' + text + '</span>';
+                        var text = data === "Settled" ? "Tamamlandı"
+                            : data === "Overdue" ? "Gecikmiş"
+                            : data || "-";
+                        var cssClass = data === "Overdue"
+                            ? "status-pill status-danger"
+                            : "status-pill status-active";
+                        return '<span class="' + cssClass + '">' + text + '</span>';
                     }
                 },
                 {
@@ -98,9 +143,13 @@
                     var pageSize = Math.min(Math.max(Number(request.length) || 10, 1), 100);
                     var pageIndex = Math.floor((Number(request.start) || 0) / pageSize);
                     var search = request.search && request.search.value ? request.search.value : "";
+                    var branchId = $("#branchFilter").val() || "";
                     var url = "/api/payments?pageIndex=" + pageIndex
                         + "&pageSize=" + pageSize
                         + "&search=" + encodeURIComponent(search);
+                    if (branchId) {
+                        url += "&branchId=" + encodeURIComponent(branchId);
+                    }
 
                     $.getJSON(url)
                         .done(function (response) {
