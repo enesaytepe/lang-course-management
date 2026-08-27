@@ -76,6 +76,15 @@ dotnet run --project src/LanguageCourseManagement.MVC
 
 Development ortaminda demo kullanici `Authentication__SeedDemoUsers=true` ayariyla etkinlestirilebilir.
 
+### Demo Kullanici Sifreleri (User Secrets)
+
+Demo kullanici sifreleri `appsettings.Development.json` dosyasinda tutulmaz. Asagidaki komutlarla User Secrets'a ekleyin:
+
+```powershell
+dotnet user-secrets set "Authentication:DemoUsers:SystemAdmin:Password" "Admin@123" --project src/LanguageCourseManagement.MVC
+dotnet user-secrets set "Authentication:DemoUsers:RegistrationOfficer:Password" "Officer@123" --project src/LanguageCourseManagement.MVC
+```
+
 ## Testler
 
 ```powershell
