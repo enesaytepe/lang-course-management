@@ -22,7 +22,7 @@
         <div class="app-content">
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <partial name="_Topbar" />
+                <partial name="_Topbar" view-data="@ViewData" />
             }
             <main id="main-content" role="main" class="page-content">
                 @RenderBody()
