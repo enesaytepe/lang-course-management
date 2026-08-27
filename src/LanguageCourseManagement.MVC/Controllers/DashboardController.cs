@@ -34,7 +34,9 @@ public sealed class DashboardController : Controller
             ActiveStudentCount = stats.ActiveStudentCount,
             ActiveCourseCount = stats.ActiveCourseCount,
             TotalEnrollmentCount = stats.TotalEnrollmentCount,
+            ActiveEnrollments = stats.ActiveEnrollments,
             TotalSettledAmount = stats.TotalSettledAmount,
+            MonthlyRevenue = stats.MonthlyRevenue,
             PendingPaymentCount = stats.PendingPaymentCount,
             OverdueInstallmentCount = stats.OverdueInstallmentCount
         });

@@ -8,7 +8,9 @@ public sealed class DashboardViewModel
     public int ActiveStudentCount { get; init; }
     public int ActiveCourseCount { get; init; }
     public int TotalEnrollmentCount { get; init; }
+    public int ActiveEnrollments { get; init; }
     public decimal TotalSettledAmount { get; init; }
+    public decimal MonthlyRevenue { get; init; }
     public int PendingPaymentCount { get; init; }
     public int OverdueInstallmentCount { get; init; }
 }
