@@ -1,6 +1,9 @@
-﻿using LanguageCourseManagement.Domain.Entities;
+﻿using System.Security.Claims;
+using System.Text.Json;
+using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using LanguageCourseManagement.Infrastructure.Identity;
@@ -9,8 +12,12 @@ namespace LanguageCourseManagement.Infrastructure;
 
 public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private bool _isSavingAuditLogs;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor httpContextAccessor) : base(options)
     {
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public DbSet<Branch> Branches { get; set; }
@@ -29,6 +36,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TeacherAvailability> TeacherAvailabilities { get; set; }
     public DbSet<TeacherBranch> TeacherBranches { get; set; }
     public DbSet<TeacherLanguage> TeacherLanguages { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -62,10 +70,23 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
         HandleSoftDelete();
         HandleTimestamps();
         EnsureSettledPaymentsAreImmutable();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
+
+        var auditEntries = !_isSavingAuditLogs ? CaptureAuditLogs() : [];
+
+        var result = base.SaveChanges(acceptAllChangesOnSuccess);
+
+        if (auditEntries.Count > 0)
+        {
+            _isSavingAuditLogs = true;
+            AuditLogs.AddRange(auditEntries);
+            base.SaveChanges(acceptAllChangesOnSuccess);
+            _isSavingAuditLogs = false;
+        }
+
+        return result;
     }
 
-    public override Task<int> SaveChangesAsync(
+    public override async Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
@@ -73,7 +94,19 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
         HandleTimestamps();
         EnsureSettledPaymentsAreImmutable();
 
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        var auditEntries = !_isSavingAuditLogs ? CaptureAuditLogs() : [];
+
+        var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        if (auditEntries.Count > 0)
+        {
+            _isSavingAuditLogs = true;
+            AuditLogs.AddRange(auditEntries);
+            await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            _isSavingAuditLogs = false;
+        }
+
+        return result;
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -121,5 +154,90 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
                 throw new InvalidOperationException(
                     $"Payment in '{originalStatus}' status is immutable and cannot be modified or deleted.");
         }
+    }
+
+    private List<AuditLog> CaptureAuditLogs()
+    {
+        ChangeTracker.DetectChanges();
+        var entries = ChangeTracker.Entries()
+            .Where(e => e.Entity is not AuditLog &&
+                        e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .ToList();
+
+        if (entries.Count == 0)
+            return [];
+
+        var userId = GetCurrentUserId();
+        var userName = GetCurrentUserName();
+        var timestamp = DateTime.UtcNow;
+        var auditLogs = new List<AuditLog>();
+
+        foreach (var entry in entries)
+        {
+            var entityName = entry.Entity.GetType().Name;
+            var entityId = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id")?.CurrentValue?.ToString() ?? string.Empty;
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                EntityName = entityName,
+                EntityId = entityId,
+                Action = entry.State switch
+                {
+                    EntityState.Added => AuditAction.Created,
+                    EntityState.Modified => AuditAction.Updated,
+                    EntityState.Deleted => AuditAction.Deleted,
+                    _ => AuditAction.Updated
+                },
+                UserId = userId,
+                UserName = userName,
+                Timestamp = timestamp
+            };
+
+            if (entry.State == EntityState.Deleted)
+            {
+                auditLog.OldValues = JsonSerializer.Serialize(entry.Properties.ToDictionary(
+                    p => p.Metadata.Name,
+                    p => p.OriginalValue));
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                var changedProperties = entry.Properties
+                    .Where(p => p.IsModified && p.Metadata.Name != "Id" && p.Metadata.Name != "UpdatedAt")
+                    .ToList();
+
+                if (changedProperties.Count > 0)
+                {
+                    auditLog.OldValues = JsonSerializer.Serialize(changedProperties.ToDictionary(
+                        p => p.Metadata.Name,
+                        p => p.OriginalValue));
+                    auditLog.NewValues = JsonSerializer.Serialize(changedProperties.ToDictionary(
+                        p => p.Metadata.Name,
+                        p => p.CurrentValue));
+                }
+            }
+            else if (entry.State == EntityState.Added)
+            {
+                auditLog.NewValues = JsonSerializer.Serialize(entry.Properties
+                    .Where(p => p.Metadata.Name != "Id" && p.Metadata.Name != "CreatedAt" && p.Metadata.Name != "UpdatedAt")
+                    .ToDictionary(
+                        p => p.Metadata.Name,
+                        p => p.CurrentValue));
+            }
+
+            auditLogs.Add(auditLog);
+        }
+
+        return auditLogs;
+    }
+
+    private string? GetCurrentUserId()
+    {
+        return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
+
+    private string? GetCurrentUserName()
+    {
+        return _httpContextAccessor.HttpContext?.User?.Identity?.Name;
     }
 }

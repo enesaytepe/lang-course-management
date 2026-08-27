@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Değişiklik Geçmişi";
+}
+
+<section class="content-card" id="audit-log-page">
+    <div class="section-heading">
+        <div>
+            <h1>Değişiklik Geçmişi</h1>
+            <p>Sistemde yapılan değişikliklerin kaydı</p>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="auditLogTable" data-datatable>
+            <caption class="visually-hidden">Değişiklik geçmişi listesi</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Tarih</th>
+                    <th scope="col">Varlık</th>
+                    <th scope="col">Varlık ID</th>
+                    <th scope="col">İşlem</th>
+                    <th scope="col">Kullanıcı</th>
+                    <th scope="col">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts
+{
+    <script src="~/js/pages/audit-log-page.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

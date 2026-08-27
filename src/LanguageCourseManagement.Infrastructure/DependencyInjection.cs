@@ -5,6 +5,7 @@ using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure.Identity;
 using LanguageCourseManagement.Infrastructure.Repositories;
 using LanguageCourseManagement.Infrastructure.Seeding;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +27,9 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddHttpContextAccessor();
 
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IClassroomRepository, ClassroomRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();

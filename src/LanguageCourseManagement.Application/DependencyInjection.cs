@@ -1,5 +1,6 @@
 using FluentValidation;
 using LanguageCourseManagement.Application.Mapping;
+using LanguageCourseManagement.Application.Services.AuditLogService;
 using LanguageCourseManagement.Application.Services.BranchService;
 using LanguageCourseManagement.Application.Services.ClassroomService;
 using LanguageCourseManagement.Application.Services.DashboardService;
@@ -23,6 +24,7 @@ public static class DependencyInjection
     {
         services.AddAutoMapper(_ => { }, typeof(BranchProfile).Assembly);
         services.AddValidatorsFromAssembly(typeof(CreateBranchRequestValidator).Assembly);
+        services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IBranchService, BranchService>();
         services.AddScoped<IClassroomService, ClassroomService>();
         services.AddScoped<IDashboardService, DashboardService>();
