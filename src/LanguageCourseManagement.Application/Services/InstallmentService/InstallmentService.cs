@@ -45,6 +45,9 @@ public sealed class InstallmentService : IInstallmentService
         if (enrollment.PaymentType != PaymentType.Installment)
             throw new BusinessException("Bu kayıt taksitli ödeme planına uygun değil.");
 
+        if (enrollment.Status != EnrollmentStatus.Active)
+            throw new BusinessException("Taksit planı sadece aktif durumdaki kayıtlar için oluşturulabilir.");
+
         if (enrollment.Installments != null && enrollment.Installments.Count > 0)
             throw new BusinessException("Bu kayıt için zaten bir taksit planı oluşturulmuş.");
 

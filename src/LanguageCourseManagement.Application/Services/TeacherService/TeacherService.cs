@@ -111,6 +111,11 @@ public sealed class TeacherService : ITeacherService
         request.FirstName = request.FirstName.Trim();
         request.LastName = request.LastName.Trim();
 
+        if (request.LanguageIds is null || request.LanguageIds.Count == 0)
+            throw new BusinessException("En az bir dil seçilmelidir.");
+        if (request.BranchIds is null || request.BranchIds.Count == 0)
+            throw new BusinessException("En az bir şube seçilmelidir.");
+
         var languageIds = await ValidateLanguagesAsync(request.LanguageIds, cancellationToken);
         var branchIds = await ValidateBranchesAsync(request.BranchIds, cancellationToken);
 

@@ -22,5 +22,9 @@ public sealed class CreateTeacherRequestValidator : AbstractValidator<CreateTeac
             .Unless(request => string.IsNullOrWhiteSpace(request.Email))
             .MaximumLength(200);
         RuleFor(request => request.HireDate).NotEmpty();
+        RuleFor(request => request.LanguageIds)
+            .NotEmpty().WithMessage("En az bir dil seçilmelidir.");
+        RuleFor(request => request.BranchIds)
+            .NotEmpty().WithMessage("En az bir şube seçilmelidir.");
     }
 }
