@@ -9,4 +9,5 @@ public sealed class EnrollmentCreateRequest
     public decimal DiscountAmount { get; set; }
     public string IdempotencyKey { get; set; } = string.Empty;
     public PaymentType PaymentType { get; set; } = PaymentType.Cash;
+    public int? InstallmentCount { get; set; }
 }
