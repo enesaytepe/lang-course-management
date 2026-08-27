@@ -5,6 +5,7 @@ using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Courses;
 using LanguageCourseManagement.Application.Exceptions;
+using LanguageCourseManagement.Domain.DTOs;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Paging;
@@ -230,21 +231,33 @@ public sealed class CourseService : ICourseService
         }).ToList();
     }
 
-    public Task<IReadOnlyList<EligibleTeacherResponse>> GetEligibleTeachersAsync(
+    public async Task<IReadOnlyList<EligibleTeacherResponse>> GetEligibleTeachersAsync(
         Guid branchId, Guid offeredLanguageId, Guid courseLevelId,
         DateOnly startDate, DateOnly endDate,
         IReadOnlyList<CourseScheduleItemDto> schedules,
         Guid? excludeCourseId = null, CancellationToken cancellationToken = default)
     {
-        return GetEligibleTeachersCoreAsync(branchId, offeredLanguageId, schedules, startDate, endDate, excludeCourseId, cancellationToken);
+        var slots = schedules.Select(s => new ScheduleSlot(s.DayOfWeek, s.StartTime, s.EndTime)).ToList();
+        var teachers = await _teacherRepository.GetEligibleTeachersAsync(
+            branchId, offeredLanguageId, slots, startDate, endDate, excludeCourseId, cancellationToken);
+
+        return teachers
+            .Select(t => new EligibleTeacherResponse { Id = t.Id, FirstName = t.FirstName, LastName = t.LastName })
+            .ToList();
     }
 
-    public Task<IReadOnlyList<EligibleClassroomResponse>> GetEligibleClassroomsAsync(
+    public async Task<IReadOnlyList<EligibleClassroomResponse>> GetEligibleClassroomsAsync(
         Guid branchId, DateOnly startDate, DateOnly endDate,
         IReadOnlyList<CourseScheduleItemDto> schedules,
         Guid? excludeCourseId = null, CancellationToken cancellationToken = default)
     {
-        return GetEligibleClassroomsCoreAsync(branchId, schedules, startDate, endDate, excludeCourseId, cancellationToken);
+        var slots = schedules.Select(s => new ScheduleSlot(s.DayOfWeek, s.StartTime, s.EndTime)).ToList();
+        var classrooms = await _classroomRepository.GetEligibleClassroomsAsync(
+            branchId, slots, startDate, endDate, excludeCourseId, cancellationToken);
+
+        return classrooms
+            .Select(c => new EligibleClassroomResponse { Id = c.Id, Name = c.Name, Capacity = c.Capacity })
+            .ToList();
     }
 
     private async Task ValidateScheduleRulesAsync(
@@ -289,42 +302,6 @@ public sealed class CourseService : ICourseService
             throw new BusinessException("Seçilen derslik uygun değil.");
         if (HasCourseConflict(classroom.Courses ?? [], startDate, endDate, schedules, excludeCourseId))
             throw new BusinessException("Dersliğin seçilen tarihlerde çakışan bir dersi bulunuyor.");
-    }
-
-    private async Task<IReadOnlyList<EligibleTeacherResponse>> GetEligibleTeachersCoreAsync(
-        Guid branchId, Guid offeredLanguageId, IReadOnlyList<CourseScheduleItemDto> schedules,
-        DateOnly startDate, DateOnly endDate, Guid? excludeCourseId, CancellationToken cancellationToken)
-    {
-        var teachers = await _teacherRepository.GetListAsync(
-            predicate: teacher => teacher.IsActive &&
-                teacher.TeacherLanguages != null && teacher.TeacherLanguages.Any(language => language.OfferedLanguageId == offeredLanguageId) &&
-                teacher.TeacherBranches != null && teacher.TeacherBranches.Any(branch => branch.BranchId == branchId),
-            include: query => query.Include(teacher => teacher.TeacherLanguages)
-                .Include(teacher => teacher.TeacherBranches)
-                .Include(teacher => teacher.Availabilities)
-                .Include(teacher => teacher.Courses!).ThenInclude(course => course.Schedules!),
-            index: 0, size: 10000, enableTracking: false, cancellationToken: cancellationToken);
-
-        return teachers.Items
-            .Where(teacher => schedules.All(schedule => (teacher.Availabilities ?? []).Any(availability =>
-                availability.DayOfWeek == schedule.DayOfWeek && availability.StartTime <= schedule.StartTime && availability.EndTime >= schedule.EndTime)))
-            .Where(teacher => !HasCourseConflict(teacher.Courses ?? [], startDate, endDate, schedules, excludeCourseId))
-            .Select(teacher => new EligibleTeacherResponse { Id = teacher.Id, FirstName = teacher.FirstName, LastName = teacher.LastName })
-            .OrderBy(teacher => teacher.LastName).ThenBy(teacher => teacher.FirstName).ToList();
-    }
-
-    private async Task<IReadOnlyList<EligibleClassroomResponse>> GetEligibleClassroomsCoreAsync(
-        Guid branchId, IReadOnlyList<CourseScheduleItemDto> schedules,
-        DateOnly startDate, DateOnly endDate, Guid? excludeCourseId, CancellationToken cancellationToken)
-    {
-        var classrooms = await _classroomRepository.GetListAsync(
-            predicate: classroom => classroom.BranchId == branchId && classroom.IsActive,
-            include: query => query.Include(classroom => classroom.Courses!).ThenInclude(course => course.Schedules!),
-            index: 0, size: 10000, enableTracking: false, cancellationToken: cancellationToken);
-
-        return classrooms.Items.Where(classroom => !HasCourseConflict(classroom.Courses ?? [], startDate, endDate, schedules, excludeCourseId))
-            .Select(classroom => new EligibleClassroomResponse { Id = classroom.Id, Name = classroom.Name, Capacity = classroom.Capacity })
-            .OrderBy(classroom => classroom.Name).ToList();
     }
 
     private static bool HasCourseConflict(IEnumerable<Course> courses, DateOnly startDate, DateOnly endDate,
