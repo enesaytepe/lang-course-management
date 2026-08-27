@@ -419,6 +419,13 @@
                     }
                 },
                 {
+                    data: "branchName",
+                    defaultContent: "-",
+                    render: function (data) {
+                        return app.Common.escapeHtml(data || "-");
+                    }
+                },
+                {
                     data: "finalAmount",
                     render: function (data) {
                         return (Number(data) || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 }) + " ₺";

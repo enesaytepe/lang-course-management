@@ -18,6 +18,8 @@ public sealed class EnrollmentProfile : Profile
                     : string.Empty))
             .ForMember(dest => dest.CourseName,
                 opt => opt.MapFrom(src => src.Course != null ? src.Course.Name : string.Empty))
+            .ForMember(dest => dest.BranchName,
+                opt => opt.MapFrom(src => src.Course != null ? src.Course.Branch.Name : string.Empty))
             .ForMember(dest => dest.IsSettled,
                 opt => opt.MapFrom(src => src.Payments != null && src.Payments.Any()))
             .ForMember(dest => dest.PaymentType,
