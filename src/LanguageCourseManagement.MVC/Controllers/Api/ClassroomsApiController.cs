@@ -1,6 +1,7 @@
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Classrooms;
+using LanguageCourseManagement.Application.DTOs.Schedules;
 using LanguageCourseManagement.Application.Services.ClassroomService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,17 @@ public sealed class ClassroomsApiController : ControllerBase
             pageRequest.PageSize = 20;
 
         return Ok(await _classroomService.GetListAsync(pageRequest, search, branchId, isActive ?? true, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
+    /// Dersliğin haftalık ders programını getirir.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
+    [HttpGet("{id:guid}/schedule")]
+    [ProducesResponseType<List<WeeklyScheduleResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<WeeklyScheduleResponse>>> GetSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        return Ok(await _classroomService.GetWeeklyScheduleAsync(id, cancellationToken));
     }
 
     /// <summary>

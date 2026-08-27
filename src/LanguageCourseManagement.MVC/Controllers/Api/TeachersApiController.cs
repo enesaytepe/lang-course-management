@@ -1,5 +1,6 @@
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
+using LanguageCourseManagement.Application.DTOs.Schedules;
 using LanguageCourseManagement.Application.DTOs.Teachers;
 using LanguageCourseManagement.Application.Services.TeacherService;
 using Microsoft.AspNetCore.Authorization;
@@ -37,6 +38,17 @@ public sealed class TeachersApiController : ControllerBase
             pageRequest.PageSize = 20;
 
         return Ok(await _teacherService.GetListAsync(pageRequest, search, isActive ?? true, showDeleted, cancellationToken));
+    }
+
+    /// <summary>
+    /// Öğretmenin haftalık ders programını getirir.
+    /// </summary>
+    /// <remarks><c>SystemAdmin</c> veya <c>RegistrationOfficer</c> rolü gerektirir.</remarks>
+    [HttpGet("{id:guid}/schedule")]
+    [ProducesResponseType<List<WeeklyScheduleResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<WeeklyScheduleResponse>>> GetSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        return Ok(await _teacherService.GetWeeklyScheduleAsync(id, cancellationToken));
     }
 
     /// <summary>

@@ -33,7 +33,53 @@
         <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Description) ? "-" : Model.Description)</dd>
     </dl>
 
+    <!-- Haftalık Ders Programı -->
+    <h5 class="mt-4">Haftalık Ders Programı</h5>
+    <div id="scheduleContainer">
+        <p class="text-muted">Program yükleniyor...</p>
+    </div>
+
     <div class="form-actions">
         <a class="btn btn-outline-secondary" asp-action="Index">Dersliklere dön</a>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (function ($) {
+            var classroomId = '@Model.Id';
+            var dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+
+            $.ajax({
+                url: '/api/classrooms/' + encodeURIComponent(classroomId) + '/schedule',
+                type: 'GET'
+            })
+            .done(function (data) {
+                var $container = $('#scheduleContainer');
+                if (!data || data.length === 0) {
+                    $container.html('<p class="text-muted">Henüz ders programı bulunmuyor.</p>');
+                    return;
+                }
+
+                var html = '<table class="table table-sm table-bordered">';
+                html += '<thead><tr><th>Gün</th><th>Ders</th><th>Öğretmen</th><th>Başlangıç</th><th>Bitiş</th><th>Öğrenci</th></tr></thead>';
+                html += '<tbody>';
+                $.each(data, function (_, item) {
+                    html += '<tr>';
+                    html += '<td>' + LanguageCourseManagement.Common.escapeHtml(dayNames[item.dayOfWeek]) + '</td>';
+                    html += '<td>' + LanguageCourseManagement.Common.escapeHtml(item.courseName) + '</td>';
+                    html += '<td>' + LanguageCourseManagement.Common.escapeHtml(item.teacherName || '-') + '</td>';
+                    html += '<td>' + LanguageCourseManagement.Common.escapeHtml(item.startTime) + '</td>';
+                    html += '<td>' + LanguageCourseManagement.Common.escapeHtml(item.endTime) + '</td>';
+                    html += '<td>' + item.studentCount + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                $container.html(html);
+            })
+            .fail(function () {
+                $('#scheduleContainer').html('<p class="text-danger">Program yüklenirken hata oluştu.</p>');
+            });
+        })(jQuery);
+    </script>
+}

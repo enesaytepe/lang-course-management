@@ -391,6 +391,7 @@ public sealed class ClassroomBusinessRulesTests
 
         return new ClassroomService(
             classroomRepository.Object,
+            new Mock<ICourseRepository>().Object,
             branchRepository.Object,
             mapper,
             NullLogger<ClassroomService>.Instance,

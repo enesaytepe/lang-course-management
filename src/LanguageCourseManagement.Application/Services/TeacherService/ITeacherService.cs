@@ -1,5 +1,6 @@
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
+using LanguageCourseManagement.Application.DTOs.Schedules;
 using LanguageCourseManagement.Application.DTOs.Teachers;
 
 namespace LanguageCourseManagement.Application.Services.TeacherService;
@@ -18,4 +19,6 @@ public interface ITeacherService
     Task<TeacherAvailabilityResponse> AddAvailabilityAsync(Guid teacherId, CreateTeacherAvailabilityRequest request, CancellationToken cancellationToken = default);
     Task<TeacherAvailabilityResponse> UpdateAvailabilityAsync(Guid teacherId, Guid availabilityId, UpdateTeacherAvailabilityRequest request, CancellationToken cancellationToken = default);
     Task<TeacherAvailabilityResponse> DeleteAvailabilityAsync(Guid teacherId, Guid availabilityId, CancellationToken cancellationToken = default);
+
+    Task<List<WeeklyScheduleResponse>> GetWeeklyScheduleAsync(Guid teacherId, CancellationToken cancellationToken = default);
 }

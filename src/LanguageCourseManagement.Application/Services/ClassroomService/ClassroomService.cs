@@ -4,8 +4,10 @@ using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Classrooms;
+using LanguageCourseManagement.Application.DTOs.Schedules;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Domain.Entities;
+using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +19,7 @@ namespace LanguageCourseManagement.Application.Services.ClassroomService;
 public sealed class ClassroomService : IClassroomService
 {
     private readonly IClassroomRepository _classroomRepository;
+    private readonly ICourseRepository _courseRepository;
     private readonly IBranchRepository _branchRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ClassroomService> _logger;
@@ -25,6 +28,7 @@ public sealed class ClassroomService : IClassroomService
 
     public ClassroomService(
         IClassroomRepository classroomRepository,
+        ICourseRepository courseRepository,
         IBranchRepository branchRepository,
         IMapper mapper,
         ILogger<ClassroomService> logger,
@@ -32,6 +36,7 @@ public sealed class ClassroomService : IClassroomService
         IValidator<UpdateClassroomRequest> updateValidator)
     {
         _classroomRepository = classroomRepository;
+        _courseRepository = courseRepository;
         _branchRepository = branchRepository;
         _mapper = mapper;
         _logger = logger;
@@ -196,6 +201,43 @@ public sealed class ClassroomService : IClassroomService
             classroom.Id);
 
         return response;
+    }
+
+    public async Task<List<WeeklyScheduleResponse>> GetWeeklyScheduleAsync(Guid classroomId, CancellationToken cancellationToken)
+    {
+        var classroom = await _classroomRepository.GetAsync(
+            item => item.Id == classroomId,
+            enableTracking: false,
+            cancellationToken: cancellationToken);
+
+        if (classroom is null)
+            throw new NotFoundException("Derslik bulunamadı.");
+
+        var courses = await _courseRepository.Query()
+            .Where(c => c.ClassroomId == classroomId && c.IsActive)
+            .Select(c => new
+            {
+                c.Name,
+                TeacherName = c.Teacher.FirstName + " " + c.Teacher.LastName,
+                c.Schedules,
+                ActiveStudentCount = c.Enrollments!.Count(e => e.Status == EnrollmentStatus.Active)
+            })
+            .ToListAsync(cancellationToken);
+
+        var result = courses
+            .SelectMany(c => c.Schedules ?? [], (c, s) => new WeeklyScheduleResponse
+            {
+                CourseName = c.Name,
+                TeacherName = c.TeacherName,
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                StudentCount = c.ActiveStudentCount
+            })
+            .OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime)
+            .ToList();
+
+        return result;
     }
 
     private async Task EnsureBranchExistsAsync(

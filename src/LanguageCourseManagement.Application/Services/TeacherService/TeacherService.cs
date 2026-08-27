@@ -2,9 +2,11 @@ using AutoMapper;
 using FluentValidation;
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
+using LanguageCourseManagement.Application.DTOs.Schedules;
 using LanguageCourseManagement.Application.DTOs.Teachers;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Domain.Entities;
+using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +18,7 @@ namespace LanguageCourseManagement.Application.Services.TeacherService;
 public sealed class TeacherService : ITeacherService
 {
     private readonly ITeacherRepository _teacherRepository;
+    private readonly ICourseRepository _courseRepository;
     private readonly IOfferedLanguageRepository _offeredLanguageRepository;
     private readonly IBranchRepository _branchRepository;
     private readonly IMapper _mapper;
@@ -27,6 +30,7 @@ public sealed class TeacherService : ITeacherService
 
     public TeacherService(
         ITeacherRepository teacherRepository,
+        ICourseRepository courseRepository,
         IOfferedLanguageRepository offeredLanguageRepository,
         IBranchRepository branchRepository,
         IMapper mapper,
@@ -37,6 +41,7 @@ public sealed class TeacherService : ITeacherService
         IValidator<UpdateTeacherAvailabilityRequest> updateAvailabilityValidator)
     {
         _teacherRepository = teacherRepository;
+        _courseRepository = courseRepository;
         _offeredLanguageRepository = offeredLanguageRepository;
         _branchRepository = branchRepository;
         _mapper = mapper;
@@ -227,6 +232,39 @@ public sealed class TeacherService : ITeacherService
         await _teacherRepository.UpdateAsync(teacher, cancellationToken);
         _logger.LogInformation("[TeacherService] Müsaitlik silindi - {TeacherId}, {AvailabilityId}", teacherId, availabilityId);
         return _mapper.Map<TeacherAvailabilityResponse>(availability);
+    }
+
+    public async Task<List<WeeklyScheduleResponse>> GetWeeklyScheduleAsync(Guid teacherId, CancellationToken cancellationToken)
+    {
+        var teacher = await _teacherRepository.GetByIdWithDetailsAsync(teacherId, cancellationToken);
+        if (teacher is null)
+            throw new NotFoundException("Öğretmen bulunamadı.");
+
+        var courses = await _courseRepository.Query()
+            .Where(c => c.TeacherId == teacherId && c.IsActive)
+            .Select(c => new
+            {
+                c.Name,
+                BranchName = c.Branch.Name,
+                c.Schedules,
+                ActiveStudentCount = c.Enrollments!.Count(e => e.Status == EnrollmentStatus.Active)
+            })
+            .ToListAsync(cancellationToken);
+
+        var result = courses
+            .SelectMany(c => c.Schedules ?? [], (c, s) => new WeeklyScheduleResponse
+            {
+                CourseName = c.Name,
+                BranchName = c.BranchName,
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                StudentCount = c.ActiveStudentCount
+            })
+            .OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime)
+            .ToList();
+
+        return result;
     }
 
     private async Task<Teacher> GetTeacherWithAvailabilitiesAsync(Guid teacherId, CancellationToken cancellationToken)
