@@ -18,6 +18,6 @@ public sealed class ClassroomConfiguration : IEntityTypeConfiguration<Classroom>
         builder.ToTable(x => x.HasCheckConstraint("CK_Classrooms_Capacity_Positive", "[Capacity] > 0"));
         builder.HasIndex(x => new { x.BranchId, x.Name }).HasDatabaseName("UX_Classrooms_Branch_Name_Active").IsUnique().HasFilter("[IsDeleted] = 0");
         builder.HasOne(x => x.Branch).WithMany(x => x.Classrooms).HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasQueryFilter(x => !x.IsDeleted && !x.Branch.IsDeleted);
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

@@ -92,19 +92,32 @@ public sealed class InstallmentService : IInstallmentService
         Guid enrollmentId,
         CancellationToken cancellationToken = default)
     {
-        var enrollment = await _enrollmentRepository.GetAsync(
+        var enrollmentExists = await _enrollmentRepository.AnyAsync(
             e => e.Id == enrollmentId,
-            include: q => q
-                .Include(e => e.Installments!)
-                    .ThenInclude(i => i.Payments!),
-            cancellationToken: cancellationToken)
-            ?? throw new NotFoundException("Kayıt bulunamadı.");
+            cancellationToken: cancellationToken);
 
-        var installments = enrollment.Installments ?? new List<Installment>();
-        return installments
+        if (!enrollmentExists)
+            throw new NotFoundException("Kayıt bulunamadı.");
+
+        var installments = await _installmentRepository.Query()
+            .Where(i => i.EnrollmentId == enrollmentId)
             .OrderBy(i => i.InstallmentNumber)
-            .Select(_mapper.Map<InstallmentResponse>)
-            .ToList();
+            .Select(i => new InstallmentResponse
+            {
+                Id = i.Id,
+                InstallmentNumber = i.InstallmentNumber,
+                Amount = i.Amount,
+                DueDate = i.DueDate,
+                Status = i.Status.ToString(),
+                Description = i.Description,
+                PaidAmount = i.Payments!
+                    .Where(p => p.Status == Domain.Enums.PaymentStatus.Settled)
+                    .Sum(p => p.Amount),
+                IsPaid = i.Status == Domain.Enums.PaymentStatus.Settled
+            })
+            .ToListAsync(cancellationToken);
+
+        return installments;
     }
 
     /// <inheritdoc />

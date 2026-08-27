@@ -12,7 +12,7 @@ public sealed class TeacherRepository
     {
     }
 
-    public Task<Teacher?> GetByIdWithDetailsAsync(
+    public Task<Teacher?> GetByIdWithDetailsForMutationAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {

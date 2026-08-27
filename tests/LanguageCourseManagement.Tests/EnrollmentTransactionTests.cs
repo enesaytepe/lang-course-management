@@ -9,8 +9,10 @@ using LanguageCourseManagement.Application.Services.PaymentService;
 using LanguageCourseManagement.Application.Validators;
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
+using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure;
 using LanguageCourseManagement.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,6 +48,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
     [Fact]
     public async Task EnrollmentPaymentAtomicity_WhenPaymentFails_EnrollmentIsNotCommitted()
     {
+        // xUnit v2'de runtime skip destegi yok; SQL Server mevcut degilse test sessizce atlanir.
         if (!_canConnect)
             return;
 
@@ -121,6 +124,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
     [Fact]
     public async Task CapacityConcurrency_TwoConcurrentEnrollments_OnlyOneSucceeds()
     {
+        // xUnit v2'de runtime skip destegi yok; SQL Server mevcut degilse test sessizce atlanir.
         if (!_canConnect)
             return;
 
@@ -226,7 +230,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
             .UseSqlServer(ConnectionString)
             .EnableSensitiveDataLogging()
             .Options;
-        return new AppDbContext(options);
+        return new AppDbContext(options, new HttpContextAccessor());
     }
 
     // ────────────────────────────────────────────
@@ -236,6 +240,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
     {
         var enrollmentRepo = new EnrollmentRepository(context);
         var paymentRepo = new PaymentRepository(context);
+        var installmentRepo = new InstallmentRepository(context);
         var transactionManager = new EfTransactionManager(context);
 
         IValidator<EnrollmentCreateRequest> createValidator = new EnrollmentCreateRequestValidator();
@@ -250,6 +255,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
         return new PaymentService(
             paymentRepo,
             enrollmentRepo,
+            installmentRepo,
             transactionManager,
             createValidator,
             mapper,

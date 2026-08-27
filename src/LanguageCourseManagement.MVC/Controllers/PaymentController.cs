@@ -1,6 +1,4 @@
 using LanguageCourseManagement.Application.Exceptions;
-using LanguageCourseManagement.Application.Services.EnrollmentService;
-using LanguageCourseManagement.Application.Services.InstallmentService;
 using LanguageCourseManagement.Application.Services.PaymentService;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.MVC.Models.ViewModels;
@@ -16,17 +14,10 @@ namespace LanguageCourseManagement.MVC.Controllers;
 public sealed class PaymentController : Controller
 {
     private readonly IPaymentService _paymentService;
-    private readonly IEnrollmentService _enrollmentService;
-    private readonly IInstallmentService _installmentService;
 
-    public PaymentController(
-        IPaymentService paymentService,
-        IEnrollmentService enrollmentService,
-        IInstallmentService installmentService)
+    public PaymentController(IPaymentService paymentService)
     {
         _paymentService = paymentService;
-        _enrollmentService = enrollmentService;
-        _installmentService = installmentService;
     }
 
     /// <summary>
@@ -50,53 +41,52 @@ public sealed class PaymentController : Controller
         if (enrollmentId.HasValue)
             model.EnrollmentId = enrollmentId.Value;
 
-        // Henüz tahsilat yapılmamış aktif kayıtları dropdown için getir
-        var enrollments = await _enrollmentService.GetListAsync(cancellationToken);
-        var unsettled = enrollments
-            .Where(e => e.Status == "Active" && !e.IsSettled)
+        var enrollments = await _paymentService.GetUnsettledEnrollmentsAsync(cancellationToken);
+
+        model.UnsettledEnrollments = enrollments
             .Select(e => new EnrollmentOptionViewModel
             {
                 Id = e.Id,
                 StudentName = e.StudentName,
                 CourseName = e.CourseName,
-                BranchName = string.Empty,
+                BranchName = e.BranchName,
                 FinalAmount = e.FinalAmount,
                 PaymentType = e.PaymentType
             })
             .ToList();
 
-        model.UnsettledEnrollments = unsettled;
+        var installmentEnrollmentIds = enrollments
+            .Where(e => e.PaymentType == PaymentType.Installment.ToString())
+            .Select(e => e.Id)
+            .ToList();
 
-        // Taksitli kayıtlar için taksit bilgilerini yükle
-        foreach (var enrollment in unsettled.Where(e => e.PaymentType == PaymentType.Installment.ToString()))
+        if (installmentEnrollmentIds.Count > 0)
         {
-            try
-            {
-                var installments = await _installmentService.GetByEnrollmentIdAsync(enrollment.Id, cancellationToken);
-                var pendingInstallments = installments
-                    .Where(i => i.Status == PaymentStatus.Pending.ToString())
-                    .Select(i => new InstallmentOptionViewModel
+            var pendingInstallments = await _paymentService.GetPendingInstallmentsByEnrollmentIdsAsync(installmentEnrollmentIds, cancellationToken);
+
+            model.EnrollmentInstallments = pendingInstallments
+                .GroupBy(i => i.EnrollmentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(i => new InstallmentOptionViewModel
                     {
                         Id = i.Id,
                         InstallmentNumber = i.InstallmentNumber,
                         Amount = i.Amount,
                         DueDate = i.DueDate,
                         Status = i.Status
-                    })
-                    .ToList();
-                model.EnrollmentInstallments[enrollment.Id] = pendingInstallments;
-            }
-            catch (NotFoundException)
-            {
-                // Taksit planı henüz oluşturulmamış olabilir
-                model.EnrollmentInstallments[enrollment.Id] = [];
-            }
+                    }).ToList());
         }
 
-        // Eğer enrollmentId belirtilmişse ilgili kaydın bilgilerini doldur
+        foreach (var id in installmentEnrollmentIds)
+        {
+            if (!model.EnrollmentInstallments.ContainsKey(id))
+                model.EnrollmentInstallments[id] = [];
+        }
+
         if (enrollmentId.HasValue)
         {
-            var selected = unsettled.FirstOrDefault(e => e.Id == enrollmentId.Value);
+            var selected = enrollments.FirstOrDefault(e => e.Id == enrollmentId.Value);
             if (selected is not null)
             {
                 model.StudentName = selected.StudentName;

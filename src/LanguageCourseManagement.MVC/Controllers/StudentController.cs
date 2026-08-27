@@ -56,8 +56,6 @@ public sealed class StudentController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(StudentFormViewModel model, CancellationToken cancellationToken)
     {
-        AddWhitespaceValidationErrors(model);
-
         if (!ModelState.IsValid)
             return View(model);
 
@@ -102,8 +100,6 @@ public sealed class StudentController : Controller
         StudentFormViewModel model,
         CancellationToken cancellationToken)
     {
-        AddWhitespaceValidationErrors(model);
-
         if (!ModelState.IsValid)
         {
             model.Id = id;
@@ -174,15 +170,4 @@ public sealed class StudentController : Controller
         }
     }
 
-    private void AddWhitespaceValidationErrors(StudentFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.FirstName))
-            ModelState.AddModelError(nameof(model.FirstName), "Ad zorunludur.");
-
-        if (string.IsNullOrWhiteSpace(model.LastName))
-            ModelState.AddModelError(nameof(model.LastName), "Soyad zorunludur.");
-
-        if (string.IsNullOrWhiteSpace(model.MobilePhone))
-            ModelState.AddModelError(nameof(model.MobilePhone), "Cep telefonu zorunludur.");
-    }
 }

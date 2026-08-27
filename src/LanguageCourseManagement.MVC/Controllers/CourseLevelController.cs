@@ -58,7 +58,6 @@ public sealed class CourseLevelController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CourseLevelFormViewModel model, CancellationToken cancellationToken)
     {
-        AddWhitespaceValidationError(model);
         if (!ModelState.IsValid)
         {
             await PopulateLanguagesAsync(model, false, cancellationToken);
@@ -106,7 +105,6 @@ public sealed class CourseLevelController : Controller
     public async Task<IActionResult> Edit(Guid id, CourseLevelFormViewModel model, CancellationToken cancellationToken)
     {
         model.Id = id;
-        AddWhitespaceValidationError(model);
         if (!ModelState.IsValid)
         {
             await PopulateLanguagesAsync(model, true, cancellationToken);
@@ -165,10 +163,5 @@ public sealed class CourseLevelController : Controller
         model.Languages = options.OrderBy(language => language.Name).ToList();
     }
 
-    private void AddWhitespaceValidationError(CourseLevelFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name))
-            ModelState.AddModelError(nameof(model.Name), "Seviye adı zorunludur.");
-    }
 
 }

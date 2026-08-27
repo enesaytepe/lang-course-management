@@ -1,6 +1,7 @@
 using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Courses;
+using LanguageCourseManagement.Domain.Enums;
 
 namespace LanguageCourseManagement.Application.Services.CourseService;
 
@@ -17,6 +18,7 @@ public interface ICourseService
         Guid? branchId,
         Guid? offeredLanguageId,
         bool? isActive,
+        CourseStatus? status = null,
         bool showDeleted = false,
         CancellationToken cancellationToken = default);
 

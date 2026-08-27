@@ -49,9 +49,7 @@ public sealed class FacilityApiController : ControllerBase
         [FromQuery] bool includeInactive = false,
         CancellationToken cancellationToken = default)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
         return Ok(await _facilityService.GetListAsync(
             pageRequest,

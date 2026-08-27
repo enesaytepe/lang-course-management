@@ -50,14 +50,32 @@ public class BranchService : IBranchService
     {
         Branch? branch = await _branchRepository.GetAsync(
             b => b.Id == id,
-            include: query => query.Include(b => b.BranchFacilities!),
             cancellationToken: cancellationToken);
 
         if (branch is null)
             throw new NotFoundException("Şube bulunamadı.");
 
+        var facilityIds = await _branchRepository.Query()
+            .Where(b => b.Id == id)
+            .SelectMany(b => b.BranchFacilities!)
+            .Select(bf => bf.FacilityId)
+            .ToListAsync(cancellationToken);
+
         _logger.LogInformation("[BranchService] Sube detay getirildi - {BranchId}", id);
-        return ToResponse(branch);
+
+        return new BranchResponse
+        {
+            Id = branch.Id,
+            Name = branch.Name,
+            Address = branch.Address,
+            PublicTransportationDirections = branch.PublicTransportationDirections,
+            PrivateVehicleDirections = branch.PrivateVehicleDirections,
+            Latitude = branch.Latitude,
+            Longitude = branch.Longitude,
+            PhoneNumber = branch.PhoneNumber,
+            IsActive = branch.IsActive,
+            FacilityIds = facilityIds
+        };
     }
 
     /// <inheritdoc />
@@ -227,13 +245,17 @@ public class BranchService : IBranchService
     {
         Branch? branch = await _branchRepository.GetAsync(
             b => b.Id == id,
-            include: query => query.Include(b => b.BranchFacilities!),
             cancellationToken: cancellationToken);
 
         if (branch is null)
             throw new NotFoundException("Şube bulunamadı.");
 
-        var facilityIds = branch.BranchFacilities?.Select(link => link.FacilityId).ToList() ?? [];
+        var facilityIds = await _branchRepository.Query()
+            .Where(b => b.Id == id)
+            .SelectMany(b => b.BranchFacilities!)
+            .Select(bf => bf.FacilityId)
+            .ToListAsync(cancellationToken);
+
         var facilityNames = new List<string>();
         if (facilityIds.Count > 0)
         {

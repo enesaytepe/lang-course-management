@@ -32,9 +32,7 @@ public sealed class StudentApiController : ControllerBase
         CancellationToken cancellationToken,
         [FromQuery] bool showDeleted = false)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
         return Ok(await _studentService.GetListAsync(pageRequest, search, isActive ?? true, showDeleted, cancellationToken));
     }

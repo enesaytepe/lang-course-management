@@ -19,6 +19,6 @@ public sealed class CourseLevelConfiguration : IEntityTypeConfiguration<CourseLe
         builder.HasIndex(x => new { x.OfferedLanguageId, x.Name }).HasDatabaseName("UX_CourseLevels_Language_Name_Active").IsUnique().HasFilter("[IsDeleted] = 0");
         builder.HasIndex(x => new { x.OfferedLanguageId, x.Order }).HasDatabaseName("UX_CourseLevels_Language_Order_Active").IsUnique().HasFilter("[IsDeleted] = 0");
         builder.HasOne(x => x.OfferedLanguage).WithMany(x => x.CourseLevels).HasForeignKey(x => x.OfferedLanguageId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasQueryFilter(x => !x.IsDeleted && !x.OfferedLanguage.IsDeleted);
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

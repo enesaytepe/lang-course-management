@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.DTOs.Branches;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.BranchService;
 using LanguageCourseManagement.Application.Services.FacilityService;
+using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.MVC.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -101,14 +102,7 @@ public sealed class BranchController : Controller
                     TeacherName = c.TeacherName,
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
-                    StatusText = c.Status switch
-                    {
-                        Domain.Enums.CourseStatus.Draft => "Taslak",
-                        Domain.Enums.CourseStatus.Open => "Açık",
-                        Domain.Enums.CourseStatus.Completed => "Tamamlandı",
-                        Domain.Enums.CourseStatus.Cancelled => "İptal",
-                        _ => c.Status.ToString()
-                    },
+                    StatusText = c.Status.ToDisplayString(),
                     IsActive = c.IsActive
                 }).ToList(),
                 Teachers = details.Teachers.Select(t => new BranchDetailsTeacherItem

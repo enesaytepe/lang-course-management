@@ -59,8 +59,6 @@ public sealed class ClassroomController : Controller
         ClassroomFormViewModel model,
         CancellationToken cancellationToken)
     {
-        AddWhitespaceValidationError(model);
-
         if (!ModelState.IsValid)
         {
             await PopulateBranchesAsync(model, includeInactive: false, cancellationToken);
@@ -116,11 +114,9 @@ public sealed class ClassroomController : Controller
         ClassroomFormViewModel model,
         CancellationToken cancellationToken)
     {
-        AddWhitespaceValidationError(model);
-
+        model.Id = id;
         if (!ModelState.IsValid)
         {
-            model.Id = id;
             await PopulateBranchesAsync(model, includeInactive: true, cancellationToken);
             return View(model);
         }
@@ -209,9 +205,4 @@ public sealed class ClassroomController : Controller
             .ToList();
     }
 
-    private void AddWhitespaceValidationError(ClassroomFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name))
-            ModelState.AddModelError(nameof(model.Name), "Derslik adı zorunludur.");
-    }
 }

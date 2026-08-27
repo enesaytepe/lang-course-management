@@ -10,10 +10,10 @@ namespace LanguageCourseManagement.Domain.Repositories;
 public interface ITeacherRepository : IRepository<Teacher>
 {
     /// <summary>
-    /// Öğretmeni dil, şube ve müsaitlik ilişkileriyle birlikte getirir.
+    /// Öğretmeni dil, şube ve müsaitlik ilişkileriyle birlikte getirir (mutation işlemleri için).
     /// Bulunamazsa null döndürür.
     /// </summary>
-    Task<Teacher?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Teacher?> GetByIdWithDetailsForMutationAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Verilen şube, dil ve ders programına uygun öğretmenleri veritabanında filtreler.

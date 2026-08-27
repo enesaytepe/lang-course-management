@@ -40,4 +40,14 @@ public interface IPaymentService
     /// Öğrenciye ait tüm tahsilatları getirir (ödeme geçmişi için).
     /// </summary>
     Task<IReadOnlyList<PaymentHistoryItem>> GetByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Henüz tahsil edilmemiş aktif kayıtları getirir (tahsilat formu dropdown için).
+    /// </summary>
+    Task<IReadOnlyList<EnrollmentOptionDto>> GetUnsettledEnrollmentsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Belirtilen kayıtlara ait bekleyen taksitleri toplu olarak getirir (N+1 sorgusunu önler).
+    /// </summary>
+    Task<IReadOnlyList<InstallmentOptionDto>> GetPendingInstallmentsByEnrollmentIdsAsync(IReadOnlyList<Guid> enrollmentIds, CancellationToken cancellationToken = default);
 }

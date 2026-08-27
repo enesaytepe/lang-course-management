@@ -54,11 +54,35 @@ public sealed class TeacherService : ITeacherService
 
     public async Task<TeacherResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var teacher = await _teacherRepository.GetByIdWithDetailsAsync(id, cancellationToken);
+        var teacher = await _teacherRepository.Query()
+            .Where(t => t.Id == id)
+            .Select(t => new TeacherResponse
+            {
+                Id = t.Id,
+                FirstName = t.FirstName,
+                LastName = t.LastName,
+                HomePhone = t.HomePhone,
+                MobilePhone = t.MobilePhone,
+                Email = t.Email,
+                HireDate = t.HireDate,
+                IsActive = t.IsActive,
+                LanguageIds = t.TeacherLanguages!.Select(tl => tl.OfferedLanguageId).ToList(),
+                BranchIds = t.TeacherBranches!.Select(tb => tb.BranchId).ToList(),
+                Availabilities = t.Availabilities!.Select(a => new TeacherAvailabilityResponse
+                {
+                    Id = a.Id,
+                    TeacherId = a.TeacherId,
+                    DayOfWeek = a.DayOfWeek,
+                    StartTime = a.StartTime,
+                    EndTime = a.EndTime
+                }).ToList()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
         if (teacher is null)
             throw new NotFoundException("Öğretmen bulunamadı.");
 
-        return ToResponse(teacher);
+        return teacher;
     }
 
     public async Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default)
@@ -177,7 +201,7 @@ public sealed class TeacherService : ITeacherService
 
     public async Task<TeacherResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var teacher = await _teacherRepository.GetByIdWithDetailsAsync(id, cancellationToken);
+        var teacher = await _teacherRepository.GetByIdWithDetailsForMutationAsync(id, cancellationToken);
         if (teacher is null)
             throw new NotFoundException("Öğretmen bulunamadı.");
 
@@ -241,8 +265,9 @@ public sealed class TeacherService : ITeacherService
 
     public async Task<List<WeeklyScheduleResponse>> GetWeeklyScheduleAsync(Guid teacherId, CancellationToken cancellationToken)
     {
-        var teacher = await _teacherRepository.GetByIdWithDetailsAsync(teacherId, cancellationToken);
-        if (teacher is null)
+        var teacherExists = await _teacherRepository.Query()
+            .AnyAsync(t => t.Id == teacherId && !t.IsDeleted, cancellationToken);
+        if (!teacherExists)
             throw new NotFoundException("Öğretmen bulunamadı.");
 
         var courses = await _courseRepository.Query()

@@ -1,5 +1,6 @@
 using LanguageCourseManagement.Application.Persistence;
 using LanguageCourseManagement.Application.Repositories;
+using LanguageCourseManagement.Application.Services.AuthService;
 using LanguageCourseManagement.Application.Services.UserService;
 using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure.Identity;
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IdentitySeedService>();
         services.AddScoped<ApplicationDataSeedService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {

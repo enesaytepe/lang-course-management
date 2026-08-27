@@ -163,6 +163,17 @@ public sealed class ClassroomService : IClassroomService
             throw new BusinessException("Bu şubede aynı isimde bir derslik zaten mevcut.");
         }
 
+        if (request.Capacity < classroom.Capacity)
+        {
+            var hasIncompatibleCourse = await _courseRepository.AnyAsync(
+                c => c.ClassroomId == id && c.IsActive && c.Capacity > request.Capacity,
+                enableTracking: false,
+                cancellationToken);
+
+            if (hasIncompatibleCourse)
+                throw new BusinessException("Derslik kapasitesi, mevcut aktif derslerin kapasitesinden küçük olarak güncellenemez.");
+        }
+
         classroom.BranchId = request.BranchId;
         classroom.Name = request.Name;
         classroom.Description = request.Description;

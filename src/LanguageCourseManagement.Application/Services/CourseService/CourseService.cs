@@ -75,6 +75,7 @@ public sealed class CourseService : ICourseService
         Guid? branchId,
         Guid? offeredLanguageId,
         bool? isActive,
+        CourseStatus? status = null,
         bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
@@ -84,6 +85,7 @@ public sealed class CourseService : ICourseService
             (!branchId.HasValue || course.BranchId == branchId.Value) &&
             (!offeredLanguageId.HasValue || course.OfferedLanguageId == offeredLanguageId.Value) &&
             (!isActive.HasValue || course.IsActive == isActive.Value) &&
+            (!status.HasValue || course.Status == status.Value) &&
             (normalizedSearch == null ||
              course.Name.Contains(normalizedSearch) ||
              (course.Branch != null && course.Branch.Name.Contains(normalizedSearch)) ||
@@ -122,7 +124,10 @@ public sealed class CourseService : ICourseService
         await EnsureLanguageExistsAsync(request.OfferedLanguageId, requireActive: true, cancellationToken);
         await EnsureLevelExistsAsync(request.CourseLevelId, request.OfferedLanguageId, requireActive: true, cancellationToken);
         await EnsureTeacherExistsAsync(request.TeacherId, request.OfferedLanguageId, request.BranchId, requireActive: true, cancellationToken);
-        await EnsureClassroomExistsAsync(request.ClassroomId, request.BranchId, requireActive: true, cancellationToken);
+        var classroom = await EnsureClassroomExistsAsync(request.ClassroomId, request.BranchId, requireActive: true, cancellationToken);
+
+        if (request.Capacity > classroom.Capacity)
+            throw new BusinessException("Ders kapasitesi derslik kapasitesinden büyük olamaz.");
 
         var course = _mapper.Map<Course>(request);
         course.Id = Guid.NewGuid();
@@ -156,8 +161,14 @@ public sealed class CourseService : ICourseService
         await EnsureLanguageExistsAsync(request.OfferedLanguageId, request.OfferedLanguageId != course.OfferedLanguageId, cancellationToken);
         await EnsureLevelExistsAsync(request.CourseLevelId, request.OfferedLanguageId, request.CourseLevelId != course.CourseLevelId || request.OfferedLanguageId != course.OfferedLanguageId, cancellationToken);
         await EnsureTeacherExistsAsync(request.TeacherId, request.OfferedLanguageId, request.BranchId, request.TeacherId != course.TeacherId, cancellationToken);
-        await EnsureClassroomExistsAsync(request.ClassroomId, request.BranchId, request.ClassroomId != course.ClassroomId || request.BranchId != course.BranchId, cancellationToken);
+        var classroom = await EnsureClassroomExistsAsync(request.ClassroomId, request.BranchId, request.ClassroomId != course.ClassroomId || request.BranchId != course.BranchId, cancellationToken);
         await ValidateScheduleRulesAsync(request.Schedules, request.StartDate, request.EndDate, request.TeacherId, request.ClassroomId, id, cancellationToken);
+
+        if (request.Capacity > classroom.Capacity)
+            throw new BusinessException("Ders kapasitesi derslik kapasitesinden büyük olamaz.");
+
+        if (request.Status is CourseStatus.Open)
+            await EnsureAllDependenciesActiveAsync(request, cancellationToken);
 
         course.Name = request.Name;
         course.BranchId = request.BranchId;
@@ -213,22 +224,26 @@ public sealed class CourseService : ICourseService
 
     public async Task<IReadOnlyList<CourseScheduleItemDto>> GetSchedulesAsync(Guid courseId, CancellationToken cancellationToken = default)
     {
-        var course = await _courseRepository.GetAsync(
+        var courseExists = await _courseRepository.AnyAsync(
             item => item.Id == courseId,
-            include: query => query.Include(item => item.Schedules!),
-            enableTracking: false,
             cancellationToken: cancellationToken);
 
-        if (course is null)
+        if (!courseExists)
             throw new NotFoundException("Ders bulunamadı.");
 
-        return (course.Schedules ?? []).Select(schedule => new CourseScheduleItemDto
-        {
-            Id = schedule.Id,
-            DayOfWeek = schedule.DayOfWeek,
-            StartTime = schedule.StartTime,
-            EndTime = schedule.EndTime
-        }).ToList();
+        var schedules = await _courseRepository.Query()
+            .Where(c => c.Id == courseId)
+            .SelectMany(c => c.Schedules ?? Enumerable.Empty<CourseSchedule>())
+            .Select(schedule => new CourseScheduleItemDto
+            {
+                Id = schedule.Id,
+                DayOfWeek = schedule.DayOfWeek,
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime
+            })
+            .ToListAsync(cancellationToken);
+
+        return schedules;
     }
 
     public async Task<IReadOnlyList<EligibleTeacherResponse>> GetEligibleTeachersAsync(
@@ -304,10 +319,12 @@ public sealed class CourseService : ICourseService
             throw new BusinessException("Dersliğin seçilen tarihlerde çakışan bir dersi bulunuyor.");
     }
 
+
     private static bool HasCourseConflict(IEnumerable<Course> courses, DateOnly startDate, DateOnly endDate,
         IReadOnlyList<CourseScheduleItemDto> schedules, Guid? excludeCourseId)
     {
-        return courses.Where(course => !excludeCourseId.HasValue || course.Id != excludeCourseId.Value)
+        return courses.Where(course => course.Status == CourseStatus.Open)
+                .Where(course => !excludeCourseId.HasValue || course.Id != excludeCourseId.Value)
                 .Where(course => course.StartDate <= endDate && course.EndDate >= startDate)
                 .SelectMany(course => course.Schedules ?? [])
                 .Any(existing => schedules.Any(schedule => existing.DayOfWeek == schedule.DayOfWeek &&
@@ -394,7 +411,7 @@ public sealed class CourseService : ICourseService
             throw new BusinessException("Seçilen öğretmen bu şubede ders veremiyor.");
     }
 
-    private async Task EnsureClassroomExistsAsync(Guid classroomId, Guid branchId, bool requireActive, CancellationToken cancellationToken)
+    private async Task<Classroom> EnsureClassroomExistsAsync(Guid classroomId, Guid branchId, bool requireActive, CancellationToken cancellationToken)
     {
         var classroom = await _classroomRepository.GetAsync(
             item => item.Id == classroomId,
@@ -409,6 +426,17 @@ public sealed class CourseService : ICourseService
 
         if (requireActive && !classroom.IsActive)
             throw new BusinessException("Derse yalnızca aktif bir derslik atanabilir.");
+
+        return classroom;
+    }
+
+    private async Task EnsureAllDependenciesActiveAsync(UpdateCourseRequest request, CancellationToken cancellationToken)
+    {
+        await EnsureBranchExistsAsync(request.BranchId, requireActive: true, cancellationToken);
+        await EnsureLanguageExistsAsync(request.OfferedLanguageId, requireActive: true, cancellationToken);
+        await EnsureLevelExistsAsync(request.CourseLevelId, request.OfferedLanguageId, requireActive: true, cancellationToken);
+        await EnsureTeacherExistsAsync(request.TeacherId, request.OfferedLanguageId, request.BranchId, requireActive: true, cancellationToken);
+        await EnsureClassroomExistsAsync(request.ClassroomId, request.BranchId, requireActive: true, cancellationToken);
     }
 
     private async Task EnsureCourseNameUniqueAsync(string name, Guid courseLevelId, Guid? excludeCourseId, CancellationToken cancellationToken)

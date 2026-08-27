@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Courses;
 using LanguageCourseManagement.Application.Services.CourseService;
+using LanguageCourseManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,14 +32,13 @@ public sealed class CoursesApiController : ControllerBase
         [FromQuery] Guid? branchId,
         [FromQuery] Guid? offeredLanguageId,
         [FromQuery] bool? isActive,
+        [FromQuery] CourseStatus? status,
         CancellationToken cancellationToken,
         [FromQuery] bool showDeleted = false)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
-        return Ok(await _service.GetListAsync(pageRequest, search, branchId, offeredLanguageId, isActive, showDeleted, cancellationToken));
+        return Ok(await _service.GetListAsync(pageRequest, search, branchId, offeredLanguageId, isActive, status, showDeleted, cancellationToken));
     }
 
     /// <summary>

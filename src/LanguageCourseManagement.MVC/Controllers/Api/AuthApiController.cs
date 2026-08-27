@@ -1,8 +1,7 @@
-using LanguageCourseManagement.Infrastructure.Identity;
+using LanguageCourseManagement.Application.Services.AuthService;
 using LanguageCourseManagement.MVC.Models.Api;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers.Api;
@@ -15,14 +14,12 @@ namespace LanguageCourseManagement.MVC.Controllers.Api;
 public sealed class AuthApiController : ControllerBase
 {
     private readonly IAntiforgery _antiforgery;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IAuthService _authService;
 
-    public AuthApiController(IAntiforgery antiforgery, SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+    public AuthApiController(IAntiforgery antiforgery, IAuthService authService)
     {
         _antiforgery = antiforgery;
-        _signInManager = signInManager;
-        _userManager = userManager;
+        _authService = authService;
     }
 
     /// <summary>
@@ -49,9 +46,10 @@ public sealed class AuthApiController : ControllerBase
     [ProducesResponseType<AuthUserResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status423Locked)]
-    public async Task<ActionResult<AuthUserResponse>> Login(ApiLoginRequest request)
+    public async Task<ActionResult<AuthUserResponse>> Login(ApiLoginRequest request, CancellationToken cancellationToken)
     {
-        var result = await _signInManager.PasswordSignInAsync(request.UserName, request.Password, request.RememberMe, lockoutOnFailure: true);
+        var result = await _authService.PasswordSignInAsync(
+            request.UserName, request.Password, request.RememberMe, lockoutOnFailure: true, cancellationToken);
 
         if (result.IsLockedOut)
         {
@@ -77,8 +75,8 @@ public sealed class AuthApiController : ControllerBase
             return Unauthorized(problemDetails);
         }
 
-        var user = await _userManager.FindByNameAsync(request.UserName);
-        if (user is null)
+        var userInfo = await _authService.GetUserInfoAsync(request.UserName, cancellationToken);
+        if (userInfo is null)
         {
             var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
             {
@@ -90,8 +88,7 @@ public sealed class AuthApiController : ControllerBase
             return Unauthorized(problemDetails);
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
-        return Ok(new AuthUserResponse { UserName = user.UserName ?? request.UserName, Roles = roles.ToArray() });
+        return Ok(new AuthUserResponse { UserName = userInfo.UserName, Roles = userInfo.Roles.ToArray() });
     }
 
     /// <summary>
@@ -102,9 +99,9 @@ public sealed class AuthApiController : ControllerBase
     [HttpPost("logout")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
-        await _signInManager.SignOutAsync();
+        await _authService.SignOutAsync(cancellationToken);
         return NoContent();
     }
 }

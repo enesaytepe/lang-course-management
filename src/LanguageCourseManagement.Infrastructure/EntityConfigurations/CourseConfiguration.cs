@@ -31,6 +31,6 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.HasOne(x => x.CourseLevel).WithMany(x => x.Courses).HasForeignKey(x => x.CourseLevelId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Teacher).WithMany(x => x.Courses).HasForeignKey(x => x.TeacherId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Classroom).WithMany(x => x.Courses).HasForeignKey(x => x.ClassroomId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasQueryFilter(x => !x.Branch.IsDeleted && !x.OfferedLanguage.IsDeleted && !x.CourseLevel.IsDeleted && !x.Teacher.IsDeleted && !x.Classroom.IsDeleted);
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

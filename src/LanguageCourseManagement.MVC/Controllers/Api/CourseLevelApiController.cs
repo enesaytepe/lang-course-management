@@ -32,9 +32,7 @@ public sealed class CourseLevelApiController : ControllerBase
         [FromQuery] bool? isActive,
         CancellationToken cancellationToken)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
         return Ok(await _courseLevelService.GetListAsync(pageRequest, search, offeredLanguageId, isActive ?? true, cancellationToken: cancellationToken));
     }

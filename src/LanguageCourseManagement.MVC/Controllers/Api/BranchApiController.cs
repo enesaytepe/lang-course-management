@@ -32,9 +32,7 @@ public sealed class BranchApiController : ControllerBase
         CancellationToken cancellationToken,
         [FromQuery] bool showDeleted = false)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
         return Ok(await _branchService.GetListAsync(pageRequest, search, isActive, showDeleted, cancellationToken));
     }

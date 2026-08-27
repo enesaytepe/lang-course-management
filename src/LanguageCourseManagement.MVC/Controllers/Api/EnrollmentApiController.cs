@@ -56,9 +56,7 @@ public sealed class EnrollmentApiController : ControllerBase
         [FromQuery] EnrollmentStatus? status,
         CancellationToken cancellationToken)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
         return Ok(await _enrollmentService.GetListAsync(pageRequest, search, branchId, status, cancellationToken: cancellationToken));
     }

@@ -14,6 +14,6 @@ public sealed class TeacherBranchConfiguration : IEntityTypeConfiguration<Teache
         builder.HasIndex(x => new { x.TeacherId, x.BranchId }).HasDatabaseName("UX_TeacherBranches_Teacher_Branch").IsUnique();
         builder.HasOne(x => x.Teacher).WithMany(x => x.TeacherBranches).HasForeignKey(x => x.TeacherId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Branch).WithMany(x => x.TeacherBranches).HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasQueryFilter(x => !x.Teacher.IsDeleted && !x.Branch.IsDeleted);
+        builder.HasQueryFilter(x => !x.Teacher.IsDeleted);
     }
 }

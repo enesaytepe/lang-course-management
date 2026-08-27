@@ -17,6 +17,7 @@ public sealed class PaymentServiceTests
 {
     private readonly Mock<IEnrollmentRepository> enrollmentRepository = new();
     private readonly Mock<IPaymentRepository> paymentRepository = new();
+    private readonly Mock<IInstallmentRepository> installmentRepository = new();
     private readonly Mock<IValidator<EnrollmentCreateRequest>> createValidator = new();
     private readonly Mock<IMapper> mapper = new();
     private readonly Mock<ITransactionManager> transactionManager = new();
@@ -134,6 +135,7 @@ public sealed class PaymentServiceTests
         return new PaymentService(
             paymentRepository.Object,
             enrollmentRepository.Object,
+            installmentRepository.Object,
             transactionManager.Object,
             createValidator.Object,
             mapper.Object,

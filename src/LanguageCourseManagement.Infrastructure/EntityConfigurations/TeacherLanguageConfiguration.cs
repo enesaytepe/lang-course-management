@@ -14,6 +14,6 @@ public sealed class TeacherLanguageConfiguration : IEntityTypeConfiguration<Teac
         builder.HasIndex(x => new { x.TeacherId, x.OfferedLanguageId }).HasDatabaseName("UX_TeacherLanguages_Teacher_Language").IsUnique();
         builder.HasOne(x => x.Teacher).WithMany(x => x.TeacherLanguages).HasForeignKey(x => x.TeacherId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.OfferedLanguage).WithMany(x => x.TeacherLanguages).HasForeignKey(x => x.OfferedLanguageId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasQueryFilter(x => !x.Teacher.IsDeleted && !x.OfferedLanguage.IsDeleted);
+        builder.HasQueryFilter(x => !x.Teacher.IsDeleted);
     }
 }

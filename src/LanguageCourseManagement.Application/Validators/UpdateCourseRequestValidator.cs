@@ -19,7 +19,7 @@ public sealed class UpdateCourseRequestValidator : AbstractValidator<UpdateCours
         RuleFor(request => request.StartDate).NotEmpty();
         RuleFor(request => request.EndDate)
             .NotEmpty()
-            .GreaterThan(request => request.StartDate);
+            .GreaterThanOrEqualTo(request => request.StartDate);
         RuleFor(request => request.Capacity).GreaterThan(0);
         RuleFor(request => request.TuitionFee).GreaterThanOrEqualTo(0);
         RuleFor(request => request.Status).IsInEnum();

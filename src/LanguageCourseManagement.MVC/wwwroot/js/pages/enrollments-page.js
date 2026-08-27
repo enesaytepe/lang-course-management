@@ -226,7 +226,7 @@
             var $course = $("#CourseId");
             var $count = $("#CourseCount");
             var pageSize = 20;
-            var url = "/api/courses?pageIndex=0&pageSize=" + pageSize + "&isActive=true";
+            var url = "/api/courses?pageIndex=0&pageSize=" + pageSize + "&isActive=true&status=Open";
             if (search) {
                 url += "&search=" + encodeURIComponent(search);
             }

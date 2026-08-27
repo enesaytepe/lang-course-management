@@ -1,7 +1,6 @@
-using LanguageCourseManagement.Infrastructure.Identity;
+using LanguageCourseManagement.Application.Services.AuthService;
 using LanguageCourseManagement.MVC.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LanguageCourseManagement.MVC.Controllers;
@@ -11,11 +10,11 @@ namespace LanguageCourseManagement.MVC.Controllers;
 /// </summary>
 public sealed class AccountController : Controller
 {
-    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IAuthService _authService;
 
-    public AccountController(SignInManager<ApplicationUser> signInManager)
+    public AccountController(IAuthService authService)
     {
-        _signInManager = signInManager;
+        _authService = authService;
     }
 
     /// <summary>
@@ -39,8 +38,8 @@ public sealed class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var result = await _signInManager.PasswordSignInAsync(
-            model.UserName, model.Password, model.RememberMe, lockoutOnFailure: true);
+        var result = await _authService.PasswordSignInAsync(
+            model.UserName, model.Password, model.RememberMe, lockoutOnFailure: true, cancellationToken);
         if (result.IsLockedOut)
         {
             ModelState.AddModelError(string.Empty, "Hesap çok fazla başarısız deneme nedeniyle kilitlendi. Lütfen daha sonra tekrar deneyin.");
@@ -58,9 +57,9 @@ public sealed class AccountController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
-        await _signInManager.SignOutAsync();
+        await _authService.SignOutAsync(cancellationToken);
         return RedirectToAction(nameof(Login));
     }
 

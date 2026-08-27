@@ -27,12 +27,12 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
             x.HasCheckConstraint("CK_Enrollments_Status_Range", "[Status] BETWEEN 1 AND 3");
             x.HasCheckConstraint("CK_Enrollments_PaymentType_Range", "[PaymentType] BETWEEN 1 AND 2");
         });
-        builder.HasIndex(x => new { x.StudentId, x.CourseId }).HasDatabaseName("UX_Enrollments_Student_Course").IsUnique();
+        builder.HasIndex(x => new { x.StudentId, x.CourseId }).HasDatabaseName("UX_Enrollments_Student_Course").IsUnique().HasFilter("[Status] != 3");
         builder.HasIndex(x => new { x.CourseId, x.Status }).HasDatabaseName("IX_Enrollments_Course_Status");
         // Composite index for status-first queries (e.g., listing active enrollments by course)
         builder.HasIndex(x => new { x.Status, x.CourseId }).HasDatabaseName("IX_Enrollments_Status_CourseId");
         builder.HasOne(x => x.Student).WithMany(x => x.Enrollments).HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Course).WithMany(x => x.Enrollments).HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasQueryFilter(x => !x.Student.IsDeleted && !x.Course.Branch.IsDeleted && !x.Course.OfferedLanguage.IsDeleted && !x.Course.CourseLevel.IsDeleted && !x.Course.Teacher.IsDeleted && !x.Course.Classroom.IsDeleted);
+        builder.HasQueryFilter(x => !x.Student.IsDeleted && !x.Course.IsDeleted);
     }
 }

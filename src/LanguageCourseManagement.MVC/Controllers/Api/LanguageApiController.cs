@@ -31,9 +31,7 @@ public sealed class LanguageApiController : ControllerBase
         [FromQuery] bool? isActive,
         CancellationToken cancellationToken)
     {
-        pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
-        if (pageRequest.PageSize is < 1 or > 100)
-            pageRequest.PageSize = 20;
+        pageRequest.Normalize();
 
         return Ok(await _languageService.GetListAsync(pageRequest, search, isActive ?? true, cancellationToken: cancellationToken));
     }

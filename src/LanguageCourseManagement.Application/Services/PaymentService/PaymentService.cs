@@ -22,6 +22,7 @@ public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
     private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IInstallmentRepository _installmentRepository;
     private readonly ITransactionManager _transactionManager;
     private readonly IValidator<EnrollmentCreateRequest> _createValidator;
     private readonly IMapper _mapper;
@@ -30,6 +31,7 @@ public class PaymentService : IPaymentService
     public PaymentService(
         IPaymentRepository paymentRepository,
         IEnrollmentRepository enrollmentRepository,
+        IInstallmentRepository installmentRepository,
         ITransactionManager transactionManager,
         IValidator<EnrollmentCreateRequest> createValidator,
         IMapper mapper,
@@ -37,6 +39,7 @@ public class PaymentService : IPaymentService
     {
         _paymentRepository = paymentRepository;
         _enrollmentRepository = enrollmentRepository;
+        _installmentRepository = installmentRepository;
         _transactionManager = transactionManager;
         _createValidator = createValidator;
         _mapper = mapper;
@@ -118,19 +121,7 @@ public class PaymentService : IPaymentService
             // Cash: create immediate settled payment
             if (request.PaymentType == PaymentType.Cash)
             {
-                var payment = new Payment
-                {
-                    Id = Guid.NewGuid(),
-                    EnrollmentId = enrollment.Id,
-                    Amount = enrollment.FinalAmount,
-                    Method = PaymentMethod.Cash,
-                    Status = PaymentStatus.Settled,
-                    SettledAt = DateTimeOffset.UtcNow,
-                    CollectedByUserId = userId,
-                    IdempotencyKey = idempotencyKey,
-                    PaymentDate = DateTime.UtcNow
-                };
-
+                var payment = CreatePaymentRecord(enrollment.Id, enrollment.FinalAmount, PaymentMethod.Cash, userId, idempotencyKey);
                 await _paymentRepository.AddAsync(payment, cancellationToken);
                 enrollment.Payments ??= new List<Payment>();
                 enrollment.Payments.Add(payment);
@@ -321,20 +312,7 @@ public class PaymentService : IPaymentService
                 throw new BusinessException("Bu kayıt için tahsilat zaten tamamlanmıştır.");
         }
 
-        var payment = new Payment
-        {
-            Id = Guid.NewGuid(),
-            EnrollmentId = request.EnrollmentId,
-            InstallmentId = installmentId,
-            Amount = paymentAmount,
-            Method = request.Method,
-            Status = PaymentStatus.Settled,
-            SettledAt = DateTimeOffset.UtcNow,
-            CollectedByUserId = userId,
-            IdempotencyKey = Guid.NewGuid().ToString("N"),
-            Description = request.Description,
-            PaymentDate = DateTime.UtcNow
-        };
+        var payment = CreatePaymentRecord(request.EnrollmentId, paymentAmount, request.Method, userId, null, installmentId, request.Description);
 
         await _paymentRepository.AddAsync(payment, cancellationToken);
 
@@ -378,6 +356,75 @@ public class PaymentService : IPaymentService
             Status = payment.Status.ToString(),
             SettledAt = payment.SettledAt,
             InstallmentNumber = payment.Installment?.InstallmentNumber
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<EnrollmentOptionDto>> GetUnsettledEnrollmentsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _enrollmentRepository.Query()
+            .Where(e => e.Status == EnrollmentStatus.Active
+                && !e.Payments!.Any())
+            .OrderByDescending(e => e.EnrollmentDate)
+            .Select(e => new EnrollmentOptionDto
+            {
+                Id = e.Id,
+                StudentName = e.Student.FirstName + " " + e.Student.LastName,
+                CourseName = e.Course.Name,
+                BranchName = e.Course.Branch.Name,
+                FinalAmount = e.FinalAmount,
+                PaymentType = e.PaymentType.ToString()
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<InstallmentOptionDto>> GetPendingInstallmentsByEnrollmentIdsAsync(
+        IReadOnlyList<Guid> enrollmentIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (enrollmentIds.Count == 0)
+            return [];
+
+        return await _installmentRepository.Query()
+            .Where(i => enrollmentIds.Contains(i.EnrollmentId)
+                && i.Status == PaymentStatus.Pending)
+            .OrderBy(i => i.EnrollmentId)
+            .ThenBy(i => i.InstallmentNumber)
+            .Select(i => new InstallmentOptionDto
+            {
+                EnrollmentId = i.EnrollmentId,
+                Id = i.Id,
+                InstallmentNumber = i.InstallmentNumber,
+                Amount = i.Amount,
+                DueDate = i.DueDate,
+                Status = i.Status.ToString()
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    private static Payment CreatePaymentRecord(
+        Guid enrollmentId,
+        decimal amount,
+        PaymentMethod method,
+        Guid userId,
+        string? idempotencyKey = null,
+        Guid? installmentId = null,
+        string? description = null)
+    {
+        return new Payment
+        {
+            Id = Guid.NewGuid(),
+            EnrollmentId = enrollmentId,
+            Amount = amount,
+            Method = method,
+            Status = PaymentStatus.Settled,
+            SettledAt = DateTimeOffset.UtcNow,
+            CollectedByUserId = userId,
+            IdempotencyKey = idempotencyKey ?? Guid.NewGuid().ToString("N"),
+            InstallmentId = installmentId,
+            Description = description,
+            PaymentDate = DateTime.UtcNow
         };
     }
 }

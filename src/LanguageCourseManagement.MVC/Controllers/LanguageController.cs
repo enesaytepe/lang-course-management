@@ -50,7 +50,6 @@ public sealed class LanguageController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(LanguageFormViewModel model, CancellationToken cancellationToken)
     {
-        AddWhitespaceValidationError(model);
         if (!ModelState.IsValid) return View(model);
 
         try
@@ -91,7 +90,6 @@ public sealed class LanguageController : Controller
     public async Task<IActionResult> Edit(Guid id, LanguageFormViewModel model, CancellationToken cancellationToken)
     {
         model.Id = id;
-        AddWhitespaceValidationError(model);
         if (!ModelState.IsValid) return View(model);
         try
         {
@@ -150,8 +148,4 @@ public sealed class LanguageController : Controller
         }
     }
 
-    private void AddWhitespaceValidationError(LanguageFormViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Name)) ModelState.AddModelError(nameof(model.Name), "Dil adı zorunludur.");
-    }
 }
