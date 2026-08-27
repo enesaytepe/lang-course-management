@@ -28,10 +28,15 @@ public interface IPaymentService
     /// <summary>
     /// Arama kriterlerine göre tahsilatları sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<PaymentListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<PaymentListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? branchId = null, bool showDeleted = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Nakit tam tahsilat gerçekleştirir.
     /// </summary>
     Task<PaymentResponse> CreateAsync(CreatePaymentRequest request, Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Öğrenciye ait tüm tahsilatları getirir (ödeme geçmişi için).
+    /// </summary>
+    Task<IReadOnlyList<PaymentHistoryItem>> GetByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default);
 }

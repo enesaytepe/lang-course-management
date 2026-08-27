@@ -135,6 +135,32 @@ public class PaymentService : IPaymentService
                 enrollment.Payments ??= new List<Payment>();
                 enrollment.Payments.Add(payment);
             }
+            else if (request.PaymentType == PaymentType.Installment && request.InstallmentCount.HasValue)
+            {
+                // Create installment plan
+                var installmentCount = Math.Clamp(request.InstallmentCount.Value, 2, 12);
+                var installmentAmount = Math.Round(enrollment.FinalAmount / installmentCount, 2);
+                var lastInstallmentAmount = enrollment.FinalAmount - (installmentAmount * (installmentCount - 1));
+                var baseDate = DateOnly.FromDateTime(enrollment.EnrollmentDate);
+                var installments = new List<Installment>();
+
+                for (int i = 1; i <= installmentCount; i++)
+                {
+                    var amount = i == installmentCount ? lastInstallmentAmount : installmentAmount;
+                    installments.Add(new Installment
+                    {
+                        Id = Guid.NewGuid(),
+                        EnrollmentId = enrollment.Id,
+                        InstallmentNumber = i,
+                        Amount = amount,
+                        DueDate = baseDate.AddMonths(i),
+                        Status = PaymentStatus.Pending,
+                        Description = $"{i}. taksit"
+                    });
+                }
+
+                enrollment.Installments = installments;
+            }
 
             await _transactionManager.CommitAsync(cancellationToken);
 
@@ -177,6 +203,7 @@ public class PaymentService : IPaymentService
     public async Task<GetListResponse<PaymentListResponse>> GetListAsync(
         PageRequest pageRequest,
         string? search,
+        Guid? branchId = null,
         bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
@@ -189,6 +216,11 @@ public class PaymentService : IPaymentService
                 p.Enrollment.Student.FirstName.ToLower().Contains(searchLower) ||
                 p.Enrollment.Student.LastName.ToLower().Contains(searchLower) ||
                 p.Enrollment.Course.Name.ToLower().Contains(searchLower));
+        }
+
+        if (branchId.HasValue)
+        {
+            query = query.Where(p => p.Enrollment.Course.BranchId == branchId.Value);
         }
 
         var payments = await query
@@ -207,6 +239,23 @@ public class PaymentService : IPaymentService
             HasNext = payments.HasNext,
             Items = payments.Items.ToList()
         };
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<PaymentHistoryItem>> GetByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
+    {
+        return await _paymentRepository.Query()
+            .Where(p => p.Enrollment.StudentId == studentId)
+            .OrderByDescending(p => p.PaymentDate)
+            .Select(p => new PaymentHistoryItem
+            {
+                CourseName = p.Enrollment.Course.Name,
+                Amount = p.Amount,
+                Method = p.Method.ToString(),
+                PaymentDate = p.PaymentDate,
+                Status = p.Status.ToString()
+            })
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -272,7 +321,7 @@ public class PaymentService : IPaymentService
             EnrollmentId = request.EnrollmentId,
             InstallmentId = installmentId,
             Amount = paymentAmount,
-            Method = PaymentMethod.Cash,
+            Method = request.Method,
             Status = PaymentStatus.Settled,
             SettledAt = DateTimeOffset.UtcNow,
             CollectedByUserId = userId,

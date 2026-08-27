@@ -9,4 +9,5 @@ public sealed class EnrollmentCreateViewModel
     public decimal DiscountAmount { get; set; }
     public string IdempotencyKey { get; set; } = Guid.NewGuid().ToString("N");
     public PaymentType PaymentType { get; set; } = PaymentType.Cash;
+    public int? InstallmentCount { get; set; }
 }

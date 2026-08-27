@@ -1,4 +1,5 @@
 using LanguageCourseManagement.Application.DTOs.Enrollments;
+using LanguageCourseManagement.Application.DTOs.Payments;
 
 namespace LanguageCourseManagement.MVC.Models.ViewModels;
 
@@ -13,4 +14,5 @@ public sealed class StudentDetailsViewModel
     public DateTime RegistrationDate { get; set; }
     public bool IsActive { get; set; }
     public IReadOnlyList<EnrollmentListItemResponse> Enrollments { get; set; } = [];
+    public IReadOnlyList<PaymentHistoryItem> PaymentHistory { get; set; } = [];
 }

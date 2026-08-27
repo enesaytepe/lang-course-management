@@ -77,3 +77,45 @@
         </div>
     }
 </section>
+
+<section class="content-card" style="margin-top: 1.5rem;">
+    <div class="section-heading">
+        <div>
+            <h2>Ödeme Geçmişi</h2>
+            <p>Bu öğrenciye ait tüm tahsilatlar</p>
+        </div>
+    </div>
+
+    @if (Model.PaymentHistory.Count == 0)
+    {
+        <p class="text-muted">Henüz bir tahsilat bulunmuyor.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Ders</th>
+                        <th>Tutar</th>
+                        <th>Yöntem</th>
+                        <th>Tarih</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var payment in Model.PaymentHistory)
+                    {
+                        <tr>
+                            <td>@payment.CourseName</td>
+                            <td>@payment.Amount.ToString("C")</td>
+                            <td>@payment.Method</td>
+                            <td>@payment.PaymentDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td><span class="status-pill @(payment.Status == "Settled" ? "status-active" : string.Empty)">@payment.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

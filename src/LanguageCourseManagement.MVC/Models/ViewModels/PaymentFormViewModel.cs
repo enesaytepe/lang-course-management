@@ -21,6 +21,12 @@ public sealed class PaymentFormViewModel
     public Guid? InstallmentId { get; set; }
 
     /// <summary>
+    /// Tahsilat yöntemi
+    /// </summary>
+    [Display(Name = "Yöntem")]
+    public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
+
+    /// <summary>
     /// Tahsilat açıklaması (isteğe bağlı)
     /// </summary>
     [StringLength(500)]

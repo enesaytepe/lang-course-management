@@ -1,3 +1,5 @@
+using LanguageCourseManagement.Domain.Enums;
+
 namespace LanguageCourseManagement.Application.DTOs.Payments;
 
 /// <summary>
@@ -14,6 +16,11 @@ public sealed class CreatePaymentRequest
     /// Tahsilat yapılacak taksit Id (nakit ödemelerde null)
     /// </summary>
     public Guid? InstallmentId { get; set; }
+
+    /// <summary>
+    /// Tahsilat yöntemi
+    /// </summary>
+    public PaymentMethod Method { get; set; } = PaymentMethod.Cash;
 
     /// <summary>
     /// Tahsilat açıklaması (isteğe bağlı)

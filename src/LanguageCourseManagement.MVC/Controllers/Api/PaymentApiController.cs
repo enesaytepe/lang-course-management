@@ -29,13 +29,14 @@ public sealed class PaymentApiController : ControllerBase
     public async Task<ActionResult<GetListResponse<PaymentListResponse>>> GetList(
         [FromQuery] PageRequest pageRequest,
         [FromQuery] string? search,
+        [FromQuery] Guid? branchId,
         CancellationToken cancellationToken)
     {
         pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _paymentService.GetListAsync(pageRequest, search, cancellationToken: cancellationToken));
+        return Ok(await _paymentService.GetListAsync(pageRequest, search, branchId, cancellationToken: cancellationToken));
     }
 
     /// <summary>

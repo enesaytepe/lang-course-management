@@ -51,6 +51,21 @@
         <span class="text-danger" data-valmsg-for="PaymentType"></span>
     </div>
 
+    <div class="mb-3" id="installmentCountGroup" style="display:none;">
+        <label class="form-label" asp-for="InstallmentCount">Taksit sayısı</label>
+        <select class="form-select" asp-for="InstallmentCount" id="InstallmentCount">
+            <option value="">Taksit sayısı seçin</option>
+            <option value="2">2 Taksit</option>
+            <option value="3">3 Taksit</option>
+            <option value="4">4 Taksit</option>
+            <option value="5">5 Taksit</option>
+            <option value="6">6 Taksit</option>
+            <option value="9">9 Taksit</option>
+            <option value="12">12 Taksit</option>
+        </select>
+        <span class="text-danger" data-valmsg-for="InstallmentCount"></span>
+    </div>
+
     <div class="form-actions">
         <button class="btn btn-primary" type="submit">@(ViewData["SubmitText"] ?? "Kaydet")</button>
         <a class="btn btn-outline-secondary" asp-controller="Enrollment" asp-action="Index">Vazgeç</a>

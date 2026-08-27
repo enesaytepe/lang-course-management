@@ -9,6 +9,7 @@ public sealed class EnrollmentCreateApiModel
     public decimal DiscountAmount { get; set; }
     public string IdempotencyKey { get; set; } = string.Empty;
     public PaymentType PaymentType { get; set; } = PaymentType.Cash;
+    public int? InstallmentCount { get; set; }
 }
 
 public static class EnrollmentApiMapping
@@ -21,7 +22,8 @@ public static class EnrollmentApiMapping
             CourseId = model.CourseId,
             DiscountAmount = model.DiscountAmount,
             IdempotencyKey = model.IdempotencyKey,
-            PaymentType = model.PaymentType
+            PaymentType = model.PaymentType,
+            InstallmentCount = model.InstallmentCount
         };
     }
 }

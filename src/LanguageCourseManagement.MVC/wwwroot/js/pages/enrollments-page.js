@@ -69,6 +69,7 @@
             if (this.$page.length) {
                 self._bindSearchEvents();
                 self._bindEligibilityCheck();
+                self._bindPaymentTypeToggle();
             }
         },
 
@@ -159,6 +160,27 @@
                 });
         },
 
+        _bindPaymentTypeToggle: function () {
+            var self = this;
+            var $paymentType = $("#PaymentType");
+            var $installmentGroup = $("#installmentCountGroup");
+
+            function toggleInstallment() {
+                if ($paymentType.val() === "Installment") {
+                    $installmentGroup.show();
+                } else {
+                    $installmentGroup.hide();
+                    $("#InstallmentCount").val("");
+                }
+            }
+
+            $paymentType
+                .off("change.enrollmentsPaymentType")
+                .on("change.enrollmentsPaymentType", toggleInstallment);
+
+            toggleInstallment();
+        },
+
         loadStudentOptions: function (search) {
             var $student = $("#StudentId");
             var $count = $("#StudentCount");
@@ -223,13 +245,17 @@
 
         getPayload: function ($form) {
             var form = $form[0];
-            return {
+            var payload = {
                 StudentId: form.StudentId.value,
                 CourseId: form.CourseId.value,
                 DiscountAmount: Number(form.DiscountAmount.value) || 0,
                 IdempotencyKey: form.IdempotencyKey.value,
                 PaymentType: form.PaymentType.value
             };
+            if (form.PaymentType.value === "Installment" && form.InstallmentCount.value) {
+                payload.InstallmentCount = Number(form.InstallmentCount.value);
+            }
+            return payload;
         },
 
         showFormErrors: function ($form, xhr) {

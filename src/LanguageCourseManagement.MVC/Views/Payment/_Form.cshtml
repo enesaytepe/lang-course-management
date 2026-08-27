@@ -69,6 +69,16 @@
             </div>
 
             <div class="col-12">
+                <label asp-for="Method" class="form-label">Ödeme yöntemi</label>
+                <select asp-for="Method" class="form-select" id="paymentMethod">
+                    <option value="Cash">Nakit</option>
+                    <option value="CreditCard">Kredi Kartı</option>
+                    <option value="BankTransfer">Banka Havalesi</option>
+                </select>
+                <span asp-validation-for="Method" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
                 <label asp-for="Description" class="form-label">Açıklama (isteğe bağlı)</label>
                 <textarea asp-for="Description" class="form-control" rows="3" placeholder="Tahsilat açıklaması girin..."></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
@@ -193,6 +203,7 @@
             var enrollment = enrollmentData.find(function (e) { return e.id === enrollmentId; });
             var payload = {
                 enrollmentId: enrollmentId,
+                method: $('#paymentMethod').val() || 'Cash',
                 description: $('#Description').val() || ''
             };
 
