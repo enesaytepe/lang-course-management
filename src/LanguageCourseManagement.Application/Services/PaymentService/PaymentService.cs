@@ -281,7 +281,7 @@ public class PaymentService : IPaymentService
             PaymentDate = DateTime.UtcNow
         };
 
-        await _paymentRepository.AddAsync(payment);
+        await _paymentRepository.AddAsync(payment, cancellationToken);
 
         _logger.LogInformation("[PaymentService] Yeni tahsilat olusturuldu - {PaymentId}, Kayit: {EnrollmentId}, Tutar: {Amount}", payment.Id, request.EnrollmentId, payment.Amount);
 
