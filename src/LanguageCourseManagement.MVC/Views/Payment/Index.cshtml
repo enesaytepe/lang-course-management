@@ -18,6 +18,17 @@
         </select>
     </div>
 
+    <div class="mb-3">
+        <label class="form-label" for="statusFilter">Durum filtresi</label>
+        <select class="form-select" id="statusFilter" style="max-width: 300px;">
+            <option value="">Tüm Durumlar</option>
+            <option value="Settled">Tamamlandı</option>
+            <option value="Pending">Bekliyor</option>
+            <option value="Overdue">Gecikmiş</option>
+            <option value="Cancelled">İptal</option>
+        </select>
+    </div>
+
     <div class="table-responsive">
         <table class="table" id="paymentsTable" data-datatable>
             <caption class="visually-hidden">Tahsilat listesi</caption>

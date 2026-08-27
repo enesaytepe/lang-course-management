@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Payments;
 using LanguageCourseManagement.Application.Services.PaymentService;
+using LanguageCourseManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -30,13 +31,14 @@ public sealed class PaymentApiController : ControllerBase
         [FromQuery] PageRequest pageRequest,
         [FromQuery] string? search,
         [FromQuery] Guid? branchId,
+        [FromQuery] PaymentStatus? status,
         CancellationToken cancellationToken)
     {
         pageRequest.PageIndex = Math.Max(pageRequest.PageIndex, 0);
         if (pageRequest.PageSize is < 1 or > 100)
             pageRequest.PageSize = 20;
 
-        return Ok(await _paymentService.GetListAsync(pageRequest, search, branchId, cancellationToken: cancellationToken));
+        return Ok(await _paymentService.GetListAsync(pageRequest, search, branchId, status: status, cancellationToken: cancellationToken));
     }
 
     /// <summary>

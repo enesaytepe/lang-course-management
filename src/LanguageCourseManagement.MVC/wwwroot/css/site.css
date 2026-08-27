@@ -501,6 +501,11 @@ a {
     background: #f8d7da;
 }
 
+.status-cancelled {
+    color: #6c757d;
+    background: #e9ecef;
+}
+
 @media (max-width: 991.98px) {
     .sidebar {
         width: 220px;

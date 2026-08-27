@@ -204,6 +204,7 @@ public class PaymentService : IPaymentService
         PageRequest pageRequest,
         string? search,
         Guid? branchId = null,
+        PaymentStatus? status = null,
         bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
@@ -221,6 +222,11 @@ public class PaymentService : IPaymentService
         if (branchId.HasValue)
         {
             query = query.Where(p => p.Enrollment.Course.BranchId == branchId.Value);
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(p => p.Status == status.Value);
         }
 
         var payments = await query

@@ -48,6 +48,12 @@
                 .on("change.paymentsFilter", function () {
                     self.dataTable.ajax.reload(null, false);
                 });
+
+            $("#statusFilter")
+                .off("change.paymentsFilter")
+                .on("change.paymentsFilter", function () {
+                    self.dataTable.ajax.reload(null, false);
+                });
         },
 
         loadBranchOptions: function () {
@@ -118,10 +124,14 @@
                     data: "status",
                     render: function (data) {
                         var text = data === "Settled" ? "Tamamlandı"
+                            : data === "Pending" ? "Bekliyor"
                             : data === "Overdue" ? "Gecikmiş"
+                            : data === "Cancelled" ? "İptal"
                             : data || "-";
                         var cssClass = data === "Overdue"
                             ? "status-pill status-danger"
+                            : data === "Cancelled"
+                            ? "status-pill status-cancelled"
                             : "status-pill status-active";
                         return '<span class="' + cssClass + '">' + text + '</span>';
                     }
@@ -159,11 +169,15 @@
                     var pageIndex = Math.floor((Number(request.start) || 0) / pageSize);
                     var search = request.search && request.search.value ? request.search.value : "";
                     var branchId = $("#branchFilter").val() || "";
+                    var status = $("#statusFilter").val() || "";
                     var url = "/api/payments?pageIndex=" + pageIndex
                         + "&pageSize=" + pageSize
                         + "&search=" + encodeURIComponent(search);
                     if (branchId) {
                         url += "&branchId=" + encodeURIComponent(branchId);
+                    }
+                    if (status) {
+                        url += "&status=" + encodeURIComponent(status);
                     }
 
                     $.getJSON(url)

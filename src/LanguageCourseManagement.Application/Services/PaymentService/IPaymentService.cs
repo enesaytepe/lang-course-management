@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.Common.Responses;
 using LanguageCourseManagement.Application.DTOs.Enrollments;
 using LanguageCourseManagement.Application.DTOs.Payments;
+using LanguageCourseManagement.Domain.Enums;
 
 namespace LanguageCourseManagement.Application.Services.PaymentService;
 
@@ -28,7 +29,7 @@ public interface IPaymentService
     /// <summary>
     /// Arama kriterlerine göre tahsilatları sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<PaymentListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? branchId = null, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<PaymentListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? branchId = null, PaymentStatus? status = null, bool showDeleted = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Nakit tam tahsilat gerçekleştirir.
