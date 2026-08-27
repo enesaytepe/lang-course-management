@@ -33,4 +33,9 @@ public interface IBranchService
     /// Şubeyi soft delete ile siler.
     /// </summary>
     Task<BranchResponse> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Şubeyi derslik, kurs ve öğretmen listeleriyle birlikte getirir.
+    /// </summary>
+    Task<BranchDetailsResponse> GetDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 }

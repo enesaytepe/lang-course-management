@@ -1,4 +1,5 @@
 @model LanguageCourseManagement.MVC.Models.ViewModels.BranchDetailsViewModel
+@using LanguageCourseManagement.Domain.Enums
 @{
     ViewData["Title"] = Model.Name;
 }
@@ -24,6 +25,110 @@
         <div><dt>Koordinat</dt><dd>@Model.Latitude, @Model.Longitude</dd></div>
         <div><dt>Durum</dt><dd><span class="status-pill @(Model.IsActive ? "status-active" : string.Empty)">@(Model.IsActive ? "Aktif" : "Pasif")</span></dd></div>
     </dl>
+
+    <!-- Derslikler -->
+    <h5 class="mt-4">Derslikler</h5>
+    @if (Model.Classrooms.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <caption class="visually-hidden">Şubeye ait derslik listesi</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Derslik</th>
+                        <th scope="col">Kapasite</th>
+                        <th scope="col">Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var classroom in Model.Classrooms)
+                    {
+                        <tr>
+                            <td>@classroom.Name</td>
+                            <td>@classroom.Capacity</td>
+                            <td><span class="status-pill @(classroom.IsActive ? "status-active" : string.Empty)">@(classroom.IsActive ? "Aktif" : "Pasif")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Bu şubede henüz derslik bulunmuyor.</p>
+    }
+
+    <!-- Kurslar -->
+    <h5 class="mt-4">Kurslar</h5>
+    @if (Model.Courses.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <caption class="visually-hidden">Şubeye ait kurs listesi</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Kurs</th>
+                        <th scope="col">Seviye</th>
+                        <th scope="col">Öğretmen</th>
+                        <th scope="col">Başlangıç</th>
+                        <th scope="col">Bitiş</th>
+                        <th scope="col">Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in Model.Courses)
+                    {
+                        <tr>
+                            <td>@course.Name</td>
+                            <td>@course.LevelName</td>
+                            <td>@course.TeacherName</td>
+                            <td>@course.StartDate.ToString("dd.MM.yyyy")</td>
+                            <td>@course.EndDate.ToString("dd.MM.yyyy")</td>
+                            <td><span class="status-pill @(course.IsActive ? "status-active" : string.Empty)">@course.StatusText</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Bu şubede henüz kurs bulunmuyor.</p>
+    }
+
+    <!-- Öğretmenler -->
+    <h5 class="mt-4">Öğretmenler</h5>
+    @if (Model.Teachers.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <caption class="visually-hidden">Şubede ders verebilen öğretmen listesi</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Ad Soyad</th>
+                        <th scope="col">Diller</th>
+                        <th scope="col">Telefon</th>
+                        <th scope="col">Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var teacher in Model.Teachers)
+                    {
+                        <tr>
+                            <td>@teacher.FirstName @teacher.LastName</td>
+                            <td>@(teacher.Languages.Count > 0 ? string.Join(", ", teacher.Languages) : "-")</td>
+                            <td>@teacher.MobilePhone</td>
+                            <td><span class="status-pill @(teacher.IsActive ? "status-active" : string.Empty)">@(teacher.IsActive ? "Aktif" : "Pasif")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Bu şubede henüz öğretmen bulunmuyor.</p>
+    }
 
     <div class="form-actions">
         <a class="btn btn-outline-secondary" asp-action="Index">Listeye dön</a>

@@ -8,6 +8,7 @@ using LanguageCourseManagement.Domain.Paging;
 using LanguageCourseManagement.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace LanguageCourseManagement.Application.Services.BranchService;
@@ -18,17 +19,29 @@ public class BranchService : IBranchService
     private readonly IBranchRepository _branchRepository;
     private readonly IMapper _mapper;
     private readonly IFacilityRepository _facilityRepository;
+    private readonly IClassroomRepository _classroomRepository;
+    private readonly ICourseRepository _courseRepository;
+    private readonly ITeacherRepository _teacherRepository;
+    private readonly IOfferedLanguageRepository _offeredLanguageRepository;
     private readonly ILogger<BranchService> _logger;
 
     public BranchService(
         IBranchRepository branchRepository,
         IMapper mapper,
         IFacilityRepository facilityRepository,
+        IClassroomRepository classroomRepository,
+        ICourseRepository courseRepository,
+        ITeacherRepository teacherRepository,
+        IOfferedLanguageRepository offeredLanguageRepository,
         ILogger<BranchService> logger)
     {
         _branchRepository = branchRepository;
         _mapper = mapper;
         _facilityRepository = facilityRepository;
+        _classroomRepository = classroomRepository;
+        _courseRepository = courseRepository;
+        _teacherRepository = teacherRepository;
+        _offeredLanguageRepository = offeredLanguageRepository;
         _logger = logger;
     }
 
@@ -207,6 +220,108 @@ public class BranchService : IBranchService
             throw new BusinessException("Seçilen sosyal olanaklardan biri veya daha fazlası bulunamadı ya da pasif durumda.");
 
         return distinctIds;
+    }
+
+    /// <inheritdoc />
+    public async Task<BranchDetailsResponse> GetDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        Branch? branch = await _branchRepository.GetAsync(
+            b => b.Id == id,
+            include: query => query.Include(b => b.BranchFacilities!),
+            cancellationToken: cancellationToken);
+
+        if (branch is null)
+            throw new NotFoundException("Şube bulunamadı.");
+
+        var facilityIds = branch.BranchFacilities?.Select(link => link.FacilityId).ToList() ?? [];
+        var facilityNames = new List<string>();
+        if (facilityIds.Count > 0)
+        {
+            var allFacilities = await _facilityRepository.GetAllAsync(cancellationToken);
+            facilityNames = allFacilities
+                .Where(f => facilityIds.Contains(f.Id))
+                .Select(f => f.Name)
+                .ToList();
+        }
+
+        // Derslikleri getir (şubeye ait)
+        var classroomItems = await _classroomRepository.Query()
+            .AsNoTracking()
+            .Where(c => c.BranchId == id && !c.IsDeleted)
+            .OrderBy(c => c.Name)
+            .Select(c => new BranchClassroomItem
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Capacity = c.Capacity,
+                IsActive = c.IsActive
+            })
+            .ToListAsync(cancellationToken);
+
+        // Kursları getir (şubeye ait)
+        var courseItems = await _courseRepository.Query()
+            .AsNoTracking()
+            .Where(c => c.BranchId == id && !c.IsDeleted)
+            .OrderByDescending(c => c.StartDate)
+            .Select(c => new BranchCourseItem
+            {
+                Id = c.Id,
+                Name = c.Name,
+                LevelName = c.CourseLevel.Name,
+                TeacherName = c.Teacher.FirstName + " " + c.Teacher.LastName,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                Status = c.Status,
+                IsActive = c.IsActive
+            })
+            .ToListAsync(cancellationToken);
+
+        // Öğretmenleri getir (şubede ders verebilen)
+        var teacherIds = await _teacherRepository.Query()
+            .AsNoTracking()
+            .Where(t => !t.IsDeleted && t.TeacherBranches != null && t.TeacherBranches.Any(tb => tb.BranchId == id))
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var teacherItems = new List<BranchTeacherItem>();
+        if (teacherIds.Count > 0)
+        {
+            teacherItems = await _teacherRepository.Query()
+                .AsNoTracking()
+                .Where(t => teacherIds.Contains(t.Id) && !t.IsDeleted)
+                .OrderBy(t => t.LastName).ThenBy(t => t.FirstName)
+                .Select(t => new BranchTeacherItem
+                {
+                    Id = t.Id,
+                    FirstName = t.FirstName,
+                    LastName = t.LastName,
+                    MobilePhone = t.MobilePhone,
+                    IsActive = t.IsActive,
+                    Languages = t.TeacherLanguages != null
+                        ? t.TeacherLanguages.Select(tl => tl.OfferedLanguage.Name).ToList()
+                        : new List<string>()
+                })
+                .ToListAsync(cancellationToken);
+        }
+
+        _logger.LogInformation("[BranchService] Sube detay bilgileri getirildi - {BranchId}", id);
+
+        return new BranchDetailsResponse
+        {
+            Id = branch.Id,
+            Name = branch.Name ?? string.Empty,
+            Address = branch.Address ?? string.Empty,
+            PublicTransportationDirections = branch.PublicTransportationDirections,
+            PrivateVehicleDirections = branch.PrivateVehicleDirections,
+            PhoneNumber = branch.PhoneNumber,
+            Latitude = branch.Latitude,
+            Longitude = branch.Longitude,
+            IsActive = branch.IsActive,
+            FacilityNames = facilityNames,
+            Classrooms = classroomItems,
+            Courses = courseItems,
+            Teachers = teacherItems
+        };
     }
 
     private BranchResponse ToResponse(Branch branch)
