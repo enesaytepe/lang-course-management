@@ -88,6 +88,13 @@
 - Repository pattern generic base + specialized method olarak kullanılır
 - Para alanlarında decimal kullanılır, float/double kullanılmaz
 
+## EF Core Query Standartları
+
+- `Include` / `ThenInclude` kullanımı yasaktır; bunun yerine `ProjectTo` veya manuel `Select` ile DTO dönüşümü yapılır.
+- `IQueryable` üzerinde `ToList()` öncesi filtreleme ve sıralama uygulanmalıdır.
+- `AsNoTracking()` read-only sorgularda tercih edilir.
+- N+1 sorgu sorunlarına karşı eager loading yerine projection kullanılır.
+
 ## Güvenlik
 
 - Hardcoded secret, password veya connection string commit edilmez
