@@ -98,6 +98,7 @@ public sealed class FacilityService : IFacilityService
         };
 
         Facility createdFacility = await _facilityRepository.AddAsync(facility, cancellationToken);
+        await _facilityRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[FacilityService] Facility created - {FacilityId}", createdFacility.Id);
         return _mapper.Map<FacilityResponse>(createdFacility);
@@ -125,6 +126,7 @@ public sealed class FacilityService : IFacilityService
         facility.IsActive = request.IsActive;
 
         Facility updatedFacility = await _facilityRepository.UpdateAsync(facility, cancellationToken);
+        await _facilityRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[FacilityService] Facility updated - {FacilityId}", updatedFacility.Id);
         return _mapper.Map<FacilityResponse>(updatedFacility);
@@ -137,6 +139,7 @@ public sealed class FacilityService : IFacilityService
             throw new NotFoundException("Sosyal olanak bulunamadı.");
 
         var deletedFacility = await _facilityRepository.DeleteAsync(facility, cancellationToken);
+        await _facilityRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[FacilityService] Facility deleted - {FacilityId}", deletedFacility.Id);
         return _mapper.Map<FacilityResponse>(deletedFacility);
     }

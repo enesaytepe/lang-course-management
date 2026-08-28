@@ -30,43 +30,42 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         await Context.AddAsync(entity, cancellationToken);
-        await Context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
     public async Task<IList<TEntity>> AddRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
     {
         await Context.AddRangeAsync(entities, cancellationToken);
-        await Context.SaveChangesAsync(cancellationToken);
         return entities;
     }
 
     public async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         Context.Update(entity);
-        await Context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
     public async Task<IList<TEntity>> UpdateRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
     {
         Context.UpdateRange(entities);
-        await Context.SaveChangesAsync(cancellationToken);
         return entities;
     }
 
     public async Task<TEntity> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         Context.Remove(entity);
-        await Context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
     public async Task<IList<TEntity>> DeleteRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
     {
         Context.RemoveRange(entities);
-        await Context.SaveChangesAsync(cancellationToken);
         return entities;
+    }
+
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return await Context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IPaginate<TEntity>> GetListAsync(
@@ -81,7 +80,7 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
     {
         IQueryable<TEntity> queryable = Query();
         if (!enableTracking)
-            queryable = queryable.AsNoTracking(); // Performans: değişiklik izleme kapalı
+            queryable = queryable.AsNoTracking();
         if (include != null)
             queryable = include(queryable);
         if (predicate != null)
@@ -100,7 +99,7 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
     {
         IQueryable<TEntity> queryable = Query();
         if (!enableTracking)
-            queryable = queryable.AsNoTracking(); // Performans: değişiklik izleme kapalı
+            queryable = queryable.AsNoTracking();
         if (include != null)
             queryable = include(queryable);
         return await queryable.FirstOrDefaultAsync(predicate, cancellationToken);

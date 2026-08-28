@@ -163,6 +163,7 @@ public class BranchService : IBranchService
             .ToList();
 
         Branch createdBranch = await _branchRepository.AddAsync(branch);
+        await _branchRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[BranchService] Yeni sube olusturuldu - {BranchId}", createdBranch.Id);
         return ToResponse(createdBranch);
     }
@@ -208,6 +209,7 @@ public class BranchService : IBranchService
         branch.IsActive = request.IsActive;
 
         Branch updatedBranch = await _branchRepository.UpdateWithFacilitiesAsync(branch, facilityIds, cancellationToken);
+        await _branchRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[BranchService] Sube guncellendi - {BranchId}", id);
         return ToResponse(updatedBranch);
     }
@@ -220,6 +222,7 @@ public class BranchService : IBranchService
             throw new NotFoundException("Şube bulunamadı.");
 
         Branch deletedBranch = await _branchRepository.DeleteAsync(branch!);
+        await _branchRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[BranchService] Sube silindi - {BranchId}", id);
 
         return ToResponse(deletedBranch);

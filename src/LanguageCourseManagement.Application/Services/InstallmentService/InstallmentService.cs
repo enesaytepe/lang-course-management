@@ -79,6 +79,7 @@ public sealed class InstallmentService : IInstallmentService
 
         enrollment.Installments = installments;
         await _enrollmentRepository.UpdateAsync(enrollment, cancellationToken);
+        await _enrollmentRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "[InstallmentService] Taksit planı oluşturuldu - Kayıt: {EnrollmentId}, Taksit sayısı: {Count}, Toplam: {Total}",
@@ -136,6 +137,7 @@ public sealed class InstallmentService : IInstallmentService
         }
 
         await _installmentRepository.UpdateRangeAsync(overdueInstallments, cancellationToken);
+        await _installmentRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "[InstallmentService] {Count} taksit Overdue durumuna geçirildi",

@@ -128,6 +128,7 @@ public sealed class EnrollmentService : IEnrollmentService
 
         enrollment.Status = request.Status;
         await _enrollmentRepository.UpdateAsync(enrollment, cancellationToken);
+        await _enrollmentRepository.SaveChangesAsync(cancellationToken);
 
         return _mapper.Map<EnrollmentDetailResponse>(enrollment);
     }

@@ -122,6 +122,7 @@ public sealed class ClassroomService : IClassroomService
         classroom.IsActive = true;
 
         await _classroomRepository.AddAsync(classroom);
+        await _classroomRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "[ClassroomService] Yeni derslik oluşturuldu - {ClassroomId}",
@@ -181,6 +182,7 @@ public sealed class ClassroomService : IClassroomService
         classroom.IsActive = request.IsActive;
 
         await _classroomRepository.UpdateAsync(classroom);
+        await _classroomRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "[ClassroomService] Derslik güncellendi - {ClassroomId}",
@@ -206,6 +208,7 @@ public sealed class ClassroomService : IClassroomService
             .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException("Derslik bulunamadı.");
 
         await _classroomRepository.DeleteAsync(classroom);
+        await _classroomRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "[ClassroomService] Derslik silindi - {ClassroomId}",

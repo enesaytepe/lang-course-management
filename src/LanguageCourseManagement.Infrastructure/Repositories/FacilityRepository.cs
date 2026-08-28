@@ -114,7 +114,6 @@ public sealed class FacilityRepository : IFacilityRepository
         CancellationToken cancellationToken = default)
     {
         await _context.Facilities.AddAsync(facility, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
         return facility;
     }
 
@@ -123,7 +122,6 @@ public sealed class FacilityRepository : IFacilityRepository
         CancellationToken cancellationToken = default)
     {
         _context.Facilities.Update(facility);
-        await _context.SaveChangesAsync(cancellationToken);
         return facility;
     }
 
@@ -132,7 +130,11 @@ public sealed class FacilityRepository : IFacilityRepository
         CancellationToken cancellationToken = default)
     {
         _context.Facilities.Remove(facility);
-        await _context.SaveChangesAsync(cancellationToken);
         return facility;
+    }
+
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.SaveChangesAsync(cancellationToken);
     }
 }

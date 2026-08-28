@@ -43,7 +43,6 @@ public class BranchRepository : EfRepositoryBase<Branch, AppDbContext>, IBranchR
         branch.BranchFacilities = newFacilities;
         Context.Entry(branch).State = EntityState.Modified;
         await Context.BranchFacilities.AddRangeAsync(newFacilities, cancellationToken);
-        await Context.SaveChangesAsync(cancellationToken);
         return branch;
     }
 }

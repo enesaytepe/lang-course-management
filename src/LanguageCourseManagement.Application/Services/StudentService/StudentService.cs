@@ -108,6 +108,7 @@ public sealed class StudentService : IStudentService
         student.RegistrationDate = DateTime.UtcNow;
         student.IsActive = true;
         await _studentRepository.AddAsync(student, cancellationToken);
+        await _studentRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[StudentService] Yeni öğrenci oluşturuldu - {StudentId}", student.Id);
         return await GetByIdAsync(student.Id, cancellationToken);
@@ -131,6 +132,7 @@ public sealed class StudentService : IStudentService
         student.Address = request.Address;
         student.IsActive = request.IsActive;
         await _studentRepository.UpdateAsync(student, cancellationToken);
+        await _studentRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[StudentService] Öğrenci güncellendi - {StudentId}", student.Id);
         return await GetByIdAsync(student.Id, cancellationToken);
@@ -144,6 +146,7 @@ public sealed class StudentService : IStudentService
 
         var response = _mapper.Map<StudentResponse>(student);
         await _studentRepository.DeleteAsync(student, cancellationToken);
+        await _studentRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[StudentService] Öğrenci silindi - {StudentId}", student.Id);
         return response;

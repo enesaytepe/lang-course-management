@@ -80,6 +80,7 @@ public sealed class CourseLevelService : ICourseLevelService
         level.Id = Guid.NewGuid();
         level.IsActive = true;
         await _courseLevelRepository.AddAsync(level, cancellationToken);
+        await _courseLevelRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[CourseLevelService] Yeni kurs seviyesi oluşturuldu - {CourseLevelId}", level.Id);
         return await GetByIdAsync(level.Id, cancellationToken);
     }
@@ -101,6 +102,7 @@ public sealed class CourseLevelService : ICourseLevelService
         level.Order = request.Order;
         level.IsActive = request.IsActive;
         await _courseLevelRepository.UpdateAsync(level, cancellationToken);
+        await _courseLevelRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[CourseLevelService] Kurs seviyesi güncellendi - {CourseLevelId}", level.Id);
         return await GetByIdAsync(level.Id, cancellationToken);
     }
@@ -115,6 +117,7 @@ public sealed class CourseLevelService : ICourseLevelService
             .ProjectTo<CourseLevelResponse>(_mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(cancellationToken) ?? throw new NotFoundException("Kurs seviyesi bulunamadı.");
         await _courseLevelRepository.DeleteAsync(level, cancellationToken);
+        await _courseLevelRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[CourseLevelService] Kurs seviyesi silindi - {CourseLevelId}", level.Id);
         return response;
     }

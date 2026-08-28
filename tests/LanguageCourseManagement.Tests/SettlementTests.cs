@@ -1,5 +1,7 @@
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
+using LanguageCourseManagement.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace LanguageCourseManagement.Tests;
@@ -27,8 +29,36 @@ public sealed class SettlementTests
         Assert.Equal("stable-key-001", payment.IdempotencyKey);
     }
 
-    [Fact(Skip = "not-verified: the test project does not reference Infrastructure/AppDbContext, so tracked and detached EF mutation/deletion checks require an explicitly authorized project-reference change.")]
-    public void Settled_payment_is_immutable_when_tracked_or_detached()
+    [Fact]
+    public void Settled_payment_is_immutable()
     {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        using var context = new AppDbContext(options);
+
+        var paymentId = Guid.NewGuid();
+        context.Payments.Add(new Payment
+        {
+            Id = paymentId,
+            EnrollmentId = Guid.NewGuid(),
+            IdempotencyKey = Guid.NewGuid().ToString(),
+            Amount = 500m,
+            Method = PaymentMethod.Cash,
+            Status = PaymentStatus.Settled,
+            SettledAt = DateTimeOffset.UtcNow,
+            PaymentDate = DateTime.UtcNow
+        });
+        context.SaveChanges();
+
+        var trackedPayment = context.Payments.IgnoreQueryFilters().First(p => p.Id == paymentId);
+        trackedPayment.Amount = 100m;
+        Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
+
+        context.Entry(trackedPayment).State = EntityState.Detached;
+        var reloaded = context.Payments.IgnoreQueryFilters().First(p => p.Id == paymentId);
+        context.Payments.Remove(reloaded);
+        Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
     }
 }

@@ -136,6 +136,7 @@ public sealed class CourseService : ICourseService
         course.Schedules = request.Schedules.Select(schedule => ToEntity(schedule, course.Id)).ToList();
 
         await _courseRepository.AddAsync(course, cancellationToken);
+        await _courseRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[CourseService] Yeni ders oluşturuldu - {CourseId}", course.Id);
 
@@ -188,6 +189,7 @@ public sealed class CourseService : ICourseService
             course.Schedules.Add(ToEntity(schedule, course.Id));
 
         await _courseRepository.UpdateAsync(course, cancellationToken);
+        await _courseRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[CourseService] Ders güncellendi - {CourseId}", course.Id);
 
@@ -215,6 +217,7 @@ public sealed class CourseService : ICourseService
 
         var response = _mapper.Map<CourseResponse>(course);
         await _courseRepository.DeleteAsync(course, cancellationToken);
+        await _courseRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[CourseService] Ders silindi - {CourseId}", course.Id);
 
