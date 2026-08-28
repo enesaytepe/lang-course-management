@@ -1,5 +1,7 @@
 <Project>
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Geçiş dönemi: uyarılar build'i kırmasın (020-editorconfig-code-style planı kararı) -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
