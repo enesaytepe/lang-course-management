@@ -22,11 +22,6 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
         return Context.Set<TEntity>();
     }
 
-    public IQueryable<TEntity> QueryWithIgnoreFilters()
-    {
-        return Context.Set<TEntity>().IgnoreQueryFilters();
-    }
-
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         await Context.AddAsync(entity, cancellationToken);
