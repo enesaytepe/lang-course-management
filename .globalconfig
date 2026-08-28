@@ -1,0 +1,8 @@
+# Solution-wide analyzer and build configuration
+# This file is auto-imported by the .NET SDK
+
+# Do not treat warnings as errors during transition period
+WarningsAsErrors = false
+
+# Nullable context
+# Nullable = enable  # Uncomment when ready to enforce across solution
