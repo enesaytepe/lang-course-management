@@ -79,6 +79,7 @@ public sealed class EnrollmentApiController : ControllerBase
     [HttpPost]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<EnrollmentDetailResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<EnrollmentDetailResponse>> Create(EnrollmentCreateApiModel model, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -96,6 +97,7 @@ public sealed class EnrollmentApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<EnrollmentDetailResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<EnrollmentDetailResponse>> Update(Guid id, UpdateEnrollmentRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _enrollmentService.UpdateStatusAsync(id, request, cancellationToken));

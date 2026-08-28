@@ -43,6 +43,11 @@ public interface IEnrollmentRepository : IRepository<Enrollment>
     /// Belirtilen öğrencinin aktif diğer kayıtlarının ders programı bilgilerini getirir (çakışma kontrolü için).
     /// </summary>
     Task<IReadOnlyList<CourseScheduleInfo>> GetStudentActiveScheduleAsync(Guid studentId, Guid excludeCourseId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Belirtilen kursun ders programını getirir (çakışma kontrolü için).
+    /// </summary>
+    Task<IReadOnlyList<CourseScheduleInfo>> GetCourseScheduleAsync(Guid courseId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

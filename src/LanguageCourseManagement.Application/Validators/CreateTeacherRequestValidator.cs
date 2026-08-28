@@ -26,5 +26,7 @@ public sealed class CreateTeacherRequestValidator : AbstractValidator<CreateTeac
             .NotEmpty().WithMessage("En az bir dil seçilmelidir.");
         RuleFor(request => request.BranchIds)
             .NotEmpty().WithMessage("En az bir şube seçilmelidir.");
+        RuleFor(request => request.CourseLevelIds)
+            .NotEmpty().WithMessage("En az bir kurs seviyesi seçilmelidir.");
     }
 }

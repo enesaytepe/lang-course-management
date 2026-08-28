@@ -15,7 +15,9 @@ public sealed class CreatePaymentRequestValidator : AbstractValidator<CreatePaym
             .WithMessage("Kayıt seçimi zorunludur.");
 
         RuleFor(x => x.InstallmentId)
-            .NotEmpty()
+            .NotNull()
+            .WithMessage("Taksit Id boş olamaz.")
+            .NotEqual(Guid.Empty)
             .WithMessage("Taksit Id boş olamaz.")
             .When((CreatePaymentRequest x) => x.InstallmentId.HasValue);
 

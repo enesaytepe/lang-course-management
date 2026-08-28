@@ -57,6 +57,22 @@
         <p class="text-muted">Henüz şube atanmamış.</p>
     }
 
+    <!-- Öğretebildiği Seviyeler -->
+    <h5>Öğretebildiği Seviyeler</h5>
+    @if (Model.CourseLevels.Count > 0)
+    {
+        <ul class="list-group list-group-flush mb-3">
+            @foreach (var level in Model.CourseLevels)
+            {
+                <li class="list-group-item">@level</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">Henüz kurs seviyesi atanmamış.</p>
+    }
+
     <!-- Haftalık Müsaitlik -->
     <h5>Haftalık Müsaitlik</h5>
     @if (Model.Availabilities.Count > 0)

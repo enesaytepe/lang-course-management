@@ -1,5 +1,5 @@
 using LanguageCourseManagement.Application.DTOs.Dashboard;
-using LanguageCourseManagement.Application.Repositories;
+using LanguageCourseManagement.Application.Persistence;
 
 namespace LanguageCourseManagement.Application.Services.DashboardService;
 
@@ -14,8 +14,8 @@ public sealed class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public Task<DashboardStats> GetStatsAsync(CancellationToken cancellationToken = default)
+    public Task<DashboardStatisticsResponse> GetStatisticsAsync(CancellationToken cancellationToken = default)
     {
-        return _dashboardRepository.GetStatsAsync(cancellationToken);
+        return _dashboardRepository.GetStatisticsAsync(cancellationToken);
     }
 }

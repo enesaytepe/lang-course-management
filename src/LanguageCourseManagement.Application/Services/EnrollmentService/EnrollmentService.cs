@@ -206,11 +206,7 @@ public sealed class EnrollmentService : IEnrollmentService
 
         if (studentSchedule.Count > 0)
         {
-            var targetCourseSchedule = await _enrollmentRepository.Query()
-                .Where(e => e.CourseId == courseId)
-                .SelectMany(e => e.Course.Schedules!)
-                .Select(s => new { s.DayOfWeek, s.StartTime, s.EndTime })
-                .ToListAsync(cancellationToken);
+            var targetCourseSchedule = await _enrollmentRepository.GetCourseScheduleAsync(courseId, cancellationToken);
 
             if (targetCourseSchedule.Count > 0)
             {

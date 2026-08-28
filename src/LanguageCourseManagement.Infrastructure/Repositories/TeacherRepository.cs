@@ -26,6 +26,7 @@ public sealed class TeacherRepository
     public async Task<IReadOnlyList<Teacher>> GetEligibleTeachersAsync(
         Guid branchId,
         Guid offeredLanguageId,
+        Guid courseLevelId,
         IReadOnlyList<ScheduleSlot> schedules,
         DateOnly startDate,
         DateOnly endDate,
@@ -41,6 +42,8 @@ public sealed class TeacherRepository
                 teacher.TeacherBranches.Any(tb => tb.BranchId == branchId))
             .Where(teacher => teacher.TeacherLanguages != null &&
                 teacher.TeacherLanguages.Any(tl => tl.OfferedLanguageId == offeredLanguageId))
+            .Where(teacher => teacher.TeacherCourseLevels != null &&
+                teacher.TeacherCourseLevels.Any(tcl => tcl.CourseLevelId == courseLevelId))
             .Where(teacher => schedulesList.All(s =>
                 teacher.Availabilities != null && teacher.Availabilities.Any(a =>
                     a.DayOfWeek == s.DayOfWeek &&

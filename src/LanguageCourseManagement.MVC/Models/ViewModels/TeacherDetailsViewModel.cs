@@ -12,6 +12,7 @@ public sealed class TeacherDetailsViewModel
     public bool IsActive { get; init; }
     public List<string> Languages { get; init; } = [];
     public List<string> Branches { get; init; } = [];
+    public List<string> CourseLevels { get; init; } = [];
     public List<TeacherAvailabilityDetailItem> Availabilities { get; init; } = [];
 }
 

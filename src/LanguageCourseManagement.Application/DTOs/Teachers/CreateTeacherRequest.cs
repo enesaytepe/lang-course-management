@@ -10,4 +10,5 @@ public sealed class CreateTeacherRequest
     public DateOnly HireDate { get; set; }
     public List<Guid> LanguageIds { get; set; } = [];
     public List<Guid> BranchIds { get; set; } = [];
+    public List<Guid> CourseLevelIds { get; set; } = [];
 }

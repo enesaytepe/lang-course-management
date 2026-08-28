@@ -71,6 +71,7 @@ public sealed class ClassroomsApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<ClassroomResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ClassroomResponse>> Create(CreateClassroomRequest request, CancellationToken cancellationToken)
     {
         var result = await _classroomService.CreateAsync(request, cancellationToken);
@@ -85,6 +86,7 @@ public sealed class ClassroomsApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<ClassroomResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ClassroomResponse>> Update(Guid id, UpdateClassroomRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _classroomService.UpdateAsync(id, request, cancellationToken));

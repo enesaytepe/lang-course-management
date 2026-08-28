@@ -58,6 +58,13 @@ public class ExceptionMiddleware
                     return;
                 }
 
+                if (IsGenericUniqueConstraintConflict(exception))
+                {
+                    await WriteProblemDetailsAsync(context.Response, new ConflictProblemDetails(
+                        "A record with the same key already exists."));
+                    return;
+                }
+
                 await HandleExceptionAsync(context.Response, exception);
                 return;
             }
@@ -153,6 +160,26 @@ public class ExceptionMiddleware
                 // never sent to the client.
                 return sqlException.Message.Contains("UX_Facilities_Name_Active", StringComparison.OrdinalIgnoreCase);
             }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// DbUpdateException içindeki herhangi bir SqlException'ın 2601 veya 2627
+    /// hata numarasını taşıyıp taşımadığını kontrol eder.
+    /// Bu handler, belirli constraint eşleşmelerinden (enrollment/settlement,
+    /// facility) kalan tüm benzersizlik ihlallerini yakalar.
+    /// </summary>
+    private static bool IsGenericUniqueConstraintConflict(Exception exception)
+    {
+        if (exception is not DbUpdateException dbUpdateException)
+            return false;
+
+        for (var current = dbUpdateException.InnerException; current is not null; current = current.InnerException)
+        {
+            if (current is SqlException sqlException && sqlException.Number is 2601 or 2627)
+                return true;
         }
 
         return false;

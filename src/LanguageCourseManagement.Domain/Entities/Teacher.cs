@@ -50,4 +50,8 @@ public class Teacher : SoftDeletableEntity
     /// Öğretmene atanan dersler
     /// </summary>
     public List<Course>? Courses { get; set; }
+    /// <summary>
+    /// Öğretmenin öğretebildiği kurs seviyeleri
+    /// </summary>
+    public List<TeacherCourseLevel>? TeacherCourseLevels { get; set; }
 }

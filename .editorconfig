@@ -41,3 +41,4 @@ dotnet_diagnostic.CS8601.severity = warning
 dotnet_diagnostic.CS8602.severity = warning
 dotnet_diagnostic.CS8603.severity = warning
 dotnet_diagnostic.CS8604.severity = warning
+dotnet_diagnostic.CS1591.severity = suggestion

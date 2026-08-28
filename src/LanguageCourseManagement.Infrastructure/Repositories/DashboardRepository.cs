@@ -1,84 +1,107 @@
-using System.Data;
 using LanguageCourseManagement.Application.DTOs.Dashboard;
-using LanguageCourseManagement.Application.Repositories;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
+using LanguageCourseManagement.Application.Persistence;
+using LanguageCourseManagement.Domain.Enums;
+using LanguageCourseManagement.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace LanguageCourseManagement.Infrastructure.Repositories;
 
 /// <summary>
-/// Dashboard istatistikleri için optimize edilmiş ham SQL sorgularını çalıştırır.
+/// Dashboard istatistikleri için EF Core tabanlı toplu sorguları çalıştırır.
 /// Tek bir aggregate sorgu ile N+1 sorununu çözer.
 /// </summary>
 public sealed class DashboardRepository : IDashboardRepository
 {
-    private readonly string _connectionString;
+    private readonly AppDbContext _context;
 
-    public DashboardRepository(IConfiguration configuration)
+    public DashboardRepository(AppDbContext context)
     {
-        _connectionString = configuration["ConnectionStrings:DefaultConnection"]
-            ?? throw new InvalidOperationException(
-                "The required configuration key 'ConnectionStrings:DefaultConnection' is missing or empty.");
+        _context = context;
     }
 
     /// <inheritdoc />
-    public async Task<DashboardStats> GetStatsAsync(CancellationToken cancellationToken = default)
+    public async Task<DashboardStatisticsResponse> GetStatisticsAsync(CancellationToken cancellationToken = default)
     {
-        const string sql = """
-            SELECT
-                (SELECT COUNT(*) FROM Branches    WHERE IsDeleted = 0 AND IsActive = 1) AS ActiveBranchCount,
-                (SELECT COUNT(*) FROM Classrooms  WHERE IsDeleted = 0 AND IsActive = 1) AS ActiveClassroomCount,
-                (SELECT COUNT(*) FROM Teachers    WHERE IsDeleted = 0 AND IsActive = 1) AS ActiveTeacherCount,
-                (SELECT COUNT(*) FROM Students    WHERE IsDeleted = 0 AND IsActive = 1) AS ActiveStudentCount,
-                (SELECT COUNT(*) FROM Courses     WHERE IsDeleted = 0 AND IsActive = 1) AS ActiveCourseCount,
-                (SELECT COUNT(*) FROM Enrollments WHERE IsDeleted = 0)                   AS TotalEnrollmentCount,
-                (SELECT COUNT(*) FROM Enrollments WHERE IsDeleted = 0 AND Status = 1)   AS ActiveEnrollments,
-                (SELECT ISNULL(SUM(Amount), 0) FROM Payments WHERE IsDeleted = 0 AND Status = 1) AS TotalSettledAmount,
-                (SELECT ISNULL(SUM(Amount), 0) FROM Payments
-                    WHERE IsDeleted = 0
-                      AND Status = 1
-                      AND YEAR(SettledAt) = YEAR(GETUTCDATE())
-                      AND MONTH(SettledAt) = MONTH(GETUTCDATE())
-                ) AS MonthlyRevenue,
-                (SELECT COUNT(*) FROM Enrollments e
-                    WHERE e.IsDeleted = 0
-                      AND NOT EXISTS (
-                          SELECT 1 FROM Payments p
-                          WHERE p.EnrollmentId = e.Id AND p.IsDeleted = 0
-                      )
-                ) AS PendingPaymentCount,
-                (SELECT COUNT(*) FROM Installments WHERE IsDeleted = 0 AND Status = 3) AS OverdueInstallmentCount
-            """;
+        var now = DateTime.UtcNow;
+        var currentYear = now.Year;
+        var currentMonth = now.Month;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        var activeBranchCount = await _context.Branches
+            .AsNoTracking()
+            .CountAsync(b => b.IsActive, cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection)
+        var activeClassroomCount = await _context.Classrooms
+            .AsNoTracking()
+            .CountAsync(c => c.IsActive, cancellationToken);
+
+        var activeTeacherCount = await _context.Teachers
+            .AsNoTracking()
+            .CountAsync(t => t.IsActive, cancellationToken);
+
+        var activeStudentCount = await _context.Students
+            .AsNoTracking()
+            .CountAsync(s => s.IsActive, cancellationToken);
+
+        var activeCourseCount = await _context.Courses
+            .AsNoTracking()
+            .CountAsync(c => c.IsActive, cancellationToken);
+
+        var totalEnrollmentCount = await _context.Enrollments
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+
+        var activeEnrollments = await _context.Enrollments
+            .AsNoTracking()
+            .CountAsync(e => e.Status == EnrollmentStatus.Active, cancellationToken);
+
+        var completedEnrollmentCount = await _context.Enrollments
+            .AsNoTracking()
+            .CountAsync(e => e.Status == EnrollmentStatus.Completed, cancellationToken);
+
+        var cancelledEnrollmentCount = await _context.Enrollments
+            .AsNoTracking()
+            .CountAsync(e => e.Status == EnrollmentStatus.Cancelled, cancellationToken);
+
+        var totalSettledAmount = await _context.Payments
+            .AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Settled)
+            .SumAsync(p => p.Amount, cancellationToken);
+
+        var monthlyRevenue = await _context.Payments
+            .AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Settled
+                     && p.SettledAt.Year == currentYear
+                     && p.SettledAt.Month == currentMonth)
+            .SumAsync(p => p.Amount, cancellationToken);
+
+        var pendingPaymentCount = await _context.Enrollments
+            .AsNoTracking()
+            .CountAsync(e => !_context.Payments.Any(p => p.EnrollmentId == e.Id), cancellationToken);
+
+        var overdueInstallmentCount = await _context.Installments
+            .AsNoTracking()
+            .CountAsync(i => i.Status == PaymentStatus.Overdue, cancellationToken);
+
+        var totalPaymentCount = await _context.Payments
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+
+        return new DashboardStatisticsResponse
         {
-            CommandType = CommandType.Text,
-            CommandTimeout = 15
+            ActiveBranchCount = activeBranchCount,
+            ActiveClassroomCount = activeClassroomCount,
+            ActiveTeacherCount = activeTeacherCount,
+            ActiveStudentCount = activeStudentCount,
+            ActiveCourseCount = activeCourseCount,
+            TotalEnrollmentCount = totalEnrollmentCount,
+            ActiveEnrollments = activeEnrollments,
+            CompletedEnrollmentCount = completedEnrollmentCount,
+            CancelledEnrollmentCount = cancelledEnrollmentCount,
+            TotalSettledAmount = totalSettledAmount,
+            MonthlyRevenue = monthlyRevenue,
+            PendingPaymentCount = pendingPaymentCount,
+            OverdueInstallmentCount = overdueInstallmentCount,
+            TotalPaymentCount = totalPaymentCount
         };
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (await reader.ReadAsync(cancellationToken))
-        {
-            return new DashboardStats
-            {
-                ActiveBranchCount = reader.GetInt32(0),
-                ActiveClassroomCount = reader.GetInt32(1),
-                ActiveTeacherCount = reader.GetInt32(2),
-                ActiveStudentCount = reader.GetInt32(3),
-                ActiveCourseCount = reader.GetInt32(4),
-                TotalEnrollmentCount = reader.GetInt32(5),
-                ActiveEnrollments = reader.GetInt32(6),
-                TotalSettledAmount = reader.GetDecimal(7),
-                MonthlyRevenue = reader.GetDecimal(8),
-                PendingPaymentCount = reader.GetInt32(9),
-                OverdueInstallmentCount = reader.GetInt32(10)
-            };
-        }
-
-        return new DashboardStats();
     }
 }

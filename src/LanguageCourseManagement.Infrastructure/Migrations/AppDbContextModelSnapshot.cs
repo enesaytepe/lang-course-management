@@ -874,6 +874,35 @@ namespace LanguageCourseManagement.Infrastructure.Migrations
                     b.ToTable("TeacherBranches");
                 });
 
+            modelBuilder.Entity("LanguageCourseManagement.Domain.Entities.TeacherCourseLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CourseLevelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2(0)");
+
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2(0)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseLevelId");
+
+                    b.HasIndex("TeacherId", "CourseLevelId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TeacherCourseLevels_Teacher_CourseLevel");
+
+                    b.ToTable("TeacherCourseLevels");
+                });
+
             modelBuilder.Entity("LanguageCourseManagement.Domain.Entities.TeacherLanguage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1278,6 +1307,25 @@ namespace LanguageCourseManagement.Infrastructure.Migrations
                     b.Navigation("Teacher");
                 });
 
+            modelBuilder.Entity("LanguageCourseManagement.Domain.Entities.TeacherCourseLevel", b =>
+                {
+                    b.HasOne("LanguageCourseManagement.Domain.Entities.CourseLevel", "CourseLevel")
+                        .WithMany("TeacherCourseLevels")
+                        .HasForeignKey("CourseLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LanguageCourseManagement.Domain.Entities.Teacher", "Teacher")
+                        .WithMany("TeacherCourseLevels")
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CourseLevel");
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("LanguageCourseManagement.Domain.Entities.TeacherLanguage", b =>
                 {
                     b.HasOne("LanguageCourseManagement.Domain.Entities.OfferedLanguage", "OfferedLanguage")
@@ -1374,6 +1422,8 @@ namespace LanguageCourseManagement.Infrastructure.Migrations
             modelBuilder.Entity("LanguageCourseManagement.Domain.Entities.CourseLevel", b =>
                 {
                     b.Navigation("Courses");
+
+                    b.Navigation("TeacherCourseLevels");
                 });
 
             modelBuilder.Entity("LanguageCourseManagement.Domain.Entities.Enrollment", b =>
@@ -1414,6 +1464,8 @@ namespace LanguageCourseManagement.Infrastructure.Migrations
                     b.Navigation("Courses");
 
                     b.Navigation("TeacherBranches");
+
+                    b.Navigation("TeacherCourseLevels");
 
                     b.Navigation("TeacherLanguages");
                 });

@@ -1,5 +1,4 @@
 using LanguageCourseManagement.Application.Persistence;
-using LanguageCourseManagement.Application.Repositories;
 using LanguageCourseManagement.Application.Services.AuthService;
 using LanguageCourseManagement.Application.Services.UserService;
 using LanguageCourseManagement.Domain.Repositories;

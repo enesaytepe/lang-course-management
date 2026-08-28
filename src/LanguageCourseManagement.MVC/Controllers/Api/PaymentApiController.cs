@@ -57,6 +57,7 @@ public sealed class PaymentApiController : ControllerBase
     [HttpPost]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<PaymentResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<PaymentResponse>> Create(CreatePaymentRequest request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))

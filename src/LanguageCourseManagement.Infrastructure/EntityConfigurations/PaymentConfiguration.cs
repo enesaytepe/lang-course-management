@@ -28,6 +28,8 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(x => x.IdempotencyKey).HasDatabaseName("UX_Payments_IdempotencyKey").IsUnique();
         // Composite index for common query patterns: status-based listing with soft-delete filter
         builder.HasIndex(x => new { x.Status, x.IsDeleted, x.EnrollmentId }).HasDatabaseName("IX_Payments_Status_IsDeleted_EnrollmentId");
+        builder.HasIndex(x => x.SettledAt).HasDatabaseName("IX_Payments_SettledAt").HasFilter("[SettledAt] IS NOT NULL");
+        builder.HasIndex(x => new { x.EnrollmentId, x.Status }).HasDatabaseName("IX_Payments_Enrollment_Status");
         builder.HasOne(x => x.Enrollment).WithMany(x => x.Payments).HasForeignKey(x => x.EnrollmentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Installment).WithMany(x => x.Payments).HasForeignKey(x => x.InstallmentId).OnDelete(DeleteBehavior.Restrict);
         // Simplified filter: only check Enrollment→Student deletion here.

@@ -21,6 +21,7 @@ public sealed class TeacherService : ITeacherService
     private readonly ICourseRepository _courseRepository;
     private readonly IOfferedLanguageRepository _offeredLanguageRepository;
     private readonly IBranchRepository _branchRepository;
+    private readonly ICourseLevelRepository _courseLevelRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<TeacherService> _logger;
     private readonly IValidator<CreateTeacherRequest> _createValidator;
@@ -33,6 +34,7 @@ public sealed class TeacherService : ITeacherService
         ICourseRepository courseRepository,
         IOfferedLanguageRepository offeredLanguageRepository,
         IBranchRepository branchRepository,
+        ICourseLevelRepository courseLevelRepository,
         IMapper mapper,
         ILogger<TeacherService> logger,
         IValidator<CreateTeacherRequest> createValidator,
@@ -44,6 +46,7 @@ public sealed class TeacherService : ITeacherService
         _courseRepository = courseRepository;
         _offeredLanguageRepository = offeredLanguageRepository;
         _branchRepository = branchRepository;
+        _courseLevelRepository = courseLevelRepository;
         _mapper = mapper;
         _logger = logger;
         _createValidator = createValidator;
@@ -68,6 +71,7 @@ public sealed class TeacherService : ITeacherService
                 IsActive = t.IsActive,
                 LanguageIds = t.TeacherLanguages!.Select(tl => tl.OfferedLanguageId).ToList(),
                 BranchIds = t.TeacherBranches!.Select(tb => tb.BranchId).ToList(),
+                CourseLevelIds = t.TeacherCourseLevels!.Select(tcl => tcl.CourseLevelId).ToList(),
                 Availabilities = t.Availabilities!.Select(a => new TeacherAvailabilityResponse
                 {
                     Id = a.Id,
@@ -143,6 +147,11 @@ public sealed class TeacherService : ITeacherService
         var languageIds = await ValidateLanguagesAsync(request.LanguageIds, cancellationToken);
         var branchIds = await ValidateBranchesAsync(request.BranchIds, cancellationToken);
 
+        if (request.CourseLevelIds is null || request.CourseLevelIds.Count == 0)
+            throw new BusinessException("En az bir kurs seviyesi seçilmelidir.");
+
+        var courseLevelIds = await ValidateCourseLevelsAsync(request.CourseLevelIds, request.LanguageIds, cancellationToken);
+
         var teacher = _mapper.Map<Teacher>(request);
         teacher.Id = Guid.NewGuid();
         teacher.IsActive = true;
@@ -153,6 +162,10 @@ public sealed class TeacherService : ITeacherService
         teacher.TeacherBranches = branchIds.Select(branchId => new TeacherBranch
         {
             Id = Guid.NewGuid(), TeacherId = teacher.Id, BranchId = branchId
+        }).ToList();
+        teacher.TeacherCourseLevels = courseLevelIds.Select(courseLevelId => new TeacherCourseLevel
+        {
+            Id = Guid.NewGuid(), TeacherId = teacher.Id, CourseLevelId = courseLevelId
         }).ToList();
 
         await _teacherRepository.AddAsync(teacher, cancellationToken);
@@ -167,13 +180,14 @@ public sealed class TeacherService : ITeacherService
         request.LastName = request.LastName.Trim();
 
         var teacher = await _teacherRepository.GetAsync(item => item.Id == id,
-            include: query => query.Include(t => t.TeacherLanguages!).Include(t => t.TeacherBranches!),
+            include: query => query.Include(t => t.TeacherLanguages!).Include(t => t.TeacherBranches!).Include(t => t.TeacherCourseLevels!),
             cancellationToken: cancellationToken);
         if (teacher is null)
             throw new NotFoundException("Öğretmen bulunamadı.");
 
         var languageIds = await ValidateLanguagesAsync(request.LanguageIds, cancellationToken);
         var branchIds = await ValidateBranchesAsync(request.BranchIds, cancellationToken);
+        var courseLevelIds = await ValidateCourseLevelsAsync(request.CourseLevelIds, request.LanguageIds, cancellationToken);
         teacher.FirstName = request.FirstName;
         teacher.LastName = request.LastName;
         teacher.HomePhone = request.HomePhone;
@@ -192,6 +206,12 @@ public sealed class TeacherService : ITeacherService
         teacher.TeacherBranches = branchIds.Select(branchId => new TeacherBranch
         {
             Id = Guid.NewGuid(), TeacherId = teacher.Id, BranchId = branchId
+        }).ToList();
+
+        teacher.TeacherCourseLevels?.Clear();
+        teacher.TeacherCourseLevels = courseLevelIds.Select(courseLevelId => new TeacherCourseLevel
+        {
+            Id = Guid.NewGuid(), TeacherId = teacher.Id, CourseLevelId = courseLevelId
         }).ToList();
 
         await _teacherRepository.UpdateAsync(teacher, cancellationToken);
@@ -336,11 +356,34 @@ public sealed class TeacherService : ITeacherService
         return distinctIds;
     }
 
+    private async Task<List<Guid>> ValidateCourseLevelsAsync(List<Guid> courseLevelIds, List<Guid> languageIds, CancellationToken cancellationToken)
+    {
+        if (courseLevelIds is null || courseLevelIds.Count == 0)
+            return [];
+        var distinctIds = courseLevelIds.Distinct().ToList();
+        var result = await _courseLevelRepository.GetListAsync(
+            predicate: cl => distinctIds.Contains(cl.Id) && cl.IsActive,
+            index: 0,
+            size: distinctIds.Count,
+            enableTracking: false,
+            cancellationToken: cancellationToken);
+        if (result.Count != distinctIds.Count)
+            throw new BusinessException("Seçilen kurs seviyelerinden biri veya daha fazlası bulunamadı ya da pasif durumda.");
+
+        var selectedLevelLanguageMap = result.Items.ToDictionary(cl => cl.Id, cl => cl.OfferedLanguageId);
+        var invalidLevels = distinctIds.Where(id => !languageIds.Contains(selectedLevelLanguageMap[id])).ToList();
+        if (invalidLevels.Count > 0)
+            throw new BusinessException("Seçilen kurs seviyeleri öğretmenin seçtiği dillere ait olmalıdır.");
+
+        return distinctIds;
+    }
+
     private TeacherResponse ToResponse(Teacher teacher)
     {
         var response = _mapper.Map<TeacherResponse>(teacher);
         response.LanguageIds = teacher.TeacherLanguages?.Select(tl => tl.OfferedLanguageId).ToList() ?? [];
         response.BranchIds = teacher.TeacherBranches?.Select(tb => tb.BranchId).ToList() ?? [];
+        response.CourseLevelIds = teacher.TeacherCourseLevels?.Select(tcl => tcl.CourseLevelId).ToList() ?? [];
         response.Availabilities = teacher.Availabilities?.Select(a => _mapper.Map<TeacherAvailabilityResponse>(a)).ToList() ?? [];
         return response;
     }

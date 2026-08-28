@@ -72,6 +72,7 @@ public sealed class ApplicationDataSeedService
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await EnsureLanguagesAndLevelsAsync(cancellationToken);
+        await EnsureTeacherCourseLevelsAsync(cancellationToken);
 
         if (!_environment.IsDevelopment() ||
             !_configuration.GetValue<bool>("Database:SeedDemoData"))
@@ -130,6 +131,45 @@ public sealed class ApplicationDataSeedService
                     Order = levelOrder,
                     IsActive = true
                 }, cancellationToken);
+            }
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task EnsureTeacherCourseLevelsAsync(CancellationToken cancellationToken)
+    {
+        // Mevcut öğretmenlerin seviye kayıtlarını oluştur
+        // Yalnızca TeacherLanguage kaydı olan ama TeacherCourseLevel kaydı olmayan öğretmenler için
+        var teachersWithoutLevels = await _dbContext.Teachers
+            .Where(t => t.IsActive && !t.IsDeleted)
+            .Where(t => t.TeacherLanguages != null && t.TeacherLanguages.Any())
+            .Where(t => !_dbContext.TeacherCourseLevels.Any(tcl => tcl.TeacherId == t.Id))
+            .Select(t => new { t.Id, LanguageIds = t.TeacherLanguages!.Select(tl => tl.OfferedLanguageId).ToList() })
+            .ToListAsync(cancellationToken);
+
+        if (teachersWithoutLevels.Count == 0)
+            return;
+
+        var allActiveLevels = await _dbContext.CourseLevels
+            .Where(cl => cl.IsActive && !cl.IsDeleted)
+            .Select(cl => new { cl.Id, cl.OfferedLanguageId })
+            .ToListAsync(cancellationToken);
+
+        foreach (var teacher in teachersWithoutLevels)
+        {
+            foreach (var languageId in teacher.LanguageIds)
+            {
+                var levelsForLanguage = allActiveLevels.Where(cl => cl.OfferedLanguageId == languageId);
+                foreach (var level in levelsForLanguage)
+                {
+                    await _dbContext.TeacherCourseLevels.AddAsync(new TeacherCourseLevel
+                    {
+                        Id = Guid.NewGuid(),
+                        TeacherId = teacher.Id,
+                        CourseLevelId = level.Id
+                    }, cancellationToken);
+                }
             }
         }
 

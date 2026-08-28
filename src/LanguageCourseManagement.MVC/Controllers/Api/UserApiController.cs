@@ -47,6 +47,7 @@ public sealed class UserApiController : ControllerBase
     [HttpPost]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<UserListResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserListResponse>> Create(CreateUserRequest request, CancellationToken cancellationToken)
     {
         var result = await _userService.CreateUserAsync(request, cancellationToken);
@@ -59,6 +60,7 @@ public sealed class UserApiController : ControllerBase
     [HttpPut("{id}")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<UserListResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserListResponse>> Update(string id, UpdateUserRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _userService.UpdateUserAsync(id, request, cancellationToken));

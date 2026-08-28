@@ -56,6 +56,7 @@ public sealed class BranchApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<BranchResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<BranchResponse>> Create(CreateBranchRequest request, CancellationToken cancellationToken)
     {
         var result = await _branchService.CreateAsync(request, cancellationToken);
@@ -70,6 +71,7 @@ public sealed class BranchApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<BranchResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<BranchResponse>> Update(Guid id, UpdateBranchRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _branchService.UpdateAsync(id, request, cancellationToken));

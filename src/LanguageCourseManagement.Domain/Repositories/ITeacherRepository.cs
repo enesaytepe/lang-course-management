@@ -21,6 +21,7 @@ public interface ITeacherRepository : IRepository<Teacher>
     Task<IReadOnlyList<Teacher>> GetEligibleTeachersAsync(
         Guid branchId,
         Guid offeredLanguageId,
+        Guid courseLevelId,
         IReadOnlyList<ScheduleSlot> schedules,
         DateOnly startDate,
         DateOnly endDate,

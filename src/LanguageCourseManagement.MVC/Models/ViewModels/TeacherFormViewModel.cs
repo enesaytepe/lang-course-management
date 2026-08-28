@@ -45,9 +45,14 @@ public sealed class TeacherFormViewModel
     [Display(Name = "Şubeler")]
     public List<Guid> BranchIds { get; set; } = [];
 
+    [Display(Name = "Kurs Seviyeleri")]
+    public List<Guid> CourseLevelIds { get; set; } = [];
+
     public List<SelectListItem> AvailableLanguages { get; set; } = [];
 
     public List<SelectListItem> AvailableBranches { get; set; } = [];
+
+    public List<SelectListItem> AvailableCourseLevels { get; set; } = [];
 
     public List<TeacherAvailabilityFormRow> Availabilities { get; set; } = [];
 }

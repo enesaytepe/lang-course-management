@@ -194,6 +194,114 @@ public sealed class DomainLifecycleTests
         Assert.Null(result.WarningMessage);
     }
 
+    [Fact]
+    public async Task CheckEligibility_detects_conflict_even_when_target_course_has_zero_enrollments()
+    {
+        var studentId = Guid.NewGuid();
+        var courseAId = Guid.NewGuid();
+        var courseBId = Guid.NewGuid();
+
+        // Student already enrolled in Course A: Monday 10:00-12:00
+        _enrollmentRepository.Setup(x => x.GetActiveStudentAsync(studentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Student { Id = studentId, FirstName = "Test", LastName = "Student", IsActive = true });
+        _enrollmentRepository.Setup(x => x.GetCourseEligibilityInfoAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CourseEligibilityInfo { Id = courseBId, Name = "English B1", Capacity = 20, IsActive = true, Status = CourseStatus.Open });
+        _enrollmentRepository.Setup(x => x.FindByStudentAndCourseAsync(studentId, courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Enrollment?)null);
+        _enrollmentRepository.Setup(x => x.CountActiveByCourseIdAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        // Student has active schedule from Course A
+        _enrollmentRepository.Setup(x => x.GetStudentActiveScheduleAsync(studentId, courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CourseScheduleInfo>
+            {
+                new() { CourseId = courseAId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(12, 0) }
+            });
+
+        // Course B has 0 enrollments, but has schedule: Monday 11:00-13:00 (overlaps with Course A)
+        _enrollmentRepository.Setup(x => x.GetCourseScheduleAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CourseScheduleInfo>
+            {
+                new() { CourseId = courseBId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeOnly(11, 0), EndTime = new TimeOnly(13, 0) }
+            });
+
+        var service = CreateEnrollmentService();
+        var result = await service.CheckEligibilityAsync(studentId, courseBId);
+
+        Assert.False(result.IsEligible);
+        Assert.Contains("çakışması", result.WarningMessage);
+    }
+
+    [Fact]
+    public async Task CheckEligibility_detects_conflict_when_target_course_has_one_enrollment()
+    {
+        var studentId = Guid.NewGuid();
+        var courseAId = Guid.NewGuid();
+        var courseBId = Guid.NewGuid();
+
+        _enrollmentRepository.Setup(x => x.GetActiveStudentAsync(studentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Student { Id = studentId, FirstName = "Test", LastName = "Student", IsActive = true });
+        _enrollmentRepository.Setup(x => x.GetCourseEligibilityInfoAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CourseEligibilityInfo { Id = courseBId, Name = "English B1", Capacity = 20, IsActive = true, Status = CourseStatus.Open });
+        _enrollmentRepository.Setup(x => x.FindByStudentAndCourseAsync(studentId, courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Enrollment?)null);
+        _enrollmentRepository.Setup(x => x.CountActiveByCourseIdAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _enrollmentRepository.Setup(x => x.GetStudentActiveScheduleAsync(studentId, courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CourseScheduleInfo>
+            {
+                new() { CourseId = courseAId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(12, 0) }
+            });
+
+        _enrollmentRepository.Setup(x => x.GetCourseScheduleAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CourseScheduleInfo>
+            {
+                new() { CourseId = courseBId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeOnly(11, 0), EndTime = new TimeOnly(13, 0) }
+            });
+
+        var service = CreateEnrollmentService();
+        var result = await service.CheckEligibilityAsync(studentId, courseBId);
+
+        Assert.False(result.IsEligible);
+        Assert.Contains("çakışması", result.WarningMessage);
+    }
+
+    [Fact]
+    public async Task CheckEligibility_detects_conflict_when_target_course_has_multiple_enrollments()
+    {
+        var studentId = Guid.NewGuid();
+        var courseAId = Guid.NewGuid();
+        var courseBId = Guid.NewGuid();
+
+        _enrollmentRepository.Setup(x => x.GetActiveStudentAsync(studentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Student { Id = studentId, FirstName = "Test", LastName = "Student", IsActive = true });
+        _enrollmentRepository.Setup(x => x.GetCourseEligibilityInfoAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CourseEligibilityInfo { Id = courseBId, Name = "English B1", Capacity = 20, IsActive = true, Status = CourseStatus.Open });
+        _enrollmentRepository.Setup(x => x.FindByStudentAndCourseAsync(studentId, courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Enrollment?)null);
+        _enrollmentRepository.Setup(x => x.CountActiveByCourseIdAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(5);
+
+        _enrollmentRepository.Setup(x => x.GetStudentActiveScheduleAsync(studentId, courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CourseScheduleInfo>
+            {
+                new() { CourseId = courseAId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(12, 0) }
+            });
+
+        _enrollmentRepository.Setup(x => x.GetCourseScheduleAsync(courseBId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CourseScheduleInfo>
+            {
+                new() { CourseId = courseBId, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeOnly(11, 0), EndTime = new TimeOnly(13, 0) }
+            });
+
+        var service = CreateEnrollmentService();
+        var result = await service.CheckEligibilityAsync(studentId, courseBId);
+
+        Assert.False(result.IsEligible);
+        Assert.Contains("çakışması", result.WarningMessage);
+    }
+
     private EnrollmentService CreateEnrollmentService()
     {
         var validator = new Mock<FluentValidation.IValidator<UpdateEnrollmentRequest>>();

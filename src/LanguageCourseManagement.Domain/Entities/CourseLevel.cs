@@ -39,4 +39,9 @@ public class CourseLevel : SoftDeletableEntity
     /// Bu seviyede açılan dersler
     /// </summary>
     public virtual List<Course>? Courses { get; set; }
+
+    /// <summary>
+    /// Bu seviyeyi öğretebilen öğretmenler
+    /// </summary>
+    public virtual List<TeacherCourseLevel>? TeacherCourseLevels { get; set; }
 }

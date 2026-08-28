@@ -8,4 +8,9 @@ namespace LanguageCourseManagement.Domain.Repositories;
 /// </summary>
 public interface ICourseRepository : IRepository<Course>
 {
+    /// <summary>
+    /// Belirli bir kursa ait tüm ders programı kayıtlarını siler.
+    /// Kurs silinirken owned lifecycle parçası olarak temizlik için kullanılır.
+    /// </summary>
+    Task<int> DeleteSchedulesByCourseIdAsync(Guid courseId, CancellationToken cancellationToken = default);
 }

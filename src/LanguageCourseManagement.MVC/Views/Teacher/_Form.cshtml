@@ -81,6 +81,14 @@
             </div>
         </div>
 
+        <div class="row g-4 mt-2">
+            <div class="col-md-12">
+                <label asp-for="CourseLevelIds" class="form-label">Öğretebildiği Kurs Seviyeleri</label>
+                <select asp-for="CourseLevelIds" asp-items="Model.AvailableCourseLevels" class="form-select" multiple></select>
+                <span asp-validation-for="CourseLevelIds" class="text-danger"></span>
+            </div>
+        </div>
+
         <!-- Müsaitlik Tablosu -->
         <hr class="my-4" />
         <h5>Haftalık Müsaitlik</h5>

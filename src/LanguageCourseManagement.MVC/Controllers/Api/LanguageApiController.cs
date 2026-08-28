@@ -55,6 +55,7 @@ public sealed class LanguageApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<OfferedLanguageResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<OfferedLanguageResponse>> Create(CreateOfferedLanguageRequest request, CancellationToken cancellationToken)
     {
         var result = await _languageService.CreateAsync(request, cancellationToken);
@@ -69,6 +70,7 @@ public sealed class LanguageApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<OfferedLanguageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<OfferedLanguageResponse>> Update(Guid id, UpdateOfferedLanguageRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _languageService.UpdateAsync(id, request, cancellationToken));

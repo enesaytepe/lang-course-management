@@ -1,5 +1,5 @@
+using LanguageCourseManagement.Application.DTOs.Dashboard;
 using LanguageCourseManagement.Application.Services.DashboardService;
-using LanguageCourseManagement.MVC.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,21 +24,8 @@ public sealed class DashboardController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var stats = await _dashboardService.GetStatsAsync(cancellationToken);
+        var statistics = await _dashboardService.GetStatisticsAsync(cancellationToken);
 
-        return View(new DashboardViewModel
-        {
-            ActiveBranchCount = stats.ActiveBranchCount,
-            ActiveClassroomCount = stats.ActiveClassroomCount,
-            ActiveTeacherCount = stats.ActiveTeacherCount,
-            ActiveStudentCount = stats.ActiveStudentCount,
-            ActiveCourseCount = stats.ActiveCourseCount,
-            TotalEnrollmentCount = stats.TotalEnrollmentCount,
-            ActiveEnrollments = stats.ActiveEnrollments,
-            TotalSettledAmount = stats.TotalSettledAmount,
-            MonthlyRevenue = stats.MonthlyRevenue,
-            PendingPaymentCount = stats.PendingPaymentCount,
-            OverdueInstallmentCount = stats.OverdueInstallmentCount
-        });
+        return View(statistics);
     }
 }

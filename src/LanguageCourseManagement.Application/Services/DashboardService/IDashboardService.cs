@@ -10,5 +10,5 @@ public interface IDashboardService
     /// <summary>
     /// Dashboard için gerekli tüm istatistikleri tek sorgu ile getirir.
     /// </summary>
-    Task<DashboardStats> GetStatsAsync(CancellationToken cancellationToken = default);
+    Task<DashboardStatisticsResponse> GetStatisticsAsync(CancellationToken cancellationToken = default);
 }

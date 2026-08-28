@@ -31,6 +31,7 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
         builder.HasIndex(x => new { x.CourseId, x.Status }).HasDatabaseName("IX_Enrollments_Course_Status");
         // Composite index for status-first queries (e.g., listing active enrollments by course)
         builder.HasIndex(x => new { x.Status, x.CourseId }).HasDatabaseName("IX_Enrollments_Status_CourseId");
+        builder.HasIndex(x => new { x.StudentId, x.Status }).HasDatabaseName("IX_Enrollments_Student_Status");
         builder.HasOne(x => x.Student).WithMany(x => x.Enrollments).HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Course).WithMany(x => x.Enrollments).HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict);
         builder.HasQueryFilter(x => !x.Student.IsDeleted && !x.Course.IsDeleted);

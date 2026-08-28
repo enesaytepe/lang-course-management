@@ -12,6 +12,7 @@ public sealed class TeacherProfile : Profile
         CreateMap<Teacher, TeacherResponse>()
             .ForMember(destination => destination.LanguageIds, options => options.Ignore())
             .ForMember(destination => destination.BranchIds, options => options.Ignore())
+            .ForMember(destination => destination.CourseLevelIds, options => options.Ignore())
             .ForMember(destination => destination.Availabilities, options => options.Ignore());
 
         CreateMap<CreateTeacherRequest, Teacher>()
@@ -23,6 +24,7 @@ public sealed class TeacherProfile : Profile
             .ForMember(destination => destination.TeacherLanguages, options => options.Ignore())
             .ForMember(destination => destination.TeacherBranches, options => options.Ignore())
             .ForMember(destination => destination.Availabilities, options => options.Ignore())
+            .ForMember(destination => destination.TeacherCourseLevels, options => options.Ignore())
             .ForMember(destination => destination.Courses, options => options.Ignore());
 
         CreateMap<UpdateTeacherRequest, Teacher>()
@@ -34,6 +36,7 @@ public sealed class TeacherProfile : Profile
             .ForMember(destination => destination.TeacherLanguages, options => options.Ignore())
             .ForMember(destination => destination.TeacherBranches, options => options.Ignore())
             .ForMember(destination => destination.Availabilities, options => options.Ignore())
+            .ForMember(destination => destination.TeacherCourseLevels, options => options.Ignore())
             .ForMember(destination => destination.Courses, options => options.Ignore());
     }
 }

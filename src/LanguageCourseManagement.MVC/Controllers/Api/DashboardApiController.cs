@@ -24,10 +24,10 @@ public sealed class DashboardApiController : ControllerBase
     /// Dashboard istatistiklerini tek bir aggregate sorgu ile getirir.
     /// </summary>
     [HttpGet]
-    [ProducesResponseType<DashboardStats>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<DashboardStats>> GetStats(CancellationToken cancellationToken)
+    [ProducesResponseType<DashboardStatisticsResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<DashboardStatisticsResponse>> GetStats(CancellationToken cancellationToken)
     {
-        var stats = await _dashboardService.GetStatsAsync(cancellationToken);
+        var stats = await _dashboardService.GetStatisticsAsync(cancellationToken);
         return Ok(stats);
     }
 }

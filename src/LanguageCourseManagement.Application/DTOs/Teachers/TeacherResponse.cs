@@ -12,5 +12,6 @@ public sealed class TeacherResponse
     public bool IsActive { get; set; }
     public List<Guid> LanguageIds { get; set; } = [];
     public List<Guid> BranchIds { get; set; } = [];
+    public List<Guid> CourseLevelIds { get; set; } = [];
     public List<TeacherAvailabilityResponse> Availabilities { get; set; } = [];
 }

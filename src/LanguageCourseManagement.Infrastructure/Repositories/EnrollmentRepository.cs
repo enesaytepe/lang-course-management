@@ -112,4 +112,22 @@ public sealed class EnrollmentRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<CourseScheduleInfo>> GetCourseScheduleAsync(
+        Guid courseId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.CourseSchedules
+            .AsNoTracking()
+            .Where(s => s.CourseId == courseId)
+            .Select(s => new CourseScheduleInfo
+            {
+                CourseId = s.CourseId,
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime
+            })
+            .ToListAsync(cancellationToken);
+    }
+
 }

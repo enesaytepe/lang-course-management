@@ -12,10 +12,10 @@ namespace LanguageCourseManagement.Infrastructure;
 
 public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
     private bool _isSavingAuditLogs;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor httpContextAccessor) : base(options)
+    public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor? httpContextAccessor = null) : base(options)
     {
         _httpContextAccessor = httpContextAccessor;
     }
@@ -36,6 +36,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TeacherAvailability> TeacherAvailabilities { get; set; }
     public DbSet<TeacherBranch> TeacherBranches { get; set; }
     public DbSet<TeacherLanguage> TeacherLanguages { get; set; }
+    public DbSet<TeacherCourseLevel> TeacherCourseLevels { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -233,11 +234,11 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     private string? GetCurrentUserId()
     {
-        return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        return _httpContextAccessor?.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     private string? GetCurrentUserName()
     {
-        return _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+        return _httpContextAccessor?.HttpContext?.User?.Identity?.Name;
     }
 }

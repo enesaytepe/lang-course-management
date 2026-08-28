@@ -77,6 +77,7 @@ public sealed class FacilityApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<FacilityResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<FacilityResponse>> Create(CreateFacilityRequest request, CancellationToken cancellationToken)
     {
         var result = await _facilityService.CreateAsync(request, cancellationToken);
@@ -91,6 +92,7 @@ public sealed class FacilityApiController : ControllerBase
     [Authorize(Roles = "SystemAdmin")]
     [ValidateAntiForgeryToken]
     [ProducesResponseType<FacilityResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<FacilityResponse>> Update(Guid id, UpdateFacilityRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _facilityService.UpdateAsync(id, request, cancellationToken));

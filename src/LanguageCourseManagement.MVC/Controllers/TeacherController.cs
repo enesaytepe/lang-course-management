@@ -2,6 +2,7 @@ using LanguageCourseManagement.Application.Common.Requests;
 using LanguageCourseManagement.Application.DTOs.Teachers;
 using LanguageCourseManagement.Application.Exceptions;
 using LanguageCourseManagement.Application.Services.BranchService;
+using LanguageCourseManagement.Application.Services.CourseLevelService;
 using LanguageCourseManagement.Application.Services.OfferedLanguageService;
 using LanguageCourseManagement.Application.Services.TeacherService;
 using LanguageCourseManagement.MVC.Models.ViewModels;
@@ -19,15 +20,18 @@ public sealed class TeacherController : Controller
     private readonly ITeacherService _teacherService;
     private readonly IOfferedLanguageService _offeredLanguageService;
     private readonly IBranchService _branchService;
+    private readonly ICourseLevelService _courseLevelService;
 
     public TeacherController(
         ITeacherService teacherService,
         IOfferedLanguageService offeredLanguageService,
-        IBranchService branchService)
+        IBranchService branchService,
+        ICourseLevelService courseLevelService)
     {
         _teacherService = teacherService;
         _offeredLanguageService = offeredLanguageService;
         _branchService = branchService;
+        _courseLevelService = courseLevelService;
     }
 
     /// <summary>
@@ -109,10 +113,19 @@ public sealed class TeacherController : Controller
             new SelectListItem(b.Name ?? "", b.Id.ToString(),
                 model.BranchIds.Contains(b.Id))).ToList();
 
+        var levelsPage = await _courseLevelService.GetListAsync(
+            new Application.Common.Requests.PageRequest { PageIndex = 0, PageSize = 100 },
+            search: null, offeredLanguageId: null, isActive: true, cancellationToken: cancellationToken);
+
+        model.AvailableCourseLevels = levelsPage.Items.Select(cl =>
+            new SelectListItem($"{cl.LanguageName} - {cl.Name}", cl.Id.ToString(),
+                model.CourseLevelIds.Contains(cl.Id))).ToList();
+
         if (existingTeacher is not null)
         {
             model.LanguageIds = existingTeacher.LanguageIds;
             model.BranchIds = existingTeacher.BranchIds;
+            model.CourseLevelIds = existingTeacher.CourseLevelIds;
             model.Availabilities = existingTeacher.Availabilities.Select(a =>
                 new TeacherAvailabilityFormRow
                 {
@@ -138,6 +151,7 @@ public sealed class TeacherController : Controller
             IsActive = teacher.IsActive,
             LanguageIds = teacher.LanguageIds,
             BranchIds = teacher.BranchIds,
+            CourseLevelIds = teacher.CourseLevelIds,
             Availabilities = teacher.Availabilities.Select(a =>
                 new TeacherAvailabilityFormRow
                 {
@@ -157,9 +171,13 @@ public sealed class TeacherController : Controller
         var branchesPage = await _branchService.GetListAsync(
             new Application.Common.Requests.PageRequest { PageIndex = 0, PageSize = 100 },
             search: null, isActive: true, cancellationToken: cancellationToken);
+        var levelsPage = await _courseLevelService.GetListAsync(
+            new Application.Common.Requests.PageRequest { PageIndex = 0, PageSize = 100 },
+            search: null, offeredLanguageId: null, isActive: true, cancellationToken: cancellationToken);
 
         var languageMap = languagesPage.Items.ToDictionary(l => l.Id, l => l.Name);
         var branchMap = branchesPage.Items.ToDictionary(b => b.Id, b => b.Name ?? "");
+        var courseLevelMap = levelsPage.Items.ToDictionary(cl => cl.Id, cl => $"{cl.LanguageName} - {cl.Name}");
         var dayNames = new[] { "Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi" };
 
         return new TeacherDetailsViewModel
@@ -177,6 +195,9 @@ public sealed class TeacherController : Controller
                 .ToList(),
             Branches = teacher.BranchIds
                 .Select(id => branchMap.TryGetValue(id, out var name) ? name : "Bilinmeyen")
+                .ToList(),
+            CourseLevels = teacher.CourseLevelIds
+                .Select(id => courseLevelMap.TryGetValue(id, out var name) ? name : "Bilinmeyen")
                 .ToList(),
             Availabilities = teacher.Availabilities
                 .Select(a => new TeacherAvailabilityDetailItem
