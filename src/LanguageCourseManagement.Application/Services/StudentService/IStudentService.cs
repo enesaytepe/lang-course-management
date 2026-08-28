@@ -17,7 +17,7 @@ public interface IStudentService
     /// <summary>
     /// Arama ve filtre kriterlerine göre öğrencileri sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<StudentListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<StudentListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Yeni öğrenci oluşturur.

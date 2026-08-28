@@ -46,7 +46,6 @@ public sealed class EnrollmentService : IEnrollmentService
         string? search,
         Guid? branchId,
         EnrollmentStatus? status,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
@@ -59,7 +58,7 @@ public sealed class EnrollmentService : IEnrollmentService
              enrollment.Student.LastName.Contains(normalizedSearch) ||
              enrollment.Course.Name.Contains(normalizedSearch));
 
-        var enrollmentQuery = showDeleted ? _enrollmentRepository.QueryWithIgnoreFilters() : _enrollmentRepository.Query();
+        var enrollmentQuery = _enrollmentRepository.Query();
         var enrollmentsPage = await enrollmentQuery
             .Where(predicate)
             .OrderByDescending(enrollment => enrollment.EnrollmentDate)

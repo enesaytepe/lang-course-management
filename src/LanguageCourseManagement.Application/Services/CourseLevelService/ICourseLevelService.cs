@@ -17,7 +17,7 @@ public interface ICourseLevelService
     /// <summary>
     /// Arama ve filtre kriterlerine göre kurs seviyelerini sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Yeni kurs seviyesi oluşturur.

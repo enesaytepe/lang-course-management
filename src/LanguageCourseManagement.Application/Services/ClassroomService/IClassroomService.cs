@@ -25,7 +25,6 @@ public interface IClassroomService
         string? search,
         Guid? branchId,
         bool? isActive,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>
