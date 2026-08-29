@@ -157,6 +157,7 @@ public sealed class TeacherService : ITeacherService
         }).ToList();
 
         await _teacherRepository.AddAsync(teacher, cancellationToken);
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[TeacherService] Yeni öğretmen oluşturuldu - {TeacherId}", teacher.Id);
         return await GetByIdAsync(teacher.Id, cancellationToken);
     }
@@ -203,6 +204,7 @@ public sealed class TeacherService : ITeacherService
         }).ToList();
 
         await _teacherRepository.UpdateAsync(teacher, cancellationToken);
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[TeacherService] Öğretmen güncellendi - {TeacherId}", teacher.Id);
         return await GetByIdAsync(teacher.Id, cancellationToken);
     }
@@ -214,6 +216,7 @@ public sealed class TeacherService : ITeacherService
             throw new NotFoundException("Öğretmen bulunamadı.");
 
         await _teacherRepository.DeleteAsync(teacher, cancellationToken);
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[TeacherService] Öğretmen silindi - {TeacherId}", id);
         return ToResponse(teacher);
     }
@@ -234,6 +237,7 @@ public sealed class TeacherService : ITeacherService
         };
         (teacher.Availabilities ??= []).Add(availability);
         await _teacherRepository.UpdateAsync(teacher, cancellationToken);
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[TeacherService] Müsaitlik eklendi - {TeacherId}, {DayOfWeek}", teacherId, request.DayOfWeek);
         return _mapper.Map<TeacherAvailabilityResponse>(availability);
     }
@@ -254,6 +258,7 @@ public sealed class TeacherService : ITeacherService
         availability.StartTime = request.StartTime;
         availability.EndTime = request.EndTime;
         await _teacherRepository.UpdateAsync(teacher, cancellationToken);
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[TeacherService] Müsaitlik güncellendi - {TeacherId}, {AvailabilityId}", teacherId, availabilityId);
         return _mapper.Map<TeacherAvailabilityResponse>(availability);
     }
@@ -267,6 +272,7 @@ public sealed class TeacherService : ITeacherService
 
         teacher.Availabilities!.Remove(availability);
         await _teacherRepository.UpdateAsync(teacher, cancellationToken);
+        await _teacherRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[TeacherService] Müsaitlik silindi - {TeacherId}, {AvailabilityId}", teacherId, availabilityId);
         return _mapper.Map<TeacherAvailabilityResponse>(availability);
     }

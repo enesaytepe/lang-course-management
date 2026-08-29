@@ -65,6 +65,7 @@ public sealed class OfferedLanguageService : IOfferedLanguageService
         language.Id = Guid.NewGuid();
         language.IsActive = true;
         await _offeredLanguageRepository.AddAsync(language, cancellationToken);
+        await _offeredLanguageRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[OfferedLanguageService] Yeni dil oluşturuldu - {OfferedLanguageId}", language.Id);
         return await GetByIdAsync(language.Id, cancellationToken);
     }
@@ -83,6 +84,7 @@ public sealed class OfferedLanguageService : IOfferedLanguageService
         language.Code = request.Code;
         language.IsActive = request.IsActive;
         await _offeredLanguageRepository.UpdateAsync(language, cancellationToken);
+        await _offeredLanguageRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[OfferedLanguageService] Dil güncellendi - {OfferedLanguageId}", language.Id);
         return await GetByIdAsync(language.Id, cancellationToken);
     }
@@ -94,6 +96,7 @@ public sealed class OfferedLanguageService : IOfferedLanguageService
             throw new NotFoundException("Dil bulunamadı.");
         var response = _mapper.Map<OfferedLanguageResponse>(language);
         await _offeredLanguageRepository.DeleteAsync(language, cancellationToken);
+        await _offeredLanguageRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("[OfferedLanguageService] Dil silindi - {OfferedLanguageId}", language.Id);
         return response;
     }

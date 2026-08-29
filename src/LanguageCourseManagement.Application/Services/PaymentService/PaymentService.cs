@@ -153,6 +153,7 @@ public class PaymentService : IPaymentService
                 enrollment.Installments = installments;
             }
 
+            await _enrollmentRepository.SaveChangesAsync(cancellationToken);
             await _transactionManager.CommitAsync(cancellationToken);
 
             _logger.LogInformation("[PaymentService] Kayıt ve tahsilat oluşturuldu - Kayıt: {EnrollmentId}, Öğrenci: {StudentId}, Ders: {CourseId}", enrollment.Id, request.StudentId, request.CourseId);
@@ -314,6 +315,7 @@ public class PaymentService : IPaymentService
         var payment = CreatePaymentRecord(request.EnrollmentId, paymentAmount, request.Method, userId, null, installmentId, request.Description);
 
         await _paymentRepository.AddAsync(payment, cancellationToken);
+        await _paymentRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("[PaymentService] Yeni tahsilat olusturuldu - {PaymentId}, Kayit: {EnrollmentId}, Tutar: {Amount}", payment.Id, request.EnrollmentId, payment.Amount);
 

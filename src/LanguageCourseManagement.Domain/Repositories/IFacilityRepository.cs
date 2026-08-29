@@ -37,4 +37,6 @@ public interface IFacilityRepository
     Task<Facility> DeleteAsync(
         Facility facility,
         CancellationToken cancellationToken = default);
+
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

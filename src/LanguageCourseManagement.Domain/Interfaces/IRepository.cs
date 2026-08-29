@@ -21,16 +21,19 @@ public interface IRepository<TEntity> where TEntity : BaseEntity
     /// <summary>Koşula uyan herhangi bir kayıt var mı kontrol eder.</summary>
     Task<bool> AnyAsync(Expression<Func<TEntity, bool>>? predicate = null, bool enableTracking = true, CancellationToken cancellationToken = default);
 
-    /// <summary>Yeni entity ekler ve kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    /// <summary>Yeni entity ekler. İptal belirteci kayıt işlemini iptal eder.</summary>
     Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default);
-    /// <summary>Birden fazla entity ekler ve kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    /// <summary>Birden fazla entity ekler. İptal belirteci kayıt işlemini iptal eder.</summary>
     Task<IList<TEntity>> AddRangeAsync(IList<TEntity> entity, CancellationToken cancellationToken = default);
-    /// <summary>Entity'yi günceller ve kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    /// <summary>Entity'yi günceller. İptal belirteci kayıt işlemini iptal eder.</summary>
     Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
-    /// <summary>Birden fazla entity'yi günceller ve kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    /// <summary>Birden fazla entity'yi günceller. İptal belirteci kayıt işlemini iptal eder.</summary>
     Task<IList<TEntity>> UpdateRangeAsync(IList<TEntity> entity, CancellationToken cancellationToken = default);
-    /// <summary>Entity'yi siler ve kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    /// <summary>Entity'yi siler. İptal belirteci kayıt işlemini iptal eder.</summary>
     Task<TEntity> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
-    /// <summary>Birden fazla entity'yi siler ve kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    /// <summary>Birden fazla entity'yi siler. İptal belirteci kayıt işlemini iptal eder.</summary>
     Task<IList<TEntity>> DeleteRangeAsync(IList<TEntity> entity, CancellationToken cancellationToken = default);
+
+    /// <summary>Tüm bekleyen değişiklikleri kaydeder. İptal belirteci kayıt işlemini iptal eder.</summary>
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
