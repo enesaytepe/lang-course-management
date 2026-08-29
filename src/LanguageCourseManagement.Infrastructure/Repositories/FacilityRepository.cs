@@ -114,20 +114,20 @@ public sealed class FacilityRepository : IFacilityRepository
         return facility;
     }
 
-    public async Task<Facility> UpdateAsync(
+    public Task<Facility> UpdateAsync(
         Facility facility,
         CancellationToken cancellationToken = default)
     {
         _context.Facilities.Update(facility);
-        return facility;
+        return Task.FromResult(facility);
     }
 
-    public async Task<Facility> DeleteAsync(
+    public Task<Facility> DeleteAsync(
         Facility facility,
         CancellationToken cancellationToken = default)
     {
         _context.Facilities.Remove(facility);
-        return facility;
+        return Task.FromResult(facility);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

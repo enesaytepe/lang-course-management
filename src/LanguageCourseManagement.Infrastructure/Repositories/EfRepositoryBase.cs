@@ -34,28 +34,28 @@ public class EfRepositoryBase<TEntity, TContext> : IRepository<TEntity>
         return entities;
     }
 
-    public async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         Context.Update(entity);
-        return entity;
+        return Task.FromResult(entity);
     }
 
-    public async Task<IList<TEntity>> UpdateRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
+    public Task<IList<TEntity>> UpdateRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
     {
         Context.UpdateRange(entities);
-        return entities;
+        return Task.FromResult(entities);
     }
 
-    public async Task<TEntity> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public Task<TEntity> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         Context.Remove(entity);
-        return entity;
+        return Task.FromResult(entity);
     }
 
-    public async Task<IList<TEntity>> DeleteRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
+    public Task<IList<TEntity>> DeleteRangeAsync(IList<TEntity> entities, CancellationToken cancellationToken = default)
     {
         Context.RemoveRange(entities);
-        return entities;
+        return Task.FromResult(entities);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
