@@ -52,7 +52,6 @@ public sealed class StudentService : IStudentService
         PageRequest pageRequest,
         string? search,
         bool? isActive,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
@@ -65,25 +64,13 @@ public sealed class StudentService : IStudentService
              student.MobilePhone.ToLower().Contains(searchLower) ||
              (student.Email != null && student.Email.ToLower().Contains(searchLower)));
 
-        IPaginate<Student> students;
-        if (showDeleted)
-        {
-            var queryable = _studentRepository.QueryWithIgnoreFilters().AsNoTracking();
-            queryable = queryable.Where(predicate);
-            students = await queryable
-                .OrderBy(student => student.LastName).ThenBy(student => student.FirstName)
-                .ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, from: 0, cancellationToken);
-        }
-        else
-        {
-            students = await _studentRepository.GetListAsync(
-                predicate: predicate,
-                orderBy: query => query.OrderBy(student => student.LastName).ThenBy(student => student.FirstName),
-                index: pageRequest.PageIndex,
-                size: pageRequest.PageSize,
-                enableTracking: false,
-                cancellationToken: cancellationToken);
-        }
+        IPaginate<Student> students = await _studentRepository.GetListAsync(
+            predicate: predicate,
+            orderBy: query => query.OrderBy(student => student.LastName).ThenBy(student => student.FirstName),
+            index: pageRequest.PageIndex,
+            size: pageRequest.PageSize,
+            enableTracking: false,
+            cancellationToken: cancellationToken);
 
         return new GetListResponse<StudentListResponse>
         {

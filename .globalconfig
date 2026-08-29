@@ -1,0 +1,6 @@
+# Solution-wide analyzer configuration (globalconfig format)
+# This file is auto-imported by the .NET SDK for analyzer diagnostics.
+# MSBuild properties (e.g. TreatWarningsAsErrors) do NOT belong here;
+# they are configured in Directory.Build.props.
+
+is_global = true

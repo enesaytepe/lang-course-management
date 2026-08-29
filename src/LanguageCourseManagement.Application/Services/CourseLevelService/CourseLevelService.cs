@@ -44,7 +44,7 @@ public sealed class CourseLevelService : ICourseLevelService
         return level;
     }
 
-    public async Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default)
+    public async Task<GetListResponse<CourseLevelListResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? offeredLanguageId, bool? isActive, CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         Expression<Func<CourseLevel, bool>> predicate = level =>
@@ -54,7 +54,7 @@ public sealed class CourseLevelService : ICourseLevelService
              (level.Description != null && level.Description.Contains(normalizedSearch)) ||
              (level.OfferedLanguage != null && level.OfferedLanguage.Name.Contains(normalizedSearch)));
 
-        var levelQuery = showDeleted ? _courseLevelRepository.QueryWithIgnoreFilters() : _courseLevelRepository.Query();
+        var levelQuery = _courseLevelRepository.Query();
         var levels = await levelQuery
             .Where(predicate)
             .OrderBy(level => level.OfferedLanguage.Name).ThenBy(level => level.Order).ThenBy(level => level.Name)

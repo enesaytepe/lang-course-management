@@ -18,7 +18,7 @@ public interface IEnrollmentService
     /// <summary>
     /// Arama ve filtre kriterlerine göre kayıtları sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<EnrollmentListItemResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? branchId, EnrollmentStatus? status, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<EnrollmentListItemResponse>> GetListAsync(PageRequest pageRequest, string? search, Guid? branchId, EnrollmentStatus? status, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Öğrenciye ait kayıtları listeler.

@@ -30,12 +30,11 @@ public sealed class TeachersApiController : ControllerBase
         [FromQuery] PageRequest pageRequest,
         [FromQuery] string? search,
         [FromQuery] bool? isActive,
-        CancellationToken cancellationToken,
-        [FromQuery] bool showDeleted = false)
+        CancellationToken cancellationToken)
     {
         pageRequest.Normalize();
 
-        return Ok(await _teacherService.GetListAsync(pageRequest, search, isActive ?? true, showDeleted, cancellationToken));
+        return Ok(await _teacherService.GetListAsync(pageRequest, search, isActive ?? true, cancellationToken));
     }
 
     /// <summary>

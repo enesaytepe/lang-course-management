@@ -33,12 +33,11 @@ public sealed class CoursesApiController : ControllerBase
         [FromQuery] Guid? offeredLanguageId,
         [FromQuery] bool? isActive,
         [FromQuery] CourseStatus? status,
-        CancellationToken cancellationToken,
-        [FromQuery] bool showDeleted = false)
+        CancellationToken cancellationToken)
     {
         pageRequest.Normalize();
 
-        return Ok(await _service.GetListAsync(pageRequest, search, branchId, offeredLanguageId, isActive, status, showDeleted, cancellationToken));
+        return Ok(await _service.GetListAsync(pageRequest, search, branchId, offeredLanguageId, isActive, status, cancellationToken));
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using LanguageCourseManagement.Domain.Entities;
 using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Infrastructure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -30,35 +31,106 @@ public sealed class SettlementTests
     }
 
     [Fact]
-    public void Settled_payment_is_immutable()
+    public async Task Settled_payment_is_immutable_when_tracked_or_detached()
     {
+        // Uretim guard'u AppDbContext.SaveChangesAsync/SaveChanges override icinde calisiyor
+        // (AppDbContext.cs EnsureSettledPaymentsAreImmutable). Guard, change tracker uzerinden
+        // calistigi icin provider'dan bagimsizdir; bu yuzden EF Core InMemory saglayicisi
+        // SaveChanges guard'unu gercek anlamda dogrular.
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase($"SettlementImmutability_{Guid.NewGuid():N}")
             .Options;
 
-        using var context = new AppDbContext(options);
+        const string expectedMessageFragment =
+            "Payment in 'Settled' status is immutable and cannot be modified or deleted.";
 
-        var paymentId = Guid.NewGuid();
-        context.Payments.Add(new Payment
+        // (a) TRACKED: Settled odemenin uzerinde degisiklik yapilirsa guard firlatir.
+        var settledPaymentId = Guid.NewGuid();
+        await using (var context = new AppDbContext(options, new HttpContextAccessor()))
         {
-            Id = paymentId,
-            EnrollmentId = Guid.NewGuid(),
-            IdempotencyKey = Guid.NewGuid().ToString(),
-            Amount = 500m,
-            Method = PaymentMethod.Cash,
-            Status = PaymentStatus.Settled,
-            SettledAt = DateTimeOffset.UtcNow,
-            PaymentDate = DateTime.UtcNow
-        });
-        context.SaveChanges();
+            var payment = new Payment
+            {
+                Id = settledPaymentId,
+                EnrollmentId = Guid.NewGuid(),
+                Amount = 250m,
+                Method = PaymentMethod.Cash,
+                Status = PaymentStatus.Settled,
+                IdempotencyKey = $"SETTLE-{settledPaymentId:N}",
+                PaymentDate = DateTime.UtcNow,
+                SettledAt = DateTimeOffset.UtcNow,
+            };
+            context.Payments.Add(payment);
+            await context.SaveChangesAsync();
 
-        var trackedPayment = context.Payments.IgnoreQueryFilters().First(p => p.Id == paymentId);
-        trackedPayment.Amount = 100m;
-        Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
+            payment.Amount = 1m; // Settled kayit uzerinde yasakli degisiklik
 
-        context.Entry(trackedPayment).State = EntityState.Detached;
-        var reloaded = context.Payments.IgnoreQueryFilters().First(p => p.Id == paymentId);
-        context.Payments.Remove(reloaded);
-        Assert.Throws<InvalidOperationException>(() => context.SaveChanges());
+            var trackedException = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => context.SaveChangesAsync());
+            Assert.Contains(expectedMessageFragment, trackedException.Message, StringComparison.Ordinal);
+        }
+
+        // (b) DETACHED UPDATE: baglamindan koparilmis Settled odemeye Update uygulanirsa guard firlatir.
+        await using (var context = new AppDbContext(options, new HttpContextAccessor()))
+        {
+            var detached = new Payment
+            {
+                Id = settledPaymentId,
+                EnrollmentId = Guid.NewGuid(),
+                Amount = 999m,
+                Method = PaymentMethod.Cash,
+                Status = PaymentStatus.Pending,
+                IdempotencyKey = $"SETTLE-{settledPaymentId:N}",
+                PaymentDate = DateTime.UtcNow,
+                SettledAt = DateTimeOffset.UtcNow,
+            };
+            context.Payments.Update(detached);
+
+            var persistedValues = await context.Entry(detached).GetDatabaseValuesAsync();
+            Assert.NotNull(persistedValues);
+            Assert.Equal(PaymentStatus.Settled, persistedValues!["Status"]);
+            context.Entry(detached).OriginalValues.SetValues(persistedValues);
+
+            var detachedUpdateException = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => context.SaveChangesAsync());
+            Assert.Contains(expectedMessageFragment, detachedUpdateException.Message, StringComparison.Ordinal);
+        }
+
+        // (c) DETACHED DELETE: baglamindan koparilmis Settled odemeye Remove uygulanirsa guard firlatir.
+        await using (var context = new AppDbContext(options, new HttpContextAccessor()))
+        {
+            var detached = new Payment
+            {
+                Id = settledPaymentId,
+                EnrollmentId = Guid.NewGuid(),
+                Amount = 250m,
+                Method = PaymentMethod.Cash,
+                Status = PaymentStatus.Pending,
+                IdempotencyKey = $"SETTLE-{settledPaymentId:N}",
+                PaymentDate = DateTime.UtcNow,
+                SettledAt = DateTimeOffset.UtcNow,
+            };
+            context.Payments.Remove(detached);
+
+            var persistedValues = await context.Entry(detached).GetDatabaseValuesAsync();
+            Assert.NotNull(persistedValues);
+            Assert.Equal(PaymentStatus.Settled, persistedValues!["Status"]);
+            context.Entry(detached).OriginalValues.SetValues(persistedValues);
+
+            var detachedDeleteException = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => context.SaveChangesAsync());
+            Assert.Contains(expectedMessageFragment, detachedDeleteException.Message, StringComparison.Ordinal);
+        }
+
+        await using (var context = new AppDbContext(options, new HttpContextAccessor()))
+        {
+            var persisted = await context.Payments
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .SingleAsync(p => p.Id == settledPaymentId);
+            Assert.Equal(250m, persisted.Amount);
+            Assert.Equal(PaymentMethod.Cash, persisted.Method);
+            Assert.Equal(PaymentStatus.Settled, persisted.Status);
+            Assert.False(persisted.IsDeleted);
+        }
     }
 }

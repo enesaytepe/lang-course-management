@@ -12,6 +12,7 @@ using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure;
 using LanguageCourseManagement.Infrastructure.Repositories;
+using LanguageCourseManagement.Tests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -23,21 +24,20 @@ namespace LanguageCourseManagement.Tests;
 /// <summary>
 /// enrollment + payment atomically ve kapasite eşzamanlılık davranışı için
 /// gerçek SQL Server bağlantısıyla integration test'leri.
-/// SQL Server kullanılamıyorsa test'ler zarif biçimde atlanır.
+/// SQL Server kullanılamıyorsa test'ler Xunit.SkippableFact (Skip.If) ile
+/// görünür biçimde SKIPPED olarak raporlanır; asla boş çalışmayıp PASSED olmaz.
 /// </summary>
 public sealed class EnrollmentTransactionTests : IDisposable
 {
     private const string TestPrefix = "ITX_";
 
-    private static readonly string ConnectionString =
-        Environment.GetEnvironmentVariable("TEST_CONNECTION_STRING")
-        ?? @"Server=localhost;Database=LangCourseManagement_Test;Trusted_Connection=True;TrustServerCertificate=True;";
+    private static string? ConnectionString => SqlServerEnrollmentFixture.ConnectionString;
 
     private readonly bool _canConnect;
 
     public EnrollmentTransactionTests()
     {
-        _canConnect = TryConnect();
+        _canConnect = SqlServerEnrollmentFixture.IsConfigured && TryConnect();
         if (_canConnect)
             EnsureSchema();
     }
@@ -45,12 +45,11 @@ public sealed class EnrollmentTransactionTests : IDisposable
     // ────────────────────────────────────────────
     //  Test 1: Enrollment + Payment atomiklik
     // ────────────────────────────────────────────
-    [Fact]
+    [SkippableFact]
     public async Task EnrollmentPaymentAtomicity_WhenPaymentFails_EnrollmentIsNotCommitted()
     {
-        // xUnit v2'de runtime skip destegi yok; SQL Server mevcut degilse test sessizce atlanir.
-        if (!_canConnect)
-            return;
+        // SQL Server mevcut degilse test gorunur sekilde SKIPPED raporlanir (Xunit.SkippableFact).
+        Skip.If(!_canConnect, SqlServerEnrollmentFixture.NotVerifiedReason);
 
         await using var context = CreateContext();
         await CleanupTestDataAsync(context);
@@ -121,12 +120,11 @@ public sealed class EnrollmentTransactionTests : IDisposable
     // ────────────────────────────────────────────
     //  Test 2: Kapasite eşzamanlılık
     // ────────────────────────────────────────────
-    [Fact]
+    [SkippableFact]
     public async Task CapacityConcurrency_TwoConcurrentEnrollments_OnlyOneSucceeds()
     {
-        // xUnit v2'de runtime skip destegi yok; SQL Server mevcut degilse test sessizce atlanir.
-        if (!_canConnect)
-            return;
+        // SQL Server mevcut degilse test gorunur sekilde SKIPPED raporlanir (Xunit.SkippableFact).
+        Skip.If(!_canConnect, SqlServerEnrollmentFixture.NotVerifiedReason);
 
         await using var context = CreateContext();
         await CleanupTestDataAsync(context);
@@ -227,7 +225,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
     private static AppDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlServer(ConnectionString)
+            .UseSqlServer(ConnectionString!)
             .EnableSensitiveDataLogging()
             .Options;
         return new AppDbContext(options, new HttpContextAccessor());
@@ -269,7 +267,7 @@ public sealed class EnrollmentTransactionTests : IDisposable
     {
         try
         {
-            using var conn = new SqlConnection(ConnectionString);
+            using var conn = new SqlConnection(ConnectionString!);
             conn.Open();
             return true;
         }

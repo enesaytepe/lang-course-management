@@ -64,14 +64,11 @@ public sealed class FacilityRepository : IFacilityRepository
         int size,
         string? search = null,
         bool? isActive = null,
-        bool ignoreQueryFilters = false,
         CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
 
-        var facilitiesQuery = ignoreQueryFilters
-            ? _context.Facilities.IgnoreQueryFilters().AsNoTracking()
-            : _context.Facilities.AsNoTracking();
+        var facilitiesQuery = _context.Facilities.AsNoTracking();
 
         var query = facilitiesQuery
             .Where(facility =>

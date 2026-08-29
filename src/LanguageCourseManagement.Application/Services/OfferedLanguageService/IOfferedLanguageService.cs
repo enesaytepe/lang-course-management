@@ -17,7 +17,7 @@ public interface IOfferedLanguageService
     /// <summary>
     /// Arama ve filtre kriterlerine göre dilleri sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<OfferedLanguageListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<OfferedLanguageListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Yeni sunulan dil oluşturur.

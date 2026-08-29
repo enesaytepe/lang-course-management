@@ -58,7 +58,6 @@ public sealed class FacilityService : IFacilityService
         PageRequest pageRequest,
         string? search,
         bool? isActive,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         IPaginate<Facility> facilities = await _facilityRepository.GetListAsync(
@@ -66,8 +65,7 @@ public sealed class FacilityService : IFacilityService
             pageRequest.PageSize,
             string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
             isActive,
-            ignoreQueryFilters: showDeleted,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         return new GetListResponse<FacilityListResponse>
         {

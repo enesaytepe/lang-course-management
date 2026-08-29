@@ -25,7 +25,6 @@ public interface ICourseService
         Guid? offeredLanguageId,
         bool? isActive,
         CourseStatus? status = null,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

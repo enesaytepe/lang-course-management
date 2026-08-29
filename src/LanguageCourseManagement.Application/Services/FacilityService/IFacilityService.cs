@@ -31,7 +31,6 @@ public interface IFacilityService
         PageRequest pageRequest,
         string? search,
         bool? isActive,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>
