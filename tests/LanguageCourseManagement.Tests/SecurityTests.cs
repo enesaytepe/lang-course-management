@@ -137,6 +137,76 @@ public sealed class SecurityTests
     }
 
     // -----------------------------------------------------------------------------------------
+    // 1c. Contract test — IEnrollmentRepository must not expose ignoreQueryFilters parameter
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void IEnrollmentRepository_DoesNotExposeIgnoreQueryFiltersParameter()
+    {
+        // Enrollment has a global query filter on Student.IsDeleted && Course.IsDeleted
+        // (see EnrollmentConfiguration). No repository method should offer a bypass parameter.
+        var repositoryType = typeof(IEnrollmentRepository);
+
+        var offenders = repositoryType.GetMethods()
+            .SelectMany(m => m.GetParameters().Select(p => new { Method = m.Name, Param = p }))
+            .Where(x => string.Equals(x.Param.Name, "ignoreQueryFilters", StringComparison.OrdinalIgnoreCase))
+            .Select(x => $"{x.Method}({x.Param.ParameterType.Name} {x.Param.Name})")
+            .ToList();
+
+        Assert.True(
+            offenders.Count == 0,
+            $"IEnrollmentRepository must not expose an 'ignoreQueryFilters' parameter on any method " +
+            $"(bypass surface); found: {string.Join(", ", offenders)}");
+
+        // Enrollment entity is ISoftDelete (via SoftDeletableEntity) and AppDbContext configures
+        // a global query filter on it — verified by AppDbContext_EverySoftDeletableEntity_HasGlobalQueryFilter above.
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 6b. EF model test — Enrollment global query filter references Student/Course, not its own IsDeleted
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void AppDbContext_EnrollmentQueryFilter_ReferencesStudentAndCourseIsDeleted()
+    {
+        // KNOWN GAP: Enrollment inherits ISoftDelete and has its own IsDeleted column, but its
+        // global query filter only checks Student.IsDeleted and Course.IsDeleted — it does NOT
+        // filter on its own IsDeleted flag. This means a soft-deleted Enrollment that belongs to
+        // an active Student and an active Course will NOT be filtered out by the global filter.
+        //
+        // This is a known security follow-up item. The current behavior relies on application
+        // logic to exclude soft-deleted Enrollments. Removing IgnoreQueryFilters from the
+        // EnrollmentRepository (commit 041) ensures no explicit bypass, but the gap in the
+        // filter itself remains.
+        using var context = CreateModelOnlyContext();
+
+        var entityType = context.Model.FindEntityType(typeof(Enrollment));
+        Assert.True(entityType is not null, "Enrollment is not mapped in AppDbContext.");
+
+        var filters = entityType!.GetDeclaredQueryFilters()
+            .Select(f => f.Expression)
+            .Where(f => f is not null)
+            .ToList();
+
+        Assert.True(
+            filters.Count > 0,
+            "Enrollment has no global query filter; soft-deleted rows would leak into every query.");
+
+        // Enrollment's filter must reference Student.IsDeleted and Course.IsDeleted via navigation
+        Assert.True(
+            filters.Any(f => ReferencesAnyMember(f!, "IsDeleted")),
+            "Enrollment's global query filter must reference an IsDeleted property.");
+
+        // Enrollment does NOT reference its own IsDeleted directly — document this known gap.
+        Assert.False(
+            filters.Any(f => ReferencesOwnMember(f!, "IsDeleted")),
+            "Enrollment's global query filter should NOT reference its own IsDeleted (known gap). " +
+            "The filter only checks Student.IsDeleted and Course.IsDeleted via navigation properties. " +
+            "If this assertion breaks, the Enrollment filter has been updated to include its own IsDeleted — " +
+            "remove this comment and update the test to Assert.True instead.");
+    }
+
+    // -----------------------------------------------------------------------------------------
     // 2. Contract test — IRepository<T> must not expose the filter-bypass query method
     // -----------------------------------------------------------------------------------------
 
@@ -426,6 +496,7 @@ public sealed class SecurityTests
         Assert.Contains("CourseLevel", mappedClrTypeNames);
         Assert.Contains("OfferedLanguage", mappedClrTypeNames);
         Assert.Contains("Facility", mappedClrTypeNames);
+        Assert.Contains("Enrollment", mappedClrTypeNames);
 
         var entitiesWithoutFilter = softDeletableEntityTypes
             .Where(e => !e.GetDeclaredQueryFilters().Any())
