@@ -110,6 +110,33 @@ public sealed class SecurityTests
     }
 
     // -----------------------------------------------------------------------------------------
+    // 1b. Contract test — IFacilityRepository must not expose ignoreQueryFilters parameter
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void IFacilityRepository_DoesNotExposeIgnoreQueryFiltersParameter()
+    {
+        // FacilityEntity inherits ISoftDelete, so the global query filter is the single
+        // source of truth for soft-delete visibility. No repository method should offer
+        // a bypass parameter.
+        var repositoryType = typeof(IFacilityRepository);
+
+        var offenders = repositoryType.GetMethods()
+            .SelectMany(m => m.GetParameters().Select(p => new { Method = m.Name, Param = p }))
+            .Where(x => string.Equals(x.Param.Name, "ignoreQueryFilters", StringComparison.OrdinalIgnoreCase))
+            .Select(x => $"{x.Method}({x.Param.ParameterType.Name} {x.Param.Name})")
+            .ToList();
+
+        Assert.True(
+            offenders.Count == 0,
+            $"IFacilityRepository must not expose an 'ignoreQueryFilters' parameter on any method " +
+            $"(bypass surface); found: {string.Join(", ", offenders)}");
+
+        // Sanity: Facility entity is ISoftDelete and AppDbContext configures a global query filter
+        // on it — verified by AppDbContext_EverySoftDeletableEntity_HasGlobalQueryFilter above.
+    }
+
+    // -----------------------------------------------------------------------------------------
     // 2. Contract test — IRepository<T> must not expose the filter-bypass query method
     // -----------------------------------------------------------------------------------------
 
