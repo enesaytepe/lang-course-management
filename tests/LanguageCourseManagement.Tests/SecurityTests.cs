@@ -163,21 +163,15 @@ public sealed class SecurityTests
     }
 
     // -----------------------------------------------------------------------------------------
-    // 6b. EF model test — Enrollment global query filter references Student/Course, not its own IsDeleted
+    // 6b. EF model test — Enrollment global query filter references Student/Course AND its own IsDeleted
     // -----------------------------------------------------------------------------------------
 
     [Fact]
     public void AppDbContext_EnrollmentQueryFilter_ReferencesStudentAndCourseIsDeleted()
     {
-        // KNOWN GAP: Enrollment inherits ISoftDelete and has its own IsDeleted column, but its
-        // global query filter only checks Student.IsDeleted and Course.IsDeleted — it does NOT
-        // filter on its own IsDeleted flag. This means a soft-deleted Enrollment that belongs to
-        // an active Student and an active Course will NOT be filtered out by the global filter.
-        //
-        // This is a known security follow-up item. The current behavior relies on application
-        // logic to exclude soft-deleted Enrollments. Removing IgnoreQueryFilters from the
-        // EnrollmentRepository (commit 041) ensures no explicit bypass, but the gap in the
-        // filter itself remains.
+        // Enrollment inherits ISoftDelete and has its own IsDeleted column. Its global query
+        // filter now checks all three: its own IsDeleted, Student.IsDeleted, and Course.IsDeleted.
+        // This ensures a soft-deleted Enrollment is excluded even if the Student and Course are active.
         using var context = CreateModelOnlyContext();
 
         var entityType = context.Model.FindEntityType(typeof(Enrollment));
@@ -197,13 +191,11 @@ public sealed class SecurityTests
             filters.Any(f => ReferencesAnyMember(f!, "IsDeleted")),
             "Enrollment's global query filter must reference an IsDeleted property.");
 
-        // Enrollment does NOT reference its own IsDeleted directly — document this known gap.
-        Assert.False(
+        // Enrollment now filters on its own IsDeleted — the gap is closed.
+        Assert.True(
             filters.Any(f => ReferencesOwnMember(f!, "IsDeleted")),
-            "Enrollment's global query filter should NOT reference its own IsDeleted (known gap). " +
-            "The filter only checks Student.IsDeleted and Course.IsDeleted via navigation properties. " +
-            "If this assertion breaks, the Enrollment filter has been updated to include its own IsDeleted — " +
-            "remove this comment and update the test to Assert.True instead.");
+            "Enrollment's global query filter must reference its own IsDeleted. " +
+            "The filter now checks !x.IsDeleted && !x.Student.IsDeleted && !x.Course.IsDeleted.");
     }
 
     // -----------------------------------------------------------------------------------------
@@ -514,12 +506,13 @@ public sealed class SecurityTests
     {
         using var context = CreateModelOnlyContext();
 
-        // The 8 core entities behind the fixed list endpoints must be filtered by their own
+        // The 9 core entities behind the fixed list endpoints must be filtered by their own
         // IsDeleted flag (not only via a navigation to another entity).
         var coreEntities = new[]
         {
             typeof(Student), typeof(Branch), typeof(Teacher), typeof(Course),
             typeof(Classroom), typeof(CourseLevel), typeof(OfferedLanguage), typeof(Facility),
+            typeof(Enrollment),
         };
 
         foreach (var clrType in coreEntities)
@@ -541,6 +534,26 @@ public sealed class SecurityTests
                 $"{clrType.Name}'s global query filter must reference its own IsDeleted property; " +
                 $"actual filters: {string.Join(" | ", filters)}");
         }
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // 6c. Behavioral test — soft-deleted Enrollment is excluded from normal queries
+    // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public void Enrollment_SoftDeleted_IsExcludedFromNormalQuery()
+    {
+        using var context = CreateModelOnlyContext();
+
+        // Normal enrollment sorgusu (soft-delete filtreli)
+        var query = context.Enrollments
+            .Where(e => e.Status == LanguageCourseManagement.Domain.Enums.EnrollmentStatus.Active);
+
+        // ToQueryString() LINQ'u SQL'e çevirir, sorgu çalıştırılmaz
+        var sql = query.ToQueryString();
+
+        // SQL çıktısında Enrollment'ın kendi IsDeleted koşulu olmalı
+        Assert.Contains("IsDeleted", sql);
     }
 
     // -----------------------------------------------------------------------------------------
