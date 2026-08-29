@@ -45,6 +45,9 @@ csharp_style_expression_bodied_methods = false:warning
 csharp_style_expression_bodied_properties = true:suggestion
 
 # Naming conventions
+# Treat all warnings as errors to prevent accumulation
+dotnet_analyzer_diagnostic.category-CodeAnalysis.severity = error
+
 dotnet_naming_rule.private_fields_should_be_camel_case.severity = suggestion
 dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case_underscore
@@ -71,6 +74,13 @@ csharp_style_prefer_primary_constructors = false
 dotnet_diagnostic.IDE0022.severity = warning
 
 # CS1591: Missing XML comment for publicly visible type or member
+# CS8619: Nullable reference type mismatch for Include/ThenInclude chains on nullable navigation properties.
+# EF Core handles null collections at runtime; these are compile-time-only false positives.
+# ProjectTo should be preferred for new code (see AGENTS.md EF Core Query Standards).
+dotnet_diagnostic.CS8619.severity = silent
+
+# CS8620: Argument type mismatch in ThenInclude on nullable collections (same root cause as CS8619).
+dotnet_diagnostic.CS8620.severity = silent
 dotnet_diagnostic.CS1591.severity = suggestion
 
 # CS8600-CS8625: Nullable reference types

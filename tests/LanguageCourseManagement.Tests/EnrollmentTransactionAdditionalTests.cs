@@ -10,6 +10,7 @@ using LanguageCourseManagement.Domain.Enums;
 using LanguageCourseManagement.Domain.Repositories;
 using LanguageCourseManagement.Infrastructure;
 using LanguageCourseManagement.Infrastructure.Repositories;
+using LanguageCourseManagement.Tests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -22,24 +23,22 @@ public sealed class EnrollmentTransactionAdditionalTests : IDisposable
 {
     private const string TestPrefix = "ITX2_";
 
-    private static readonly string ConnectionString =
-        Environment.GetEnvironmentVariable("TEST_CONNECTION_STRING")
-        ?? @"Server=localhost;Database=LangCourseManagement_Test;Trusted_Connection=True;TrustServerCertificate=True;";
+    private static string? ConnectionString => SqlServerEnrollmentFixture.ConnectionString;
 
     private readonly bool _canConnect;
 
     public EnrollmentTransactionAdditionalTests()
     {
-        _canConnect = TryConnect();
+        _canConnect = SqlServerEnrollmentFixture.IsConfigured && TryConnect();
         if (_canConnect)
             EnsureSchema();
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task InstallmentEnrollment_WhenInstallmentPlanFails_EnrollmentIsRolledBack()
     {
-        if (!_canConnect)
-            return;
+        // SQL Server mevcut degilse test gorunur sekilde SKIPPED raporlanir (Xunit.SkippableFact).
+        Skip.If(!_canConnect, SqlServerEnrollmentFixture.NotVerifiedReason);
 
         await using var context = CreateContext();
         await CleanupTestDataAsync(context);
@@ -92,11 +91,11 @@ public sealed class EnrollmentTransactionAdditionalTests : IDisposable
         await CleanupTestDataAsync(context);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Cancellation_EnrollmentStatusChangesToCancelled()
     {
-        if (!_canConnect)
-            return;
+        // SQL Server mevcut degilse test gorunur sekilde SKIPPED raporlanir (Xunit.SkippableFact).
+        Skip.If(!_canConnect, SqlServerEnrollmentFixture.NotVerifiedReason);
 
         await using var context = CreateContext();
         await CleanupTestDataAsync(context);
@@ -147,7 +146,7 @@ public sealed class EnrollmentTransactionAdditionalTests : IDisposable
     private static AppDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlServer(ConnectionString)
+            .UseSqlServer(ConnectionString!)
             .EnableSensitiveDataLogging()
             .Options;
         return new AppDbContext(options, new HttpContextAccessor());
@@ -186,7 +185,7 @@ public sealed class EnrollmentTransactionAdditionalTests : IDisposable
     {
         try
         {
-            using var conn = new SqlConnection(ConnectionString);
+            using var conn = new SqlConnection(ConnectionString!);
             conn.Open();
             return true;
         }
