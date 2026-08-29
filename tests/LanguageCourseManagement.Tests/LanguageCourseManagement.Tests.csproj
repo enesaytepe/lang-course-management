@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\src\LanguageCourseManagement.Domain\LanguageCourseManagement.Domain.csproj" />
     <ProjectReference Include="..\..\src\LanguageCourseManagement.Infrastructure\LanguageCourseManagement.Infrastructure.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
+    <ProjectReference Include="..\..\src\LanguageCourseManagement.MVC\LanguageCourseManagement.MVC.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />

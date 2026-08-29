@@ -17,7 +17,7 @@ public interface ITeacherService
     /// <summary>
     /// Arama ve filtre kriterlerine göre öğretmenleri sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<TeacherListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default);
     /// <summary>
     /// Yeni öğretmen oluşturur.
     /// </summary>

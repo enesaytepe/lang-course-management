@@ -64,7 +64,6 @@ public sealed class ClassroomService : IClassroomService
         string? search,
         Guid? branchId,
         bool? isActive,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
         var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
@@ -77,7 +76,7 @@ public sealed class ClassroomService : IClassroomService
              (classroom.Description != null && classroom.Description.Contains(normalizedSearch)) ||
              classroom.Branch.Name.Contains(normalizedSearch));
 
-        var classroomQuery = showDeleted ? _classroomRepository.QueryWithIgnoreFilters() : _classroomRepository.Query();
+        var classroomQuery = _classroomRepository.Query();
         var classrooms = await classroomQuery
             .Where(predicate)
             .OrderBy(classroom => classroom.Branch.Name).ThenBy(classroom => classroom.Name)

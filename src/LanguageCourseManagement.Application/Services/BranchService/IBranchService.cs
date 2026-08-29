@@ -17,7 +17,7 @@ public interface IBranchService
     /// <summary>
     /// Arama ve filtre kriterlerine göre şubeleri sayfalamalı getirir.
     /// </summary>
-    Task<GetListResponse<BranchListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, bool showDeleted = false, CancellationToken cancellationToken = default);
+    Task<GetListResponse<BranchListResponse>> GetListAsync(PageRequest pageRequest, string? search, bool? isActive, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Yeni şube oluşturur.

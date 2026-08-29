@@ -18,7 +18,6 @@ public sealed class EnrollmentRepository
         CancellationToken cancellationToken = default)
     {
         return Context.Enrollments
-            .IgnoreQueryFilters()
             .AsNoTracking()
             .CountAsync(enrollment =>
                 enrollment.CourseId == courseId &&
@@ -33,7 +32,6 @@ public sealed class EnrollmentRepository
     {
         return Context.Enrollments
             .FromSqlInterpolated<Enrollment>($"SELECT * FROM [Enrollments] WITH (UPDLOCK, HOLDLOCK) WHERE [CourseId] = {courseId} AND [Status] <> {(int)EnrollmentStatus.Cancelled}")
-            .IgnoreQueryFilters()
             .CountAsync(cancellationToken);
     }
 
@@ -44,7 +42,6 @@ public sealed class EnrollmentRepository
         CancellationToken cancellationToken = default)
     {
         return Context.Enrollments
-            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
                 e => e.StudentId == studentId && e.CourseId == courseId,
                 cancellationToken);

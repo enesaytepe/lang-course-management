@@ -196,10 +196,9 @@ public class PaymentService : IPaymentService
         string? search,
         Guid? branchId = null,
         PaymentStatus? status = null,
-        bool showDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Payment> query = showDeleted ? _paymentRepository.QueryWithIgnoreFilters() : _paymentRepository.Query();
+        IQueryable<Payment> query = _paymentRepository.Query();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
